@@ -95,7 +95,6 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 
   // ─── 1. Inicializar YouTube IFrame Player (SimpMusic Engine Oficial) ───
   useEffect(() => {
-    // Carrega script do YouTube IFrame API se ainda não existir
     if (!document.getElementById("yt-iframe-api")) {
       const tag = document.createElement("script")
       tag.id = "yt-iframe-api"
@@ -188,7 +187,45 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // ─── 2. Reproduzir Faixa ───
+  // ─── 2. Web MediaSession API (Controle na Tela de Bloqueio e Notificação do Android) ───
+  useEffect(() => {
+    if ("mediaSession" in navigator && currentTrack) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentTrack.title,
+        artist: currentTrack.artist,
+        album: currentTrack.album || "LuciMusic",
+        artwork: [
+          { src: currentTrack.thumbnail, sizes: "512x512", type: "image/jpeg" },
+        ],
+      })
+
+      navigator.mediaSession.setActionHandler("play", () => {
+        ytPlayerRef.current?.playVideo()
+        setIsPlaying(true)
+      })
+
+      navigator.mediaSession.setActionHandler("pause", () => {
+        ytPlayerRef.current?.pauseVideo()
+        setIsPlaying(false)
+      })
+
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
+        prev()
+      })
+
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
+        next()
+      })
+
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        if (details.seekTime !== undefined && details.seekTime !== null) {
+          seek(details.seekTime)
+        }
+      })
+    }
+  }, [currentTrack])
+
+  // ─── 3. Reproduzir Faixa ───
   const playTrack = useCallback(async (track: LuciTrack, contextQueue?: LuciTrack[]) => {
     setIsLoading(true)
     setCurrentTrack(track)
@@ -235,7 +272,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       .catch(() => {})
   }, [])
 
-  // ─── 3. Próxima / Fim de Faixa ───
+  // ─── 4. Próxima / Fim de Faixa ───
   const handleTrackEnded = useCallback(() => {
     if (repeat === "one") {
       if (ytPlayerRef.current?.seekTo) {
@@ -457,7 +494,6 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   return (
     <MusicPlayerContext.Provider value={value}>
       {children}
-      {/* Contêiner invisível do motor oficial do YouTube IFrame (SimpMusic Engine) */}
       <div
         id="youtube-audio-engine-container"
         style={{
