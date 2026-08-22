@@ -1,0 +1,623 @@
+[
+  {
+    "id": "mem-1785173515023-15ou",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Me desculpe, errei.\nNa verdade é 31",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1785173515023
+  },
+  {
+    "id": "mem-1786287493083-ajhh",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Acenda a luz da sala.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786287493083
+  },
+  {
+    "id": "mem-1786287493478-vrzf",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Me dê um resumo das notícias de hoje.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786287493478
+  },
+  {
+    "id": "mem-1786288797374-0br3",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Não, mas é. Parece que tudo bem.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786288797374
+  },
+  {
+    "id": "mem-1786290318048-mjvu",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Olá Luci",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786290318048
+  },
+  {
+    "id": "mem-1786291098591-z4it",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Que bom",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786291098591
+  },
+  {
+    "id": "mem-1786291128306-eky2",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Estou tentando entender pq não está saindo voz quando você fala",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786291128306
+  },
+  {
+    "id": "mem-1786291161020-amgt",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Sim. Dispositivo com volume máximo. Testei com youtube e funcionando",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786291161020
+  },
+  {
+    "id": "mem-1786291826786-6dah",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Estou tentando resolver tambem",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786291826786
+  },
+  {
+    "id": "mem-1786297119198-mbwu",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Acenda a luz da sala.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786297119198
+  },
+  {
+    "id": "mem-1786297119519-to54",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Me dê um resumo das notícias de hoje.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786297119519
+  },
+  {
+    "id": "mem-1786299923102-cba8",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "ajustes no código",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786299923102
+  },
+  {
+    "id": "mem-1786300715948-mk6y",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "testando",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786300715948
+  },
+  {
+    "id": "mem-1786300727630-jbbi",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "testando",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786300727630
+  },
+  {
+    "id": "mem-1786543484627-jgc6",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "oi Luci",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786543484627
+  },
+  {
+    "id": "mem-1786636688006-uee3",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Oi Luci",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786636688006
+  },
+  {
+    "id": "mem-1786638303313-fdb2",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Estou testando sua voz",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786638303313
+  },
+  {
+    "id": "mem-1786638522132-jf4r",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Estou realizando alguns teste para escolher sua voz",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786638522132
+  },
+  {
+    "id": "mem-1786638567803-jb8f",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Estou em duvida entre a voz Jessica e a voz Bella do Eleven Labs",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786638567803
+  },
+  {
+    "id": "mem-1786639589424-hj90",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Coloquei a voz: Mariana.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786639589424
+  },
+  {
+    "id": "mem-1786640120384-i15s",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Infelizmente não funcionou. Vamos ficar com a voz Jessica",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786640120384
+  },
+  {
+    "id": "mem-1786640375271-anke",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Vou testar com mais algumas para ver a melhor compatibilidade",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786640375271
+  },
+  {
+    "id": "mem-1786640440821-cidp",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Agora estou tentando a voz da Bella. Fale uma frase com data e porcentagem por favor",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786640440821
+  },
+  {
+    "id": "mem-1786640482990-ett8",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Pode fazer o mesmo teste e inclua pergunta e entonação",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786640482990
+  },
+  {
+    "id": "mem-1786640511908-e3d2",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Pode repetir, coloquei a voz da Laura agora",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786640511908
+  },
+  {
+    "id": "mem-1786640538709-obiw",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Formule outra frase agora",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786640538709
+  },
+  {
+    "id": "mem-1786640584492-oi2p",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Acho que ficaremos com a voz da Jéssica mesmo, fale mais comigo para testar por favor",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786640584492
+  },
+  {
+    "id": "mem-1786640721214-zunk",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Estou quase satisfeito com os testes. Mas não 100% decidido com a voz",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786640721214
+  },
+  {
+    "id": "mem-1786640826629-kdl5",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "A duvida esta entre a voz da Jéssica que é Jovem, calorosa, amigável e descontraída e a voz da Sarah que é Confiante, madura, suave e executiva.\n\nEu queria uma inspiração próxima da voz da Lucy do filme de 2014.\nQue é a Scarlet Johansson",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786640826629
+  },
+  {
+    "id": "mem-1786640910748-pi0j",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Vou manter a dela por enquenato",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786640910748
+  },
+  {
+    "id": "mem-1786652957245-0m1o",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Oi Luci, estou testando outra voz",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786652957245
+  },
+  {
+    "id": "mem-1786744583246-woza",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Oi Luci, voltei",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786744583246
+  },
+  {
+    "id": "mem-1786744614346-q4r0",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Foi bom, obrigado.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786744614346
+  },
+  {
+    "id": "mem-1786746225983-rtyz",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Estou testando a voz Francisca do EdgeTTS",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786746225983
+  },
+  {
+    "id": "mem-1786747491334-ree2",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Agora o teste é com a voz talitha do EdgeTTS",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786747491334
+  },
+  {
+    "id": "mem-1786910178404-cts7",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Oi Luci",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786910178404
+  },
+  {
+    "id": "mem-1786911294210-zhw9",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "estou testando a nova voz q criei para vc no XXTS-v2",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786911294210
+  },
+  {
+    "id": "mem-1786981436251-71cv",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Pode soltar a voz",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786981436251
+  },
+  {
+    "id": "mem-1786982576445-hvo5",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Estou ainda nos testes de voz",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786982576445
+  },
+  {
+    "id": "mem-1786983531986-rmd2",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Pode falar alguma frase complexa",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1786983531986
+  },
+  {
+    "id": "mem-1787158718574-8liq",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Definimos a voz dora no Kokoro pq o tempo de resposta é mais rapido",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787158718574
+  },
+  {
+    "id": "mem-1787158744102-rsc1",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Não. Vamos seguir testando",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787158744102
+  },
+  {
+    "id": "mem-1787159118780-mv8k",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Ok. Já vi aqui como fazer",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787159118780
+  },
+  {
+    "id": "mem-1787159137975-l5y6",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Por enquanto nao. Obrigado",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787159137975
+  },
+  {
+    "id": "mem-1787159217363-pety",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Perfeito, obrigado",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787159217363
+  },
+  {
+    "id": "mem-1787159234831-rdfy",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Não. Vou trabalhar agora. Tchau",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787159234831
+  },
+  {
+    "id": "mem-1787181548463-9qhh",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "6 anos né",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787181548463
+  },
+  {
+    "id": "mem-1787181565192-1w5i",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "feira nunca nunca trocou o nome quando morreu foi com a presidente entendeu ela tem um problema",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787181565192
+  },
+  {
+    "id": "mem-1787181613892-vja6",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Tô bem também.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787181613892
+  },
+  {
+    "id": "mem-1787181686626-ng7c",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Ô louco",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787181686626
+  },
+  {
+    "id": "mem-1787181691548-jy86",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Ô louco",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787181691548
+  },
+  {
+    "id": "mem-1787182233752-inr1",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "estou em Osasco",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182233752
+  },
+  {
+    "id": "mem-1787182587404-m43s",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "E aí Lúcia tudo bem",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182587404
+  },
+  {
+    "id": "mem-1787182597289-7fjj",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Estou bem também",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182597289
+  },
+  {
+    "id": "mem-1787182600104-koy9",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "temperatura",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182600104
+  },
+  {
+    "id": "mem-1787182601951-v59l",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "temperatura",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182601951
+  },
+  {
+    "id": "mem-1787182659263-dn45",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "obrigada",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182659263
+  },
+  {
+    "id": "mem-1787182684050-3f4q",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Na igreja você consegue fazer já tudo com validade.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182684050
+  },
+  {
+    "id": "mem-1787182695374-kuu6",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Não, Lucio, você está misturando as conversas.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182695374
+  },
+  {
+    "id": "mem-1787182723127-ffkk",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "certo entendi",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182723127
+  },
+  {
+    "id": "mem-1787182727342-4bzq",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Certo, entendi.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182727342
+  },
+  {
+    "id": "mem-1787182729025-gkc4",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Orações.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182729025
+  },
+  {
+    "id": "mem-1787182733432-qmnl",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Aí você deixa comigo.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182733432
+  },
+  {
+    "id": "mem-1787182876331-94na",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "na cara dela porque é mentira dela",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787182876331
+  },
+  {
+    "id": "mem-1787183629224-fxq0",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Vai demorar e não consegui usar meu cartão, não sei o quê.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787183629224
+  },
+  {
+    "id": "mem-1787183632443-woi9",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Aí ele.",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787183632443
+  },
+  {
+    "id": "mem-1787184096158-v6xg",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Lúcio o que faz mais sentido para criar um",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787184096158
+  },
+  {
+    "id": "mem-1787184130780-ecme",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "então é melhor criar interface primeiro já que ela vai ser multi canais né vai funcionar em Android vai funcionar em desktop web ou primeiro crio toda a parte lógica por trás e depois deixo para criar a parte de interfaces",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787184130780
+  },
+  {
+    "id": "mem-1787184156065-7sj8",
+    "userId": "Lucas",
+    "category": "EPISODIC",
+    "content": "Então mas como que eu vou fazer os testes",
+    "confidence": 0.5,
+    "status": "QUARANTINE",
+    "timestamp": 1787184156065
+  }
+]

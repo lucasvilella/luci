@@ -1,0 +1,47 @@
+{
+  "name": "luci",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "server": "npx tsx server/api.ts",
+    "dev:desktop": "npm run dev --prefix interfaces/desktop",
+    "dev:mobile": "npm run dev --prefix interfaces/mobile",
+    "tts:xtts": "F:\\System\\Python310\\python.exe speech/tts/service/xtts_server.py",
+    "dev": "npx concurrently \"npm run server\" \"npm run dev:desktop\" --names \"SERVER,CLIENT\" -c \"cyan,magenta\"",
+    "dev:all": "npx concurrently \"npm run server\" \"npm run dev:desktop\" \"npm run dev:mobile\" --names \"SERVER,DESKTOP,MOBILE\" -c \"cyan,magenta,green\"",
+    "test:router": "npx tsx test_router.ts",
+    "test:components": "npx tsx test_new_components.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@google/genai": "^2.13.0",
+    "@whiskeysockets/baileys": "^7.0.0-rc14",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "edge-tts": "^1.0.1",
+    "express": "^5.2.1",
+    "google-tts-api": "^2.0.2",
+    "kokoro-js": "^1.2.1",
+    "node-edge-tts": "^1.2.10",
+    "node-gtts": "^2.0.2",
+    "qrcode-terminal": "^0.12.0",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.1",
+    "@types/qrcode-terminal": "^0.12.2",
+    "concurrently": "^10.0.4",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2"
+  }
+}
