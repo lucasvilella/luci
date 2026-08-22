@@ -4,14 +4,17 @@ Integrates:
 - Multi-Tool API Endpoints (/api/v1/tools)
 - Universal Interpreter WebSocket (/ws/interpreter)
 - Acoustic Music Recognition (/api/v1/music/recognize)
+- Static Mobile Interface (Next.js Export)
 """
 
 import os
+from pathlib import Path
 from contextlib import asynccontextmanager
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, UploadFile, File, HTTPException, Request, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.core.config import settings
@@ -19,11 +22,16 @@ from app.tools.registry import tool_registry
 from app.tools.music_recognizer import recognize_ambient_music
 from app.services.interpreter_service import UniversalInterpreterSession
 
+# Caminho dos arquivos estáticos da interface mobile
+STATIC_DIR = Path(__file__).parent / "static"
+
 # ─── Middleware de Autenticação Segura (Bearer Token / X-API-Key) ───
 async def verify_api_secret(request: Request):
     """Verifica se a requisição possui a chave secreta da Luci."""
-    # Permite endpoint de health público ou com validação
-    if request.url.path in ["/health", "/docs", "/openapi.json"]:
+    # Permite acesso público a endpoints de health, docs, e interface estática
+    path = request.url.path
+    public_paths = ["/health", "/docs", "/openapi.json", "/favicon.ico"]
+    if path in public_paths or path == "/" or path.startswith("/_next") or path.startswith("/static"):
         return True
 
     auth_header = request.headers.get("Authorization", "")
@@ -44,7 +52,7 @@ async def verify_api_secret(request: Request):
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Acesso Negado: Chave Secreta da L.U.C.I. inválida ou ausente.",
+        detail="Acesso Negado: Chave Secreta da Luci inválida ou ausente.",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -99,7 +107,50 @@ async def execute_tool(req: ToolExecuteRequest):
     result = await tool_registry.execute(req.tool_name, req.arguments)
     return {"result": result}
 
-# ─── 3. Acoustic Music Recognition ───
+# ─── 3. Chat Endpoint (Proxy para Gemini) ───
+class ChatRequest(BaseModel):
+    message: str
+    userId: str = "user"
+    history: List[Dict[str, str]] = []
+
+@app.post("/api/v1/chat")
+async def chat_endpoint(req: ChatRequest):
+    """Endpoint de chat que processa mensagens via ferramentas registradas."""
+    # Por enquanto, executa a tool de weather como demo
+    # TODO: Integrar com Gemini para roteamento inteligente
+    return JSONResponse(content={
+        "content": f"Olá! Recebi sua mensagem: '{req.message}'. Estou processando com as {len(tool_registry._tools)} ferramentas disponíveis. Em breve terei respostas completas via Gemini!",
+    })
+
+# ─── 4. TTS Endpoint ───
+class TTSRequest(BaseModel):
+    text: str
+    voice: str = "pt-BR-ThalitaNeural"
+
+@app.post("/api/v1/tts/speak")
+async def tts_speak(req: TTSRequest):
+    """Sintetiza texto em áudio usando Edge TTS."""
+    try:
+        import edge_tts
+        import io
+        communicate = edge_tts.Communicate(req.text, req.voice)
+        audio_data = io.BytesIO()
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_data.write(chunk["data"])
+        audio_data.seek(0)
+        from fastapi.responses import StreamingResponse
+        return StreamingResponse(
+            audio_data,
+            media_type="audio/mpeg",
+            headers={"X-TTS-Provider": "EdgeTTS"}
+        )
+    except ImportError:
+        raise HTTPException(status_code=501, detail="edge-tts não instalado no servidor.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ─── 5. Acoustic Music Recognition ───
 @app.post("/api/v1/music/recognize")
 async def recognize_music_file(file: UploadFile = File(...)):
     """Recebe um arquivo de áudio gravado no ambiente e retorna os metadados da música (ShazamIO)."""
@@ -183,6 +234,24 @@ async def interpreter_websocket(
     finally:
         if session:
             await session.close()
+
+# ─── Interface Mobile Estática ───
+# Servir a interface Next.js exportada como arquivos estáticos
+if STATIC_DIR.exists() and (STATIC_DIR / "index.html").exists():
+    @app.get("/")
+    async def serve_index():
+        return FileResponse(STATIC_DIR / "index.html")
+
+    # Montar arquivos estáticos (CSS, JS, imagens)
+    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static-mobile")
+else:
+    @app.get("/")
+    async def root_redirect():
+        return JSONResponse(content={
+            "message": "Luci AI Backend ativo. Interface mobile não encontrada.",
+            "docs": "/docs",
+            "health": "/health",
+        })
 
 if __name__ == "__main__":
     import uvicorn

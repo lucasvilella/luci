@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import { Mic, MessageSquare, X, Sparkles, Volume2, Loader2 } from "lucide-react"
+import { luciApiFetch } from "@/lib/api"
 
 class AudioPlayerQueue {
   private audioContext: AudioContext | null = null
@@ -126,7 +127,7 @@ export function VoiceOrbView() {
     if (cleanSentence.length < 2) return
 
     try {
-      const res = await fetch("/api/tts/speak", {
+      const res = await luciApiFetch("/api/v1/tts/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: cleanSentence }),
@@ -154,7 +155,7 @@ export function VoiceOrbView() {
     const currentHistory = [...conversationHistory]
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await luciApiFetch("/api/v1/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

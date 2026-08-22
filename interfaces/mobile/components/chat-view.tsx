@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Send, Sparkles, Copy, Share2, Music } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
+import { luciApiFetch } from "@/lib/api"
 
 type Message = {
   id: number
@@ -45,7 +46,7 @@ export function ChatView() {
     setIsTyping(true)
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await luciApiFetch("/api/v1/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

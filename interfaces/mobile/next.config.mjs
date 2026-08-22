@@ -1,12 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   typescript: {
     ignoreBuildErrors: true,
   },
   images: {
     unoptimized: true,
   },
-  allowedDevOrigins: ['192.168.68.138', '192.168.68.138:3000', '192.168.15.92', 'localhost:3000', '192.168.15.92:3000'],
+  // Trailing slash garante que /index.html funcione corretamente como arquivos estáticos
+  trailingSlash: true,
 }
 
 export default nextConfig
