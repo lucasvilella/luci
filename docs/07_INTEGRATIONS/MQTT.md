@@ -11,18 +11,18 @@ Related Documents:
 - TOOL_ENGINE.md
 - TOOL_REGISTRY.md
 - HOME_ASSISTANT.md
-Summary: A integração MQTT conecta a L.U.C.I. a dispositivos, sensores e sistemas distribuídos através de um barramento leve baseado em eventos.
+Summary: A integração MQTT conecta a Luci a dispositivos, sensores e sistemas distribuídos através de um barramento leve baseado em eventos.
 ---
 
 # MQTT
 
-> *"O MQTT transporta eventos. A L.U.C.I. compreende seus significados."*
+> *"O MQTT transporta eventos. A Luci compreende seus significados."*
 
 ---
 
 # Objetivo
 
-A integração MQTT conecta a L.U.C.I. a dispositivos, sensores e sistemas distribuídos através de um barramento leve baseado em eventos.
+A integração MQTT conecta a Luci a dispositivos, sensores e sistemas distribuídos através de um barramento leve baseado em eventos.
 
 Seu objetivo é transformar mensagens MQTT em eventos cognitivos compreensíveis pela plataforma e disponibilizar capacidades operacionais para o mundo físico.
 
@@ -32,7 +32,7 @@ Seu objetivo é transformar mensagens MQTT em eventos cognitivos compreensíveis
 
 MQTT é um meio de transporte.
 
-A inteligência pertence exclusivamente à L.U.C.I.
+A inteligência pertence exclusivamente à Luci
 
 Nenhum tópico MQTT possui significado cognitivo por si só.
 
@@ -229,11 +229,11 @@ A integração segue os princípios:
 
 # Definição
 
-A integração MQTT conecta a L.U.C.I. a ecossistemas distribuídos baseados em eventos, abstraindo completamente a estrutura de tópicos e transformando mensagens em eventos cognitivos padronizados. Dessa forma, o restante da plataforma permanece desacoplado da infraestrutura de comunicação utilizada.
+A integração MQTT conecta a Luci a ecossistemas distribuídos baseados em eventos, abstraindo completamente a estrutura de tópicos e transformando mensagens em eventos cognitivos padronizados. Dessa forma, o restante da plataforma permanece desacoplado da infraestrutura de comunicação utilizada.
 
 ---
 
-> **"O MQTT entrega mensagens. A L.U.C.I. entende o que mudou no mundo."**
+> **"O MQTT entrega mensagens. A Luci entende o que mudou no mundo."**
 
 ---
 

@@ -1,7 +1,7 @@
 /**
  * mode_engine.ts
  *
- * Execution Mode Engine for L.U.C.I. (Inspired by Leon 2.0 Execution Modes)
+ * Execution Mode Engine for Luci (Inspired by Leon 2.0 Execution Modes)
  * 
  * Supports three primary execution modes:
  * 1. CONTROLLED - Fast, deterministic execution of native skills/commands without calling LLM.

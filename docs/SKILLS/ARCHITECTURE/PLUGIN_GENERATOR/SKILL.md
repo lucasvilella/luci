@@ -1,12 +1,12 @@
 ---
 name: Plugin Generator
 description: >
-  Projeta novos Plugins para a L.U.C.I., garantindo que toda extensão da
+  Projeta novos Plugins para a Luci, garantindo que toda extensão da
   plataforma seja modular, desacoplada e compatível com a arquitetura oficial.
 
 version: 1.0
 owner: Lucas
-project: L.U.C.I.
+project: Luci
 architecture: Cognitive Operating System
 
 requires:
@@ -27,7 +27,7 @@ triggers:
 
 ## Objetivo
 
-Projetar Plugins que expandam a L.U.C.I. sem modificar o Core da plataforma.
+Projetar Plugins que expandam a Luci sem modificar o Core da plataforma.
 
 Plugins adicionam capacidades.
 
@@ -212,4 +212,4 @@ Todo Plugin gerado deve:
 - integrar-se por contratos públicos;
 - respeitar os Non-Negotiables;
 - poder ser instalado ou removido sem impactos na arquitetura;
-- estar pronto para implementação dentro da plataforma L.U.C.I.
+- estar pronto para implementação dentro da plataforma Luci

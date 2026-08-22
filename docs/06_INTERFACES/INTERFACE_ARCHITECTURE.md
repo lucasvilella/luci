@@ -11,7 +11,7 @@ Related Documents:
 - CONTEXT_CORE.md
 - TASK_COORDINATOR.md
 - EVENT_ROUTER.md
-Summary: A arquitetura de Interfaces define como usuários interagem com a L.U.C.I. através de diferentes dispositivos e canais.
+Summary: A arquitetura de Interfaces define como usuários interagem com a Luci através de diferentes dispositivos e canais.
 ---
 
 # INTERFACE ARCHITECTURE
@@ -22,7 +22,7 @@ Summary: A arquitetura de Interfaces define como usuários interagem com a L.U.C
 
 # Objetivo
 
-A arquitetura de Interfaces define como usuários interagem com a L.U.C.I. através de diferentes dispositivos e canais.
+A arquitetura de Interfaces define como usuários interagem com a Luci através de diferentes dispositivos e canais.
 
 Cada Interface representa uma manifestação da mesma inteligência, adaptada às capacidades físicas e funcionais do dispositivo.
 
@@ -34,13 +34,13 @@ Toda inteligência reside no núcleo da plataforma.
 
 # Filosofia
 
-A L.U.C.I. existe independentemente da Interface.
+A Luci existe independentemente da Interface.
 
 Desktop, celular, tablet, relógio, voz ou qualquer outro dispositivo representam apenas diferentes formas de acessar o mesmo estado cognitivo.
 
 O usuário nunca conversa com uma Interface.
 
-Ele conversa com a L.U.C.I.
+Ele conversa com a Luci
 
 ---
 
@@ -333,11 +333,11 @@ Toda Interface segue os princípios.
 
 # Definição
 
-A Interface Architecture define a camada responsável por conectar usuários à L.U.C.I., adaptando a experiência para diferentes dispositivos sem duplicar inteligência ou estado cognitivo. Todas as Interfaces compartilham o mesmo núcleo, preservando identidade, memória, contexto e continuidade de interação em qualquer ambiente.
+A Interface Architecture define a camada responsável por conectar usuários à Luci, adaptando a experiência para diferentes dispositivos sem duplicar inteligência ou estado cognitivo. Todas as Interfaces compartilham o mesmo núcleo, preservando identidade, memória, contexto e continuidade de interação em qualquer ambiente.
 
 ---
 
-> **"Não importa o dispositivo. O usuário sempre conversa com a mesma L.U.C.I."**
+> **"Não importa o dispositivo. O usuário sempre conversa com a mesma Luci"**
 
 ---
 

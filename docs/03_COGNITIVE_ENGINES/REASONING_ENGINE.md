@@ -12,7 +12,7 @@ Related Documents:
 - KNOWLEDGE_CORE.md
 - CONTEXT_CORE.md
 - MODEL_ROUTER.md
-Summary: O Reasoning Engine é responsável pelo raciocínio cognitivo da L.U.C.I.
+Summary: O Reasoning Engine é responsável pelo raciocínio cognitivo da Luci
 ---
 
 # REASONING ENGINE
@@ -23,7 +23,7 @@ Summary: O Reasoning Engine é responsável pelo raciocínio cognitivo da L.U.C.
 
 # Objetivo
 
-O Reasoning Engine é responsável pelo raciocínio cognitivo da L.U.C.I.
+O Reasoning Engine é responsável pelo raciocínio cognitivo da Luci
 
 Seu papel é transformar uma intenção estruturada em uma compreensão profunda do problema, utilizando contexto, memória, conhecimento e inferências antes que qualquer decisão seja tomada.
 
@@ -35,7 +35,7 @@ Ele pensa.
 
 # Filosofia
 
-O raciocínio da L.U.C.I. não pertence a um modelo de IA.
+O raciocínio da Luci não pertence a um modelo de IA.
 
 Os modelos são recursos.
 
@@ -79,7 +79,7 @@ Essas funções pertencem a outros Engines.
 
 A primeira resposta raramente é a melhor resposta.
 
-Antes de agir, a L.U.C.I. deve construir uma representação suficientemente confiável do problema.
+Antes de agir, a Luci deve construir uma representação suficientemente confiável do problema.
 
 ---
 
@@ -290,7 +290,7 @@ Todos são abstraídos pelo Model Routing.
 
 # Cadeia de Pensamento
 
-A L.U.C.I. pode utilizar raciocínio interno para resolver problemas complexos.
+A Luci pode utilizar raciocínio interno para resolver problemas complexos.
 
 Esses processos são internos ao sistema.
 
@@ -420,13 +420,13 @@ O Reasoning Engine segue os princípios.
 
 # Definição
 
-O Reasoning Engine representa o sistema de raciocínio da L.U.C.I.
+O Reasoning Engine representa o sistema de raciocínio da Luci
 
 Ele transforma intenções em compreensão estruturada utilizando memória, conhecimento, contexto e inferências para produzir uma representação confiável do problema antes que qualquer decisão ou ação seja executada.
 
 ---
 
-> **"A inteligência da L.U.C.I. não está no modelo que responde, mas na arquitetura que aprende a pensar."**
+> **"A inteligência da Luci não está no modelo que responde, mas na arquitetura que aprende a pensar."**
 
 ---
 

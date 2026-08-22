@@ -1,7 +1,7 @@
 /**
  * HolographicOrb3D.tsx
  *
- * Ultron-inspired 3D Holographic Orb for L.U.C.I. Desktop (Three.js)
+ * Ultron-inspired 3D Holographic Orb for Luci Desktop (Three.js)
  * Features wireframe spheres, rotating neon rings, floating particles,
  * and state-reactive color shifts (Idle, Listening, Thinking, Speaking).
  */
@@ -95,7 +95,7 @@ export function HolographicOrb3D({ state, gestureRotation, gestureZoom = 1 }: Or
 
       {/* HUD State Indicator */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-mono tracking-widest uppercase px-3 py-1 bg-black/40 backdrop-blur-md rounded-full border border-blue-500/30 text-blue-400">
-        L.U.C.I. STATE: <span className="font-bold text-white">{state}</span>
+        Luci STATE: <span className="font-bold text-white">{state}</span>
       </div>
     </div>
   );

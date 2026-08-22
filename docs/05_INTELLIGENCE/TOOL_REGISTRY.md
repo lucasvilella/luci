@@ -12,7 +12,7 @@ Related Documents:
 - AI_PROVIDER_MANAGER.md
 - SECURITY_RULES.md
 - PLUGIN_SYSTEM.md
-Summary: O Tool Registry é o catálogo central de todas as ferramentas operacionais disponíveis para a L.U.C.I.
+Summary: O Tool Registry é o catálogo central de todas as ferramentas operacionais disponíveis para a Luci
 ---
 
 # TOOL REGISTRY
@@ -23,7 +23,7 @@ Summary: O Tool Registry é o catálogo central de todas as ferramentas operacio
 
 # Objetivo
 
-O Tool Registry é o catálogo central de todas as ferramentas operacionais disponíveis para a L.U.C.I.
+O Tool Registry é o catálogo central de todas as ferramentas operacionais disponíveis para a Luci
 
 Ele descreve quais capacidades existem, quais implementações as oferecem, quais permissões são necessárias e em quais contextos podem ser utilizadas.
 
@@ -350,7 +350,7 @@ O Tool Registry segue os princípios:
 
 # Definição
 
-O Tool Registry representa o catálogo oficial de capacidades operacionais da L.U.C.I., mantendo o registro de todas as ferramentas disponíveis, suas implementações, permissões e metadados. Ele garante que toda execução ocorra de forma desacoplada, segura e independente das tecnologias utilizadas.
+O Tool Registry representa o catálogo oficial de capacidades operacionais da Luci, mantendo o registro de todas as ferramentas disponíveis, suas implementações, permissões e metadados. Ele garante que toda execução ocorra de forma desacoplada, segura e independente das tecnologias utilizadas.
 
 ---
 

@@ -1,8 +1,8 @@
 /**
- * L.U.C.I. Orb State Machine
+ * Luci Orb State Machine
  *
  * Pure TypeScript implementation — zero React dependencies.
- * Manages the 4 External States of the L.U.C.I. platform.
+ * Manages the 4 External States of the Luci platform.
  *
  * This class is intentionally decoupled from any UI framework so that:
  * - The Orb's visual appearance can be replaced without changing state logic

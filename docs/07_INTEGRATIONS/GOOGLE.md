@@ -12,18 +12,18 @@ Related Documents:
 - TOOL_REGISTRY.md
 - CONTEXT_CORE.md
 - KNOWLEDGE_CORE.md
-Summary: A integração Google Ecosystem conecta a L.U.C.I. ao conjunto de serviços oferecidos pelo Google, disponibilizando informações, documentos e funcionalidades por meio de uma camada unificada baseada em Capabilities.
+Summary: A integração Google Ecosystem conecta a Luci ao conjunto de serviços oferecidos pelo Google, disponibilizando informações, documentos e funcionalidades por meio de uma camada unificada baseada em Capabilities.
 ---
 
 # GOOGLE ECOSYSTEM
 
-> *"O Google fornece serviços. A L.U.C.I. transforma esses serviços em capacidades cognitivas."*
+> *"O Google fornece serviços. A Luci transforma esses serviços em capacidades cognitivas."*
 
 ---
 
 # Objetivo
 
-A integração Google Ecosystem conecta a L.U.C.I. ao conjunto de serviços oferecidos pelo Google, disponibilizando informações, documentos e funcionalidades por meio de uma camada unificada baseada em Capabilities.
+A integração Google Ecosystem conecta a Luci ao conjunto de serviços oferecidos pelo Google, disponibilizando informações, documentos e funcionalidades por meio de uma camada unificada baseada em Capabilities.
 
 A plataforma nunca depende diretamente de APIs específicas do Google.
 
@@ -35,7 +35,7 @@ O Google é tratado como um Provider.
 
 Os serviços são apenas fontes de capacidades.
 
-Toda inteligência permanece na L.U.C.I.
+Toda inteligência permanece na Luci
 
 ---
 
@@ -261,11 +261,11 @@ O Google Provider segue os princípios:
 
 # Definição
 
-O Google Ecosystem Provider integra a L.U.C.I. aos serviços do ecossistema Google através de uma camada unificada baseada em Capabilities. Ele abstrai APIs específicas, fornece acesso seguro às informações do usuário e transforma serviços do Google em recursos cognitivos reutilizáveis por toda a plataforma.
+O Google Ecosystem Provider integra a Luci aos serviços do ecossistema Google através de uma camada unificada baseada em Capabilities. Ele abstrai APIs específicas, fornece acesso seguro às informações do usuário e transforma serviços do Google em recursos cognitivos reutilizáveis por toda a plataforma.
 
 ---
 
-> **"Para a L.U.C.I., o Google não é um conjunto de APIs. É um ecossistema de capacidades."**
+> **"Para a Luci, o Google não é um conjunto de APIs. É um ecossistema de capacidades."**
 
 ---
 

@@ -16,7 +16,7 @@ Summary: O Plugin System permite estender a plataforma de forma modular, segura 
 
 # PLUGIN SYSTEM
 
-> *"Plugins não adicionam apenas funcionalidades. Eles expandem o ecossistema cognitivo da L.U.C.I."*
+> *"Plugins não adicionam apenas funcionalidades. Eles expandem o ecossistema cognitivo da Luci"*
 
 ---
 
@@ -30,7 +30,7 @@ Plugins podem adicionar novas capacidades, integrações, interfaces, motores co
 
 # Filosofia
 
-O núcleo da L.U.C.I. permanece pequeno, estável e independente.
+O núcleo da Luci permanece pequeno, estável e independente.
 
 Toda funcionalidade opcional pode ser distribuída como Plugin.
 
@@ -278,7 +278,7 @@ O Plugin System segue os princípios:
 
 # Definição
 
-O Plugin System fornece a infraestrutura para expansão modular da L.U.C.I., permitindo adicionar novos componentes cognitivos e operacionais sem alterar o núcleo da plataforma. Cada Plugin é tratado como um módulo autônomo, seguro e desacoplado, garantindo evolução contínua e alta extensibilidade.
+O Plugin System fornece a infraestrutura para expansão modular da Luci, permitindo adicionar novos componentes cognitivos e operacionais sem alterar o núcleo da plataforma. Cada Plugin é tratado como um módulo autônomo, seguro e desacoplado, garantindo evolução contínua e alta extensibilidade.
 
 ---
 

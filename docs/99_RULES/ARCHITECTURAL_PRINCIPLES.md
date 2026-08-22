@@ -11,18 +11,18 @@ Related Documents:
 - SYSTEM_ARCHITECTURE.md
 - EVENT_ROUTER.md
 - TOOL_REGISTRY.md
-Summary: Este documento estabelece os princípios arquiteturais fundamentais da L.U.C.I.
+Summary: Este documento estabelece os princípios arquiteturais fundamentais da Luci
 ---
 
 # ARCHITECTURAL PRINCIPLES
 
-> *"A arquitetura da L.U.C.I. não é definida apenas por componentes. Ela é definida pelos princípios que nunca podem ser violados."*
+> *"A arquitetura da Luci não é definida apenas por componentes. Ela é definida pelos princípios que nunca podem ser violados."*
 
 ---
 
 # Objetivo
 
-Este documento estabelece os princípios arquiteturais fundamentais da L.U.C.I.
+Este documento estabelece os princípios arquiteturais fundamentais da Luci
 
 Todos os componentes, módulos, Engines, Interfaces, Providers e futuras evoluções da plataforma devem respeitar estas regras.
 
@@ -299,13 +299,13 @@ Entretanto:
 
 Nenhum princípio pode ser removido sem uma revisão arquitetural formal.
 
-Mudanças devem preservar a filosofia central da L.U.C.I.
+Mudanças devem preservar a filosofia central da Luci
 
 ---
 
 # Definição
 
-Os Architectural Principles representam as regras fundamentais que orientam toda a arquitetura da L.U.C.I. Eles garantem consistência entre componentes, preservam o desacoplamento do Sistema Operacional Cognitivo e estabelecem critérios permanentes para evolução, implementação e manutenção da plataforma.
+Os Architectural Principles representam as regras fundamentais que orientam toda a arquitetura da Luci Eles garantem consistência entre componentes, preservam o desacoplamento do Sistema Operacional Cognitivo e estabelecem critérios permanentes para evolução, implementação e manutenção da plataforma.
 
 ---
 

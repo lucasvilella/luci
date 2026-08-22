@@ -11,7 +11,7 @@ Related Documents:
 - CONTEXT_BUILDER.md
 - TOKEN_MANAGER.md
 - TOOL_ENGINE.md
-Summary: O Model Router é responsável por selecionar a melhor estratégia de inferência e o modelo mais adequado para cada solicitação realizada pela L.U.C.I.
+Summary: O Model Router é responsável por selecionar a melhor estratégia de inferência e o modelo mais adequado para cada solicitação realizada pela Luci
 ---
 
 # MODEL ROUTER
@@ -22,7 +22,7 @@ Summary: O Model Router é responsável por selecionar a melhor estratégia de i
 
 # Objetivo
 
-O Model Router é responsável por selecionar a melhor estratégia de inferência e o modelo mais adequado para cada solicitação realizada pela L.U.C.I.
+O Model Router é responsável por selecionar a melhor estratégia de inferência e o modelo mais adequado para cada solicitação realizada pela Luci
 
 Sua decisão considera capacidades cognitivas, contexto, custo, desempenho, disponibilidade, políticas do Workspace e restrições operacionais.
 
@@ -36,7 +36,7 @@ Todos solicitam apenas capacidades.
 
 Os modelos evoluem constantemente.
 
-A arquitetura da L.U.C.I. deve permanecer estável independentemente da tecnologia utilizada.
+A arquitetura da Luci deve permanecer estável independentemente da tecnologia utilizada.
 
 A escolha do modelo é uma decisão operacional.
 
@@ -337,7 +337,7 @@ O Model Router segue os princípios.
 
 # Definição
 
-O Model Router representa o componente responsável por transformar necessidades cognitivas em estratégias de inferência, selecionando automaticamente o modelo mais adequado para cada situação. Ele mantém a L.U.C.I. independente de fornecedores e garante que cada tarefa utilize a combinação ideal de capacidade, desempenho, custo e privacidade.
+O Model Router representa o componente responsável por transformar necessidades cognitivas em estratégias de inferência, selecionando automaticamente o modelo mais adequado para cada situação. Ele mantém a Luci independente de fornecedores e garante que cada tarefa utilize a combinação ideal de capacidade, desempenho, custo e privacidade.
 
 ---
 

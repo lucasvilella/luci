@@ -12,7 +12,7 @@ Related Documents:
 - KNOWLEDGE_CORE.md
 - DECISION_ENGINE.md
 - PLANNING_ENGINE.md
-Summary: O Goal Core representa todos os objetivos da L.U.C.I.
+Summary: O Goal Core representa todos os objetivos da Luci
 ---
 
 # GOAL CORE
@@ -23,7 +23,7 @@ Summary: O Goal Core representa todos os objetivos da L.U.C.I.
 
 # Objetivo
 
-O Goal Core representa todos os objetivos da L.U.C.I.
+O Goal Core representa todos os objetivos da Luci
 
 Ele organiza aquilo que precisa ser alcançado, independentemente da origem do objetivo.
 
@@ -35,7 +35,7 @@ Todo objetivo possui contexto, prioridade, estado e responsável.
 
 # Filosofia
 
-A L.U.C.I. não trabalha apenas respondendo perguntas.
+A Luci não trabalha apenas respondendo perguntas.
 
 Ela trabalha perseguindo objetivos.
 
@@ -147,7 +147,7 @@ Representa metas concretas.
 Exemplos.
 
 - economizar R$ 20.000;
-- publicar o MVP da L.U.C.I.;
+- publicar o MVP da Luci;
 - automatizar a residência.
 
 ---
@@ -158,7 +158,7 @@ Representa conjuntos organizados de trabalho.
 
 Exemplos.
 
-Projeto L.U.C.I.
+Projeto Luci
 
 Reforma.
 
@@ -256,7 +256,7 @@ Background
 
 A prioridade influencia o planejamento.
 
-Nunca altera a personalidade da L.U.C.I.
+Nunca altera a personalidade da Luci
 
 ---
 
@@ -300,7 +300,7 @@ Workspace Empresa.
 
 Fechar contrato.
 
-Workspace L.U.C.I.
+Workspace Luci
 
 ↓
 
@@ -363,7 +363,7 @@ Exemplos.
 
 Após muitos objetivos semelhantes.
 
-A L.U.C.I. pode aprender padrões.
+A Luci pode aprender padrões.
 
 Exemplo.
 
@@ -416,7 +416,7 @@ O Goal Core segue os princípios.
 
 # Definição
 
-O Goal Core representa todas as intenções estruturadas da L.U.C.I.
+O Goal Core representa todas as intenções estruturadas da Luci
 
 Ele organiza missões, objetivos, projetos, tarefas e ações em uma hierarquia única, permitindo que a plataforma coordene atividades de curto e longo prazo de forma consistente entre identidades, Workspaces e ciclos cognitivos.
 

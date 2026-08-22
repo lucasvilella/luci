@@ -27,7 +27,7 @@ export function UltronView({ state, onStateChange, onRegisterSendHandler }: Ultr
         };
       case 'speaking':
         return {
-          title: 'L.U.C.I. respondendo',
+          title: 'Luci respondendo',
           sub: 'Sintetizando resposta',
         };
       default:

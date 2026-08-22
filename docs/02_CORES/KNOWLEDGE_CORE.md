@@ -12,7 +12,7 @@ Related Documents:
 - IDENTITY_CORE.md
 - LEARNING_ENGINE.md
 - REASONING_ENGINE.md
-Summary: O Knowledge Core representa todo o conhecimento consolidado da L.U.C.I.
+Summary: O Knowledge Core representa todo o conhecimento consolidado da Luci
 ---
 
 # KNOWLEDGE CORE
@@ -23,7 +23,7 @@ Summary: O Knowledge Core representa todo o conhecimento consolidado da L.U.C.I.
 
 # Objetivo
 
-O Knowledge Core representa todo o conhecimento consolidado da L.U.C.I.
+O Knowledge Core representa todo o conhecimento consolidado da Luci
 
 Enquanto o Memory Core armazena acontecimentos, o Knowledge Core armazena fatos, conceitos, relações e padrões considerados suficientemente confiáveis para fazer parte da compreensão permanente do Mega Brain.
 
@@ -166,7 +166,7 @@ Exemplos.
 
 - funcionamento da plataforma;
 - conceitos internos;
-- arquitetura da L.U.C.I.;
+- arquitetura da Luci;
 - regras gerais.
 
 ---
@@ -216,7 +216,7 @@ Projeto
 
 ↓
 
-L.U.C.I.
+Luci
 ```
 
 ```
@@ -248,7 +248,7 @@ Maria
 ```
 
 ```
-Projeto L.U.C.I.
+Projeto Luci
 
 ↓
 
@@ -450,7 +450,7 @@ O Knowledge Core segue os princípios.
 
 # Definição
 
-O Knowledge Core representa a compreensão consolidada da L.U.C.I. sobre pessoas, ambientes, projetos e relações.
+O Knowledge Core representa a compreensão consolidada da Luci sobre pessoas, ambientes, projetos e relações.
 
 Ele transforma experiências recorrentes em conhecimento reutilizável, permitindo que o Mega Brain desenvolva uma compreensão cada vez mais rica e consistente do mundo sem confundir acontecimentos temporários com verdades permanentes.
 

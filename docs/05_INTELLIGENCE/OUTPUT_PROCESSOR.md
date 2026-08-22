@@ -36,7 +36,7 @@ Nenhum componente consome diretamente a saída do modelo.
 
 A resposta produzida por um modelo representa apenas uma hipótese.
 
-Cabe à L.U.C.I. validar essa hipótese antes de utilizá-la.
+Cabe à Luci validar essa hipótese antes de utilizá-la.
 
 O modelo sugere.
 
@@ -442,11 +442,11 @@ O Output Processor segue os princípios.
 
 # Definição
 
-O Output Processor representa a etapa final do ciclo de inferência da L.U.C.I., transformando respostas brutas produzidas por modelos de Inteligência Artificial em resultados cognitivos estruturados, validados e integrados ao restante da plataforma. Ele garante que toda inferência seja compreendida, auditável e utilizável pelos demais componentes do Sistema Operacional Cognitivo.
+O Output Processor representa a etapa final do ciclo de inferência da Luci, transformando respostas brutas produzidas por modelos de Inteligência Artificial em resultados cognitivos estruturados, validados e integrados ao restante da plataforma. Ele garante que toda inferência seja compreendida, auditável e utilizável pelos demais componentes do Sistema Operacional Cognitivo.
 
 ---
 
-> **"Modelos produzem respostas. A L.U.C.I. produz compreensão."**
+> **"Modelos produzem respostas. A Luci produz compreensão."**
 
 ---
 

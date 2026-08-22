@@ -14,7 +14,7 @@ Related Documents:
 - COGNITIVE_MODEL.md
 - MEMORY_CORE.md
 - SYSTEM_ARCHITECTURE.md
-Summary: Este documento define como a L.U.C.I. identifica pessoas, organiza contextos, protege informações e compartilha conhecimento entre múltiplas identidades.
+Summary: Este documento define como a Luci identifica pessoas, organiza contextos, protege informações e compartilha conhecimento entre múltiplas identidades.
 ---
 
 # IDENTITY AND WORKSPACES
@@ -25,7 +25,7 @@ Summary: Este documento define como a L.U.C.I. identifica pessoas, organiza cont
 
 # Objetivo
 
-Este documento define como a L.U.C.I. identifica pessoas, organiza contextos, protege informações e compartilha conhecimento entre múltiplas identidades.
+Este documento define como a Luci identifica pessoas, organiza contextos, protege informações e compartilha conhecimento entre múltiplas identidades.
 
 O objetivo não é criar um sistema de usuários.
 
@@ -37,7 +37,7 @@ O objetivo é criar um sistema de inteligência compartilhada.
 
 A maioria dos softwares organiza dados em contas.
 
-A L.U.C.I. organiza conhecimento em Workspaces Cognitivos.
+A Luci organiza conhecimento em Workspaces Cognitivos.
 
 Ela não pergunta apenas:
 
@@ -188,7 +188,7 @@ Representa um projeto específico.
 
 Exemplo.
 
-Projeto L.U.C.I.
+Projeto Luci
 
 Pode reunir:
 
@@ -336,7 +336,7 @@ Quem está falando?
 
 # Relationship Graph
 
-A L.U.C.I. compreende relações.
+A Luci compreende relações.
 
 Exemplos.
 
@@ -376,7 +376,7 @@ Workspace Empresa
 
 ---
 
-Projeto L.U.C.I.
+Projeto Luci
 
 ↓
 

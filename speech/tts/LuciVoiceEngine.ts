@@ -1,7 +1,7 @@
 /**
  * LuciVoiceEngine.ts
  *
- * Master Voice Façade for L.U.C.I. Conversational Assistant.
+ * Master Voice Façade for Luci Conversational Assistant.
  * Hides provider complexity behind a single call: LuciVoiceEngine.speak(text, context)
  *
  * Supports two synthesis modes:
@@ -86,7 +86,7 @@ export class LuciVoiceEngine {
     // 3. Trigger warmup on first XTTS use
     if (!this.warmupDone && provider instanceof XTTSProvider) {
       this.warmupDone = true;
-      provider.warmupCache().catch(() => {}); // Fire and forget
+      provider.warmupCache().catch(() => { }); // Fire and forget
     }
 
     // 4. Decide synthesis mode

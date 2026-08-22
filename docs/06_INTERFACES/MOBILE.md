@@ -11,18 +11,18 @@ Related Documents:
 - COGNITIVE_SESSION.md
 - WORKSPACE_CORE.md
 - TASK_COORDINATOR.md
-Summary: A Interface Mobile representa a principal forma de interação cotidiana com a L.U.C.I.
+Summary: A Interface Mobile representa a principal forma de interação cotidiana com a Luci
 ---
 
 # MOBILE INTERFACE
 
-> *"O celular é a presença contínua da L.U.C.I. ao lado do usuário."*
+> *"O celular é a presença contínua da Luci ao lado do usuário."*
 
 ---
 
 # Objetivo
 
-A Interface Mobile representa a principal forma de interação cotidiana com a L.U.C.I.
+A Interface Mobile representa a principal forma de interação cotidiana com a Luci
 
 Ela foi projetada para acompanhar o usuário durante todo o dia, oferecendo uma experiência rápida, contextual e altamente integrada aos recursos do dispositivo.
 
@@ -36,7 +36,7 @@ Seu foco é oferecer inteligência no momento certo.
 
 O Mobile acompanha o usuário.
 
-Enquanto o Desktop é um ambiente de trabalho, o celular representa a presença permanente da L.U.C.I.
+Enquanto o Desktop é um ambiente de trabalho, o celular representa a presença permanente da Luci
 
 Cada interação deve considerar o contexto atual do usuário.
 
@@ -190,7 +190,7 @@ Suporta:
 
 # Compartilhamento
 
-O usuário pode compartilhar diretamente com a L.U.C.I.:
+O usuário pode compartilhar diretamente com a Luci:
 
 - textos;
 - links;
@@ -287,11 +287,11 @@ A Interface Mobile segue os princípios.
 
 # Definição
 
-A Interface Mobile representa a presença permanente da L.U.C.I. junto ao usuário, oferecendo uma experiência contextual, multimodal e altamente integrada aos recursos do dispositivo. Seu objetivo é disponibilizar a inteligência da plataforma no momento certo, em qualquer lugar, preservando a continuidade da Session e o acesso ao mesmo estado cognitivo existente nas demais Interfaces.
+A Interface Mobile representa a presença permanente da Luci junto ao usuário, oferecendo uma experiência contextual, multimodal e altamente integrada aos recursos do dispositivo. Seu objetivo é disponibilizar a inteligência da plataforma no momento certo, em qualquer lugar, preservando a continuidade da Session e o acesso ao mesmo estado cognitivo existente nas demais Interfaces.
 
 ---
 
-> **"A L.U.C.I. não está no celular. Ela acompanha o usuário através dele."**
+> **"A Luci não está no celular. Ela acompanha o usuário através dele."**
 
 ---
 

@@ -1,7 +1,7 @@
 /**
  * MemoryManager
  *
- * Central Cognitive Memory Manager for L.U.C.I.
+ * Central Cognitive Memory Manager for Luci
  * Manages the 4-layer cognitive memory architecture:
  * 1. Working Memory (Short-term context buffer)
  * 2. Episodic Memory (Events with timestamps, confidence scores, quarantine state)

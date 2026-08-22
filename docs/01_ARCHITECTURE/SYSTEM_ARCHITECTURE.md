@@ -15,12 +15,12 @@ Related Documents:
     - COGNITIVE_LOOP.md
     - COGNITIVE_BUS.md
     - STATE_MACHINE.md
-Summary: Este documento descreve a arquitetura global da plataforma L.U.C.I.
+Summary: Este documento descreve a arquitetura global da plataforma Luci
 ---
 
 # SYSTEM ARCHITECTURE
 
-> _"A L.U.C.I. não é uma aplicação com inteligência artificial. É um Sistema
+> _"A Luci não é uma aplicação com inteligência artificial. É um Sistema
 > Operacional Cognitivo construído para compreender, aprender, decidir e agir
 > continuamente."_
 
@@ -28,7 +28,7 @@ Summary: Este documento descreve a arquitetura global da plataforma L.U.C.I.
 
 # Objetivo
 
-Este documento descreve a arquitetura global da plataforma L.U.C.I.
+Este documento descreve a arquitetura global da plataforma Luci
 
 Seu propósito é explicar como todos os componentes da plataforma se relacionam,
 quais são suas responsabilidades e como a inteligência emerge da colaboração
@@ -42,7 +42,7 @@ Ele define a arquitetura conceitual permanente da plataforma.
 
 # Filosofia Arquitetural
 
-A arquitetura da L.U.C.I. foi projetada seguindo um princípio simples:
+A arquitetura da Luci foi projetada seguindo um princípio simples:
 
 **Existe apenas uma inteligência.**
 
@@ -129,7 +129,7 @@ Existe apenas um Mega Brain.
 
 Toda interação inicia um novo Ciclo Cognitivo.
 
-Esse ciclo representa o fluxo natural do pensamento da L.U.C.I.
+Esse ciclo representa o fluxo natural do pensamento da Luci
 
 ```
 Perception
@@ -564,7 +564,7 @@ Todo esse fluxo representa um único Ciclo Cognitivo.
 
 # Princípios Arquiteturais
 
-A arquitetura da L.U.C.I. segue os seguintes princípios:
+A arquitetura da Luci segue os seguintes princípios:
 
 - inteligência única;
 - contexto antes da resposta;
@@ -579,7 +579,7 @@ A arquitetura da L.U.C.I. segue os seguintes princípios:
 
 # Visão de Longo Prazo
 
-A L.U.C.I. foi projetada para evoluir continuamente.
+A Luci foi projetada para evoluir continuamente.
 
 Novos modelos de linguagem poderão surgir.
 
@@ -594,7 +594,7 @@ permanentes, e não sobre tecnologias específicas.
 
 # Definição
 
-A arquitetura da L.U.C.I. estabelece um Sistema Operacional Cognitivo composto
+A arquitetura da Luci estabelece um Sistema Operacional Cognitivo composto
 por uma única inteligência central, organizada em domínios independentes,
 coordenados por um Ciclo Cognitivo contínuo e capazes de atender múltiplas
 identidades, Workspaces, dispositivos e ambientes de forma consistente,
@@ -602,7 +602,7 @@ escalável e evolutiva.
 
 ---
 
-> **"A arquitetura da L.U.C.I. não foi projetada para responder perguntas. Foi
+> **"A arquitetura da Luci não foi projetada para responder perguntas. Foi
 > projetada para compreender o mundo."**
 
 ---

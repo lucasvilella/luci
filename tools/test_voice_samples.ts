@@ -2,7 +2,7 @@
  * test_voice_samples.ts
  *
  * Generates sample audio files with increased speeds (+18% and +25%)
- * to demonstrate fluid, natural conversational speed for L.U.C.I.!
+ * to demonstrate fluid, natural conversational speed for Luci!
  */
 
 import * as googleTTS from 'google-tts-api';

@@ -11,18 +11,18 @@ Related Documents:
 - WORKFLOW_MANAGER.md
 - TASK_COORDINATOR.md
 - CONTEXT_CORE.md
-Summary: A Interface Desktop representa o ambiente de trabalho mais completo da L.U.C.I.
+Summary: A Interface Desktop representa o ambiente de trabalho mais completo da Luci
 ---
 
 # DESKTOP INTERFACE
 
-> *"O Desktop é o ambiente de maior profundidade cognitiva da L.U.C.I."*
+> *"O Desktop é o ambiente de maior profundidade cognitiva da Luci"*
 
 ---
 
 # Objetivo
 
-A Interface Desktop representa o ambiente de trabalho mais completo da L.U.C.I.
+A Interface Desktop representa o ambiente de trabalho mais completo da Luci
 
 Ela foi projetada para oferecer máxima produtividade, visualização de informações, gerenciamento de Workflows e interação contínua com o Sistema Operacional Cognitivo.
 
@@ -34,7 +34,7 @@ Ela foi projetada para oferecer máxima produtividade, visualização de informa
 
 O Desktop não é apenas um aplicativo.
 
-Ele é o cockpit da L.U.C.I.
+Ele é o cockpit da Luci
 
 Todas as capacidades da plataforma podem ser acessadas a partir dele.
 
@@ -339,11 +339,11 @@ A Interface Desktop segue os princípios:
 
 # Definição
 
-A Interface Desktop representa o ambiente mais completo da L.U.C.I., oferecendo acesso integral às capacidades do Sistema Operacional Cognitivo por meio de uma experiência voltada à produtividade, exploração de conhecimento, gerenciamento de Workflows e acompanhamento do estado global da plataforma.
+A Interface Desktop representa o ambiente mais completo da Luci, oferecendo acesso integral às capacidades do Sistema Operacional Cognitivo por meio de uma experiência voltada à produtividade, exploração de conhecimento, gerenciamento de Workflows e acompanhamento do estado global da plataforma.
 
 ---
 
-> **"Se a L.U.C.I. é um Sistema Operacional Cognitivo, o Desktop é sua central de comando."**
+> **"Se a Luci é um Sistema Operacional Cognitivo, o Desktop é sua central de comando."**
 
 ---
 

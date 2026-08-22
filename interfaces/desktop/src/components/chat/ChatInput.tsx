@@ -1,5 +1,5 @@
 /**
- * ChatInput — Message input field for L.U.C.I.
+ * ChatInput — Message input field for Luci
  *
  * Minimal, borderless design. Sends on Enter.
  * No ornaments, no emoji pickers, no attachments.

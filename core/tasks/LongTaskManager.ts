@@ -1,7 +1,7 @@
 /**
  * LongTaskManager
  *
- * Background Task Orchestrator for L.U.C.I. 2.0.
+ * Background Task Orchestrator for Luci 2.0.
  * Executes asynchronous, long-running background tasks (e.g. code generation,
  * batch processing, deep web scraping) without blocking main voice UI.
  */

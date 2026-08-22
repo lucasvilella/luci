@@ -28,7 +28,7 @@ O Intent Engine é responsável por descobrir o que realmente o usuário deseja.
 
 Ele transforma linguagem natural, eventos externos ou comandos em intenções estruturadas que poderão ser utilizadas pelos demais Engines.
 
-Toda interação com a L.U.C.I. passa obrigatoriamente pelo Intent Engine.
+Toda interação com a Luci passa obrigatoriamente pelo Intent Engine.
 
 Nenhum processamento cognitivo ocorre antes dele.
 
@@ -184,7 +184,7 @@ O objetivo é reduzir diferenças superficiais entre formas de comunicação.
 
 # Detecção
 
-A L.U.C.I. identifica todas as intenções presentes.
+A Luci identifica todas as intenções presentes.
 
 Exemplo.
 
@@ -556,7 +556,7 @@ O Intent Engine segue os princípios.
 
 # Definição
 
-O Intent Engine representa a porta de entrada cognitiva da L.U.C.I.
+O Intent Engine representa a porta de entrada cognitiva da Luci
 
 Ele transforma linguagem, eventos e sinais externos em intenções estruturadas, preservando contexto, prioridade e nível de confiança antes que qualquer processo de raciocínio ou execução seja iniciado.
 

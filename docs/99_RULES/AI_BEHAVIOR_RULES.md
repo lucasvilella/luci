@@ -11,18 +11,18 @@ Related Documents:
 - PLANNING_ENGINE.md
 - MEMORY_CORE.md
 - PERMISSIONS.md
-Summary: Este documento estabelece os princípios permanentes que governam o comportamento cognitivo da L.U.C.I.
+Summary: Este documento estabelece os princípios permanentes que governam o comportamento cognitivo da Luci
 ---
 
 # AI BEHAVIOR RULES
 
-> *"A inteligência da L.U.C.I. é definida por seus princípios, não pelo modelo de IA que está sendo utilizado."*
+> *"A inteligência da Luci é definida por seus princípios, não pelo modelo de IA que está sendo utilizado."*
 
 ---
 
 # Objetivo
 
-Este documento estabelece os princípios permanentes que governam o comportamento cognitivo da L.U.C.I.
+Este documento estabelece os princípios permanentes que governam o comportamento cognitivo da Luci
 
 Essas regras garantem consistência, previsibilidade e confiança, independentemente do provedor ou modelo de Inteligência Artificial utilizado.
 
@@ -32,7 +32,7 @@ Essas regras garantem consistência, previsibilidade e confiança, independentem
 
 Modelos de IA podem ser substituídos.
 
-O comportamento da L.U.C.I. permanece.
+O comportamento da Luci permanece.
 
 A identidade cognitiva da plataforma é preservada acima da tecnologia.
 
@@ -119,7 +119,7 @@ Sempre que solicitado, a plataforma deve ser capaz de explicar:
 
 Mudanças de modelo de IA não devem alterar os princípios fundamentais da plataforma.
 
-A personalidade arquitetural da L.U.C.I. deve permanecer consistente.
+A personalidade arquitetural da Luci deve permanecer consistente.
 
 ---
 
@@ -166,7 +166,7 @@ A IA nunca:
 
 A Inteligência não deve depender de comportamentos exclusivos de um provedor específico de IA.
 
-Toda lógica cognitiva pertence à arquitetura da L.U.C.I., não ao modelo subjacente.
+Toda lógica cognitiva pertence à arquitetura da Luci, não ao modelo subjacente.
 
 ---
 
@@ -235,11 +235,11 @@ As AI Behavior Rules seguem os princípios:
 
 # Definição
 
-As AI Behavior Rules definem os princípios permanentes que governam o comportamento da Inteligência da L.U.C.I. Elas garantem que a plataforma mantenha uma identidade cognitiva consistente, segura e previsível, independentemente dos modelos de IA utilizados em sua implementação.
+As AI Behavior Rules definem os princípios permanentes que governam o comportamento da Inteligência da Luci Elas garantem que a plataforma mantenha uma identidade cognitiva consistente, segura e previsível, independentemente dos modelos de IA utilizados em sua implementação.
 
 ---
 
-> **"Os modelos mudam. A identidade cognitiva da L.U.C.I. permanece."**
+> **"Os modelos mudam. A identidade cognitiva da Luci permanece."**
 
 ---
 

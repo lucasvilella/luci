@@ -1,7 +1,7 @@
 /**
  * IntentClassifier
  *
- * Implements a 2-stage Intent Classifier for L.U.C.I.:
+ * Implements a 2-stage Intent Classifier for Luci:
  * 1. Fast-Path Heuristic (<1ms): Instant routing for greetings, chat, and direct action verbs.
  * 2. SmolLM2 Local LLM Classifier: Evaluates ambiguous inputs.
  */
@@ -20,7 +20,7 @@ export interface ClassificationResult {
 export class IntentClassifier {
   private smolLM: SmolLMProvider;
 
-  private readonly SYSTEM_PROMPT = `You are the intent router for L.U.C.I., a cognitive OS.
+  private readonly SYSTEM_PROMPT = `You are the intent router for Luci, a cognitive OS.
 Your ONLY job is to classify the user's input.
 You must output ONLY valid JSON without Markdown blocks.
 

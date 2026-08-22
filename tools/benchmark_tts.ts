@@ -1,7 +1,7 @@
 /**
  * benchmark_tts.ts
  *
- * Automated local benchmark for L.U.C.I. Conversational Voice Engine.
+ * Automated local benchmark for Luci Conversational Voice Engine.
  * Tests standardized phrases, evaluates TTFA (Time To First Audio), Total Latency,
  * and verifies automatic fallback between Gemini TTS & Qwen3-TTS 0.6B.
  */
@@ -15,11 +15,11 @@ const TEST_PHRASES = [
   'Claro, posso verificar isso para você.',
   'Entendi o que aconteceu. Vamos analisar juntos.',
   'Essa alteração precisa ser feita com cuidado porque afeta outros módulos.',
-  'Estou aqui para ajudar a organizar todo o sistema de voz da L.U.C.I. para tornar a conversa rápida, acolhedora e inteligente.',
+  'Estou aqui para ajudar a organizar todo o sistema de voz da Luci para tornar a conversa rápida, acolhedora e inteligente.',
 ];
 
 async function runBenchmark() {
-  console.log('=============== L.U.C.I. TTS BENCHMARK ===============\n');
+  console.log('=============== Luci TTS BENCHMARK ===============\n');
 
   const gemini = new GeminiTTSProvider();
   const qwen = new QwenTTSProvider();

@@ -35,7 +35,7 @@ Ele apenas determina seu destino.
 
 # Filosofia
 
-Na arquitetura da L.U.C.I., componentes nunca conversam diretamente entre si.
+Na arquitetura da Luci, componentes nunca conversam diretamente entre si.
 
 Eles apenas publicam eventos.
 
@@ -593,7 +593,7 @@ O Event Router segue os princípios:
 
 # Definição
 
-O Event Router representa o componente responsável por distribuir eventos cognitivos através da plataforma, conectando produtores e consumidores de forma totalmente desacoplada. Ele garante rastreabilidade, isolamento, escalabilidade e comunicação orientada a eventos, preservando a independência entre todos os componentes da arquitetura da L.U.C.I.
+O Event Router representa o componente responsável por distribuir eventos cognitivos através da plataforma, conectando produtores e consumidores de forma totalmente desacoplada. Ele garante rastreabilidade, isolamento, escalabilidade e comunicação orientada a eventos, preservando a independência entre todos os componentes da arquitetura da Luci
 
 ---
 

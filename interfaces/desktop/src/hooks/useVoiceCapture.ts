@@ -3,9 +3,9 @@
  *
  * Requirements:
  * 1. Wake Word ("Ei, Luci"): Activates Continuous Voice Mode.
- * 2. Automatic Continuous Loop: Once activated via voice, after L.U.C.I. finishes speaking,
+ * 2. Automatic Continuous Loop: Once activated via voice, after Luci finishes speaking,
  *    it automatically re-opens the mic for follow-up questions without requiring "Ei Luci" again.
- * 3. Exit Trigger: If user stays silent for 3.5s after L.U.C.I. speaks (or says "tchau", "obrigado"),
+ * 3. Exit Trigger: If user stays silent for 3.5s after Luci speaks (or says "tchau", "obrigado"),
  *    it exits continuous mode and returns to idle waiting for the Wake Word.
  * 4. Text Input Isolation: Sending messages via the chat text box DOES NOT trigger voice listening mode.
  */
@@ -79,7 +79,7 @@ export function useVoiceCapture({ state, onStateChange, onSendTextMessage }: Use
         recognitionRef.current.onerror = null;
         recognitionRef.current.onresult = null;
         recognitionRef.current.stop();
-      } catch {}
+      } catch { }
     }
 
     const recognition = new SpeechRecognition();
@@ -100,7 +100,7 @@ export function useVoiceCapture({ state, onStateChange, onSendTextMessage }: Use
             console.log(`[VoiceCapture] Wake word detected: "${cleanTranscript}". Starting Continuous Voice Session.`);
             try {
               recognition.stop();
-            } catch {}
+            } catch { }
             setIsVoiceSessionActive(true);
             speakWakewordAck();
             onStateChange('listening');
@@ -137,7 +137,7 @@ export function useVoiceCapture({ state, onStateChange, onSendTextMessage }: Use
       recognition.interimResults = true;
       recognition.lang = 'pt-BR';
 
-      // 3.5s Inactivity Timer: If user says nothing after L.U.C.I. activated, close session
+      // 3.5s Inactivity Timer: If user says nothing after Luci activated, close session
       sessionTimeoutRef.current = setTimeout(() => {
         if (!capturedTextRef.current.trim()) {
           console.log('[VoiceCapture] 3.5s inactivity timeout reached. Closing voice session.');
@@ -157,9 +157,9 @@ export function useVoiceCapture({ state, onStateChange, onSendTextMessage }: Use
       };
 
       recognition.onresult = (event: any) => {
-        // Instant Barge-in Interruption: If L.U.C.I. is currently speaking when user talks, stop speech on the spot!
+        // Instant Barge-in Interruption: If Luci is currently speaking when user talks, stop speech on the spot!
         if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
-          console.log('[VoiceCapture] 🛑 Instant User Barge-in: Interrupting L.U.C.I. speech!');
+          console.log('[VoiceCapture] 🛑 Instant User Barge-in: Interrupting Luci speech!');
           window.speechSynthesis.cancel();
         }
 
@@ -173,7 +173,7 @@ export function useVoiceCapture({ state, onStateChange, onSendTextMessage }: Use
         if (finalTranscript.trim()) {
           capturedTextRef.current = finalTranscript.trim();
           let cleanText = capturedTextRef.current;
-          
+
           WAKE_WORDS.forEach((w) => {
             cleanText = cleanText.replace(new RegExp(w, 'gi'), '').trim();
           });
@@ -184,7 +184,7 @@ export function useVoiceCapture({ state, onStateChange, onSendTextMessage }: Use
             console.log(`[VoiceCapture] Sentence captured: "${capturedTextRef.current}"`);
             try {
               recognition.stop();
-            } catch {}
+            } catch { }
 
             const lower = capturedTextRef.current.toLowerCase();
             const isExitCommand = EXIT_WORDS.some((w) => lower.includes(w));
@@ -230,7 +230,7 @@ export function useVoiceCapture({ state, onStateChange, onSendTextMessage }: Use
           recognitionRef.current.onerror = null;
           recognitionRef.current.onresult = null;
           recognitionRef.current.stop();
-        } catch {}
+        } catch { }
       }
     };
   }, [state, startVoiceCapture]);

@@ -37,7 +37,7 @@ Falhas fazem parte de qualquer sistema inteligente.
 
 A diferença entre um sistema comum e uma inteligência resiliente está na forma como ela reage.
 
-A L.U.C.I. nunca considera uma falha como o fim de um processo.
+A Luci nunca considera uma falha como o fim de um processo.
 
 Ela procura sempre a melhor forma de continuar.
 
@@ -422,7 +422,7 @@ O Failure Recovery segue os princípios.
 
 # Definição
 
-O Failure Recovery representa o mecanismo de resiliência da L.U.C.I.
+O Failure Recovery representa o mecanismo de resiliência da Luci
 
 Ele transforma falhas em eventos controlados, selecionando estratégias de recuperação que preservam a continuidade cognitiva da plataforma, minimizam impactos ao usuário e permitem que objetivos continuem evoluindo mesmo diante de erros técnicos, cognitivos ou operacionais.
 

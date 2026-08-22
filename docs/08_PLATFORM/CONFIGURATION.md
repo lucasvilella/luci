@@ -11,7 +11,7 @@ Related Documents:
 - PERMISSIONS.md
 - AI_PROVIDER_MANAGER.md
 - INTEGRATION_MANAGER.md
-Summary: O Configuration Management centraliza todas as configurações da L.U.C.I., permitindo personalização em diferentes níveis sem comprometer a consistência da arquitetura.
+Summary: O Configuration Management centraliza todas as configurações da Luci, permitindo personalização em diferentes níveis sem comprometer a consistência da arquitetura.
 ---
 
 # CONFIGURATION MANAGEMENT
@@ -22,7 +22,7 @@ Summary: O Configuration Management centraliza todas as configurações da L.U.C
 
 # Objetivo
 
-O Configuration Management centraliza todas as configurações da L.U.C.I., permitindo personalização em diferentes níveis sem comprometer a consistência da arquitetura.
+O Configuration Management centraliza todas as configurações da Luci, permitindo personalização em diferentes níveis sem comprometer a consistência da arquitetura.
 
 Ele garante organização, herança de configurações, versionamento e auditoria.
 
@@ -258,7 +258,7 @@ O Configuration Management segue os princípios:
 
 # Definição
 
-O Configuration Management administra todas as configurações operacionais da L.U.C.I. por meio de um modelo hierárquico, versionado e auditável. Ele permite personalização em diferentes níveis da plataforma, preservando consistência, segurança e flexibilidade sem impactar o núcleo cognitivo.
+O Configuration Management administra todas as configurações operacionais da Luci por meio de um modelo hierárquico, versionado e auditável. Ele permite personalização em diferentes níveis da plataforma, preservando consistência, segurança e flexibilidade sem impactar o núcleo cognitivo.
 
 ---
 

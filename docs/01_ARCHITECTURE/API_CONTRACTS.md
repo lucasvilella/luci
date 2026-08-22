@@ -10,7 +10,7 @@ Related Documents:
 - COGNITIVE_PIPELINE.md
 - COGNITIVE_COMMUNICATION.md
 - COGNITIVE_BUS.md
-Summary: Este documento define os contratos oficiais utilizados na comunicação da plataforma L.U.C.I.
+Summary: Este documento define os contratos oficiais utilizados na comunicação da plataforma Luci
 ---
 
 # API CONTRACTS
@@ -21,7 +21,7 @@ Summary: Este documento define os contratos oficiais utilizados na comunicação
 
 # Objetivo
 
-Este documento define os contratos oficiais utilizados na comunicação da plataforma L.U.C.I.
+Este documento define os contratos oficiais utilizados na comunicação da plataforma Luci
 
 Um contrato representa um acordo permanente entre dois componentes.
 
@@ -448,7 +448,7 @@ Todos os contratos seguem as seguintes regras.
 
 # Definição
 
-Os API Contracts da L.U.C.I. estabelecem uma linguagem comum para comunicação entre todos os componentes da plataforma.
+Os API Contracts da Luci estabelecem uma linguagem comum para comunicação entre todos os componentes da plataforma.
 
 Ao separar contratos de implementações, garantem estabilidade arquitetural, evolução contínua e interoperabilidade entre módulos, interfaces e futuras integrações.
 

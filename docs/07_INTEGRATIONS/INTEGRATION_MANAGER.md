@@ -11,7 +11,7 @@ Related Documents:
 - TOOL_ENGINE.md
 - EVENT_ROUTER.md
 - COGNITIVE_BUS.md
-Summary: O Integration Manager é responsável pelo ciclo de vida completo das integrações da L.U.C.I.
+Summary: O Integration Manager é responsável pelo ciclo de vida completo das integrações da Luci
 ---
 
 # INTEGRATION MANAGER
@@ -22,7 +22,7 @@ Summary: O Integration Manager é responsável pelo ciclo de vida completo das i
 
 # Objetivo
 
-O Integration Manager é responsável pelo ciclo de vida completo das integrações da L.U.C.I.
+O Integration Manager é responsável pelo ciclo de vida completo das integrações da Luci
 
 Ele centraliza descoberta, registro, configuração, monitoramento, atualização e remoção de Providers, mantendo o restante da arquitetura totalmente desacoplado das tecnologias utilizadas.
 
@@ -309,7 +309,7 @@ O Integration Manager segue os princípios:
 
 # Definição
 
-O Integration Manager coordena todo o ecossistema de integrações da L.U.C.I., administrando o ciclo de vida dos Providers e disponibilizando suas Capabilities para a plataforma de forma padronizada, segura e desacoplada. Ele garante que novas integrações possam ser adicionadas, atualizadas ou removidas sem impacto sobre os componentes cognitivos do sistema.
+O Integration Manager coordena todo o ecossistema de integrações da Luci, administrando o ciclo de vida dos Providers e disponibilizando suas Capabilities para a plataforma de forma padronizada, segura e desacoplada. Ele garante que novas integrações possam ser adicionadas, atualizadas ou removidas sem impacto sobre os componentes cognitivos do sistema.
 
 ---
 

@@ -10,7 +10,7 @@ Related Documents:
 - AI_PROVIDER_MANAGER.md
 - CONTEXT_BUILDER.md
 - TOKEN_MANAGER.md
-Summary: O Model Capabilities define todas as capacidades cognitivas conhecidas pela L.U.C.I. e descreve quais modelos são capazes de executá-las, em que nível de qualidade e sob quais restrições.
+Summary: O Model Capabilities define todas as capacidades cognitivas conhecidas pela Luci e descreve quais modelos são capazes de executá-las, em que nível de qualidade e sob quais restrições.
 ---
 
 # MODEL CAPABILITIES
@@ -21,7 +21,7 @@ Summary: O Model Capabilities define todas as capacidades cognitivas conhecidas 
 
 # Objetivo
 
-O Model Capabilities define todas as capacidades cognitivas conhecidas pela L.U.C.I. e descreve quais modelos são capazes de executá-las, em que nível de qualidade e sob quais restrições.
+O Model Capabilities define todas as capacidades cognitivas conhecidas pela Luci e descreve quais modelos são capazes de executá-las, em que nível de qualidade e sob quais restrições.
 
 Esse documento serve como base para as decisões do Model Router.
 
@@ -316,7 +316,7 @@ O Model Capabilities segue os princípios:
 
 # Definição
 
-O Model Capabilities representa o catálogo oficial de capacidades cognitivas da L.U.C.I., descrevendo o que cada modelo é capaz de realizar, em qual nível de qualidade e sob quais condições, permitindo que o Model Router tome decisões técnicas de forma objetiva, consistente e independente de fornecedores.
+O Model Capabilities representa o catálogo oficial de capacidades cognitivas da Luci, descrevendo o que cada modelo é capaz de realizar, em qual nível de qualidade e sob quais condições, permitindo que o Model Router tome decisões técnicas de forma objetiva, consistente e independente de fornecedores.
 
 ---
 

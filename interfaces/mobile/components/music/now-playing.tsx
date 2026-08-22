@@ -1,28 +1,31 @@
 "use client"
 
-import { useRef, useCallback } from "react"
-import Image from "next/image"
+import { useState, useRef, useCallback } from "react"
 import {
   ChevronDown,
   MoreVertical,
   Heart,
   Repeat,
+  Repeat1,
   SkipBack,
   Play,
   Pause,
   SkipForward,
   Shuffle,
-  ChevronUp,
+  Info,
+  ListMusic,
   Loader2,
-  Share2,
+  Trash2,
 } from "lucide-react"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
-import { getHiResCover } from "@/lib/deezer"
+import { TrackImage } from "./track-image"
 
 export function NowPlaying() {
   const {
     currentTrack,
+    queue,
+    queueIndex,
     isPlaying,
     isLoading,
     progress,
@@ -38,8 +41,14 @@ export function NowPlaying() {
     toggleLike,
     isLiked,
     formatTime,
+    playTrack,
+    removeFromQueue,
+    lyrics,
   } = useMusicPlayer()
-  const { pop, goToLyrics, goToArtist } = useMusicNavigation()
+
+  const { pop } = useMusicNavigation()
+  const [showQueue, setShowQueue] = useState(false)
+  const [lyricsExpanded, setLyricsExpanded] = useState(false)
   const progressBarRef = useRef<HTMLDivElement>(null)
 
   const handleSeek = useCallback(
@@ -54,204 +63,286 @@ export function NowPlaying() {
     [duration, seek]
   )
 
-  if (!currentTrack) {
-    return (
-      <div className="flex h-full items-center justify-center bg-[#08080A]">
-        <p className="text-zinc-500 text-sm">Nenhuma música em reprodução</p>
-      </div>
-    )
-  }
+  if (!currentTrack) return null
 
-  const pct = duration > 0 ? (progress / duration) * 100 : 0
   const liked = isLiked(currentTrack.id)
-  const coverUrl = getHiResCover(currentTrack, "xl")
+  const progressPct = duration > 0 ? (progress / duration) * 100 : 0
+  const upcomingTracks = queue.slice(queueIndex + 1)
+
+  // Encontra a linha atual de letras sincronizadas
+  const currentLineIndex = lyrics?.lines?.findIndex((line, idx) => {
+    const nextLine = lyrics.lines[idx + 1]
+    if (nextLine) {
+      return progress >= line.time && progress < nextLine.time
+    }
+    return progress >= line.time
+  }) ?? -1
 
   return (
-    <div className="flex h-full flex-col bg-gradient-to-b from-[#140F22] via-[#0D0B16] to-[#08080A] text-white animate-view-in select-none">
-      {/* ─── Header ─── */}
-      <header className="flex items-center justify-between px-5 pt-3 pb-2 border-b border-white/5">
+    <div className="flex h-full flex-col bg-[#0f192b] text-white select-none animate-slide-up overflow-hidden">
+      {/* ─── 1. Header Oficial do SimpMusic ─── */}
+      <header className="flex items-center justify-between px-5 pt-4 pb-2 z-10">
         <button
           type="button"
           onClick={pop}
-          className="flex size-9 items-center justify-center rounded-full bg-white/5 text-zinc-400 hover:text-white transition-all active:scale-95"
+          className="p-2 text-white/90 hover:text-white transition-all active:scale-90"
           aria-label="Voltar"
         >
-          <ChevronDown className="size-5" />
+          <ChevronDown className="size-6" />
         </button>
 
-        <div className="text-center">
-          <span className="text-[10px] uppercase font-bold tracking-widest text-cyan-400">
-            Tocando Agora
-          </span>
-          <p className="text-xs font-semibold text-zinc-300 truncate max-w-[180px]">
-            {currentTrack.album.title}
+        <div className="text-center px-4 min-w-0 flex-1">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-300">
+            NOW PLAYING
+          </p>
+          <p className="text-sm font-bold text-white truncate mt-0.5">
+            {currentTrack.album || "Queue"}
           </p>
         </div>
 
         <button
           type="button"
-          className="flex size-9 items-center justify-center rounded-full bg-white/5 text-zinc-400 hover:text-white transition-all active:scale-95"
-          aria-label="Opções da Faixa"
+          onClick={() => {}}
+          className="p-2 text-white/90 hover:text-white transition-all active:scale-90"
+          aria-label="Opções"
         >
-          <MoreVertical className="size-4" />
+          <MoreVertical className="size-5" />
         </button>
       </header>
 
-      {/* ─── Vinyl Holographic Cover & Art ─── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8 py-2">
-        <div className="relative size-64 sm:size-72 rounded-full p-2 bg-gradient-to-tr from-zinc-800 via-zinc-900 to-zinc-950 border border-white/10 shadow-[0_0_50px_rgba(0,242,254,0.15)] flex items-center justify-center group">
-          {/* Vinyl Grooves Background */}
-          <div className="absolute inset-2 rounded-full border border-white/5 animate-[spin_20s_linear_infinite]" />
-          <div className="absolute inset-6 rounded-full border border-white/5" />
-          <div className="absolute inset-12 rounded-full border border-white/5" />
+      {/* ─── 2. Área Central (Capa Quadrada ou Fila) ─── */}
+      <div className="flex-1 overflow-y-auto px-6 py-2 space-y-4 no-scrollbar">
+        {showQueue ? (
+          <div className="space-y-2 py-2">
+            <div className="flex items-center justify-between pb-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+                Queue ({upcomingTracks.length})
+              </h3>
+              <span className="text-[11px] text-zinc-400">Up Next</span>
+            </div>
 
-          {/* Center Album Art */}
-          <div className="relative size-44 rounded-full overflow-hidden border-2 border-zinc-950 shadow-2xl">
-            <Image
-              src={coverUrl}
-              alt={currentTrack.title}
-              fill
-              sizes="200px"
-              priority
-              className={`object-cover ${isPlaying ? "animate-[spin_12s_linear_infinite]" : ""}`}
-            />
-            {/* Center Hole */}
-            <div className="absolute inset-0 m-auto size-6 rounded-full bg-[#08080A] border-2 border-cyan-400/80 shadow-inner" />
+            <div className="space-y-2">
+              {upcomingTracks.map((track, idx) => (
+                <div
+                  key={`${track.id}-${idx}`}
+                  onClick={() => playTrack(track, queue)}
+                  className="flex items-center gap-3 p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] transition-all cursor-pointer group"
+                >
+                  <TrackImage
+                    src={track.thumbnail}
+                    trackId={track.id}
+                    alt={track.title}
+                    className="size-11 rounded-lg object-cover bg-zinc-800 shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-white truncate">{track.title}</p>
+                    <p className="text-[11px] text-zinc-400 truncate mt-0.5">{track.artist}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      removeFromQueue(queueIndex + 1 + idx)
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-2 text-zinc-500 hover:text-rose-400 transition-opacity"
+                    aria-label="Remover"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Capa com Proporção Exata do SimpMusic */
+          <div className="flex items-center justify-center py-2">
+            <div className="relative aspect-square w-full max-w-[320px] rounded-2xl overflow-hidden shadow-2xl shadow-black/60 group">
+              <TrackImage
+                src={currentTrack.thumbnail}
+                trackId={currentTrack.id}
+                alt={currentTrack.title}
+                className="size-full object-cover"
+              />
+            </div>
+          </div>
+        )}
 
-        {/* ─── Title & Artist & Like ─── */}
-        <div className="w-full mt-6 flex items-center justify-between px-2">
-          <div className="min-w-0 flex-1 pr-4">
-            <h1 className="text-lg font-bold text-white tracking-wide truncate">
-              {currentTrack.title_short || currentTrack.title}
-            </h1>
-            <button
-              type="button"
-              onClick={() => goToArtist(currentTrack.artist.id)}
-              className="text-xs text-cyan-400 font-medium hover:underline truncate text-left block"
-            >
-              {currentTrack.artist.name}
-            </button>
+        {/* ─── 3. Título & Artista (SimpMusic Style) ─── */}
+        <div className="flex items-center justify-between gap-4 pt-2">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl font-bold text-white truncate tracking-tight font-sans">
+              {currentTrack.title}
+            </h2>
+            <p className="text-sm text-zinc-300 truncate mt-0.5 font-normal">
+              {currentTrack.artist}
+            </p>
           </div>
 
           <button
             type="button"
-            onClick={() => toggleLike(currentTrack.id)}
-            className="flex size-10 items-center justify-center rounded-full bg-white/5 text-zinc-400 hover:text-cyan-400 active:scale-90 transition-all shrink-0"
+            onClick={() => toggleLike(currentTrack)}
+            className="p-2 text-white/90 hover:text-white transition-all active:scale-90"
             aria-label={liked ? "Descurtir" : "Curtir"}
           >
             <Heart
-              className={`size-5 transition-colors ${
-                liked ? "fill-cyan-400 text-cyan-400" : "text-zinc-400"
+              className={`size-6 transition-colors ${
+                liked ? "fill-rose-500 text-rose-500" : "text-white"
               }`}
             />
           </button>
         </div>
-      </div>
 
-      {/* ─── Progress Bar & Time ─── */}
-      <div className="px-7 space-y-1.5">
-        <div
-          ref={progressBarRef}
-          className="relative h-1.5 w-full cursor-pointer rounded-full bg-zinc-800/80 overflow-hidden"
-          onClick={handleSeek}
-          onTouchMove={handleSeek}
-          role="slider"
-          aria-label="Progresso da música"
-          aria-valuemin={0}
-          aria-valuemax={duration}
-          aria-valuenow={progress}
-        >
+        {/* ─── 4. Barra de Progresso SimpMusic (Cinza Claro / Branco com Bolinha) ─── */}
+        <div className="space-y-1 pt-1">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 shadow-[0_0_10px_rgba(0,242,254,0.5)] transition-[width] duration-150"
-            style={{ width: `${pct}%` }}
-          />
+            ref={progressBarRef}
+            onClick={handleSeek}
+            className="group relative h-4 flex items-center cursor-pointer touch-none"
+          >
+            <div className="h-1 w-full rounded-full bg-white/20 overflow-hidden">
+              <div
+                className="h-full bg-white transition-all duration-100"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <div
+              className="absolute size-3 rounded-full bg-white shadow-md -translate-x-1/2"
+              style={{ left: `${progressPct}%` }}
+            />
+          </div>
+
+          <div className="flex justify-between text-xs text-zinc-300 font-mono">
+            <span>{formatTime(progress)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
         </div>
-        <div className="flex justify-between text-[11px] font-mono text-zinc-400">
-          <span>{formatTime(progress)}</span>
-          <span>{formatTime(duration || currentTrack.duration)}</span>
+
+        {/* ─── 5. Controles Oficiais SimpMusic (Shuffle, Prev, Play/Pause Redondo, Next, Repeat) ─── */}
+        <div className="flex items-center justify-between pt-1 px-1">
+          <button
+            type="button"
+            onClick={toggleShuffle}
+            className={`p-2 transition-colors active:scale-90 ${
+              shuffle ? "text-white" : "text-white/40 hover:text-white/70"
+            }`}
+            aria-label="Shuffle"
+          >
+            <Shuffle className="size-5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={prev}
+            className="p-2 text-white hover:text-white/80 transition-transform active:scale-90"
+            aria-label="Anterior"
+          >
+            <SkipBack className="size-7 fill-white" />
+          </button>
+
+          {/* Botão Play/Pause Branco Redondo Idêntico ao SimpMusic */}
+          <button
+            type="button"
+            onClick={togglePlay}
+            disabled={isLoading}
+            className="flex size-16 items-center justify-center rounded-full bg-white text-black shadow-lg transition-all active:scale-95 hover:scale-105"
+            aria-label={isPlaying ? "Pausar" : "Reproduzir"}
+          >
+            {isLoading ? (
+              <Loader2 className="size-7 animate-spin text-black" />
+            ) : isPlaying ? (
+              <Pause className="size-7 fill-black" />
+            ) : (
+              <Play className="size-7 fill-black ml-1" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={next}
+            className="p-2 text-white hover:text-white/80 transition-transform active:scale-90"
+            aria-label="Próxima"
+          >
+            <SkipForward className="size-7 fill-white" />
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleRepeat}
+            className={`p-2 transition-colors active:scale-90 ${
+              repeat !== "off" ? "text-white" : "text-white/40 hover:text-white/70"
+            }`}
+            aria-label={`Repetir: ${repeat}`}
+          >
+            {repeat === "one" ? (
+              <Repeat1 className="size-5" />
+            ) : (
+              <Repeat className="size-5" />
+            )}
+          </button>
         </div>
-      </div>
 
-      {/* ─── Control Bar ─── */}
-      <div className="flex items-center justify-between px-8 py-4">
-        {/* Shuffle */}
-        <button
-          type="button"
-          onClick={toggleShuffle}
-          className={`p-2.5 rounded-full transition-colors ${
-            shuffle ? "text-cyan-400 bg-cyan-400/10" : "text-zinc-500 hover:text-zinc-300"
-          }`}
-          aria-label="Aleatório"
-        >
-          <Shuffle className="size-4.5" />
-        </button>
+        {/* ─── 6. Barra Inferior com Ícones de Info e Fila ─── */}
+        <div className="flex items-center justify-between pt-1 text-white/60">
+          <button type="button" className="p-2 hover:text-white" aria-label="Informações">
+            <Info className="size-5" />
+          </button>
 
-        {/* Skip Back */}
-        <button
-          type="button"
-          onClick={prev}
-          className="p-2.5 text-zinc-300 hover:text-white active:scale-90 transition-transform"
-          aria-label="Anterior"
-        >
-          <SkipBack className="size-6 fill-current" />
-        </button>
+          <button
+            type="button"
+            onClick={() => setShowQueue(!showQueue)}
+            className={`p-2 transition-colors ${showQueue ? "text-white" : "hover:text-white"}`}
+            aria-label="Fila"
+          >
+            <ListMusic className="size-5" />
+          </button>
+        </div>
 
-        {/* Play/Pause Central Button */}
-        <button
-          type="button"
-          onClick={togglePlay}
-          className="size-16 rounded-full bg-gradient-to-tr from-cyan-400 to-fuchsia-500 text-black flex items-center justify-center shadow-[0_0_30px_rgba(0,242,254,0.4)] active:scale-95 transition-transform"
-          aria-label={isPlaying ? "Pausar" : "Tocar"}
-        >
-          {isLoading ? (
-            <Loader2 className="size-7 animate-spin text-black" />
-          ) : isPlaying ? (
-            <Pause className="size-7 fill-current" />
+        {/* ─── 7. Card Azul de Letras (Lyrics Card do SimpMusic) ─── */}
+        <div className="rounded-2xl bg-[#133266] p-4 text-white shadow-xl space-y-3 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-sm text-white">Lyrics</span>
+            <button
+              type="button"
+              onClick={() => setLyricsExpanded(!lyricsExpanded)}
+              className="text-xs font-semibold text-white/80 hover:text-white px-2 py-1 rounded-lg bg-white/10"
+            >
+              {lyricsExpanded ? "Hide" : "Show"}
+            </button>
+          </div>
+
+          {/* Exibição Sincronizada das Letras */}
+          {lyrics?.has_synced && lyrics.lines.length > 0 ? (
+            <div className={`space-y-3 font-sans transition-all overflow-y-auto ${lyricsExpanded ? "max-h-72" : "max-h-32"} no-scrollbar`}>
+              {lyrics.lines.map((line, idx) => {
+                const isCurrent = idx === currentLineIndex
+                return (
+                  <p
+                    key={idx}
+                    onClick={() => seek(line.time)}
+                    className={`cursor-pointer transition-all leading-snug ${
+                      isCurrent
+                        ? "text-xl font-extrabold text-white scale-[1.02] origin-left"
+                        : "text-base font-medium text-white/50 hover:text-white/80"
+                    }`}
+                  >
+                    {line.text}
+                  </p>
+                )
+              })}
+            </div>
           ) : (
-            <Play className="size-7 fill-current translate-x-0.5" />
+            <div className="py-2">
+              <p className="text-sm font-medium text-white/70">
+                {lyrics?.plain || "Carregando letras sincronizadas..."}
+              </p>
+            </div>
           )}
-        </button>
 
-        {/* Skip Forward */}
-        <button
-          type="button"
-          onClick={next}
-          className="p-2.5 text-zinc-300 hover:text-white active:scale-90 transition-transform"
-          aria-label="Próxima"
-        >
-          <SkipForward className="size-6 fill-current" />
-        </button>
-
-        {/* Repeat */}
-        <button
-          type="button"
-          onClick={toggleRepeat}
-          className={`p-2.5 rounded-full transition-colors relative ${
-            repeat !== "off" ? "text-cyan-400 bg-cyan-400/10" : "text-zinc-500 hover:text-zinc-300"
-          }`}
-          aria-label="Repetir"
-        >
-          <Repeat className="size-4.5" />
-          {repeat === "one" && (
-            <span className="absolute top-1.5 right-1.5 text-[8px] font-extrabold text-cyan-400">
-              1
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* ─── Lyrics Access Button (Bottom Drawer) ─── */}
-      <div className="px-6 pb-6 pt-1">
-        <button
-          type="button"
-          onClick={goToLyrics}
-          className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold text-zinc-300 transition-all active:scale-[0.99]"
-        >
-          <ChevronUp className="size-4 text-cyan-400" />
-          <span>Ver Letra Sincronizada</span>
-        </button>
+          <div className="flex justify-between items-center pt-2 text-[10px] text-white/40 border-t border-white/10">
+            <span>{lyrics?.has_synced ? "Line Synced" : "Plain Lyrics"}</span>
+            <span>LRCLIB</span>
+          </div>
+        </div>
       </div>
     </div>
   )

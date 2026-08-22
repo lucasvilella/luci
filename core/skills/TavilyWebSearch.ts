@@ -1,7 +1,7 @@
 /**
  * TavilyWebSearch — Real-Time Internet Perception Skill
  *
- * Connects L.U.C.I. to the live web via Tavily AI API.
+ * Connects Luci to the live web via Tavily AI API.
  * Fetches search results, news, real-time facts, stock quotes, and weather.
  */
 

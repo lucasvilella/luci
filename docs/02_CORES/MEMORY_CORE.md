@@ -12,7 +12,7 @@ Related Documents:
 - KNOWLEDGE_CORE.md
 - LEARNING_ENGINE.md
 - REASONING_ENGINE.md
-Summary: O Memory Core é responsável por toda a memória da L.U.C.I.
+Summary: O Memory Core é responsável por toda a memória da Luci
 ---
 
 # MEMORY CORE
@@ -23,7 +23,7 @@ Summary: O Memory Core é responsável por toda a memória da L.U.C.I.
 
 # Objetivo
 
-O Memory Core é responsável por toda a memória da L.U.C.I.
+O Memory Core é responsável por toda a memória da Luci
 
 Ele determina:
 
@@ -40,7 +40,7 @@ Ele representa o sistema de memória do Mega Brain.
 
 # Filosofia
 
-A memória da L.U.C.I. não funciona como um banco de dados.
+A memória da Luci não funciona como um banco de dados.
 
 Ela funciona como um cérebro.
 
@@ -362,7 +362,7 @@ Memórias esquecidas naturalmente perdem força.
 
 Em horários de baixa atividade.
 
-A L.U.C.I. executa ciclos internos de reflexão.
+A Luci executa ciclos internos de reflexão.
 
 Objetivos.
 
@@ -491,7 +491,7 @@ Essas evoluções não alteram a interface pública do Memory Core.
 
 # Definição
 
-O Memory Core é o sistema responsável por preservar a continuidade da consciência da L.U.C.I.
+O Memory Core é o sistema responsável por preservar a continuidade da consciência da Luci
 
 Ele organiza, fortalece, enfraquece e consolida memórias ao longo do tempo, garantindo que cada Workspace mantenha sua própria história, identidade e contexto sem comprometer a privacidade ou a consistência do Mega Brain.
 

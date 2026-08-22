@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Script de Instalação e Provisionamento Resiliente para L.U.C.I. no Android Termux
+# Script de Instalação e Provisionamento Resiliente para Luci no Android Termux
 # Arquitetura: ARM64 (aarch64) / Linux
 # Trata compilações nativas de Rust/C (pydantic-core, cryptography, maturin)
 # ==============================================================================
@@ -56,7 +56,7 @@ fi
 echo "🐍 5/6 Preparando ambiente Python e instalando maturin/wheel..."
 pip install --upgrade pip setuptools wheel maturin
 
-echo "📦 Instalando dependências do projeto L.U.C.I. (pydantic, fastapi, uvicorn, etc.)..."
+echo "📦 Instalando dependências do projeto Luci (pydantic, fastapi, uvicorn, etc.)..."
 if [ -f "requirements.txt" ]; then
     pip install -r requirements.txt
 else

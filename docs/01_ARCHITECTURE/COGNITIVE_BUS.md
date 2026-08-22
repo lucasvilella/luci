@@ -16,7 +16,7 @@ Summary: Este documento define o Cognitive Bus, o mecanismo oficial de comunica�
 
 # COGNITIVE BUS
 
-> *"Na L.U.C.I., componentes não trocam apenas eventos. Eles compartilham contexto cognitivo."*
+> *"Na Luci, componentes não trocam apenas eventos. Eles compartilham contexto cognitivo."*
 
 ---
 
@@ -496,7 +496,7 @@ O Cognitive Bus segue os seguintes princípios.
 
 # Definição
 
-O Cognitive Bus é o sistema nervoso da L.U.C.I.
+O Cognitive Bus é o sistema nervoso da Luci
 
 Ele conecta todos os componentes da plataforma através de mensagens contextualizadas, preservando identidade, Workspace, rastreabilidade e contexto cognitivo durante todo o ciclo de vida de cada interação.
 

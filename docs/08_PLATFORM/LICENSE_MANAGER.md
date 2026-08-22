@@ -24,7 +24,7 @@ Summary: O License Manager administra os direitos de utilização da plataforma.
 
 O License Manager administra os direitos de utilização da plataforma.
 
-Seu papel é validar quais capacidades, recursos e limites estão disponíveis para cada instalação da L.U.C.I., mantendo total desacoplamento entre licenciamento e implementação.
+Seu papel é validar quais capacidades, recursos e limites estão disponíveis para cada instalação da Luci, mantendo total desacoplamento entre licenciamento e implementação.
 
 ---
 
@@ -238,11 +238,11 @@ O License Manager segue os princípios:
 
 # Definição
 
-O License Manager administra os direitos de utilização da L.U.C.I. através de um modelo baseado em Entitlements, onde cada Capability da plataforma pode ser autorizada ou restringida independentemente da implementação técnica. Essa abordagem desacopla o licenciamento da arquitetura interna e permite evolução contínua dos modelos comerciais sem impactar o núcleo cognitivo.
+O License Manager administra os direitos de utilização da Luci através de um modelo baseado em Entitlements, onde cada Capability da plataforma pode ser autorizada ou restringida independentemente da implementação técnica. Essa abordagem desacopla o licenciamento da arquitetura interna e permite evolução contínua dos modelos comerciais sem impactar o núcleo cognitivo.
 
 ---
 
-> **"A licença não define quem a L.U.C.I. é. Apenas define quais capacidades ela está autorizada a utilizar."**
+> **"A licença não define quem a Luci é. Apenas define quais capacidades ela está autorizada a utilizar."**
 
 ---
 

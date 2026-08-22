@@ -1,202 +1,181 @@
 "use client"
 
-import { useState } from "react"
-import { Send, Sparkles, Copy, Share2, Music } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Send, Sparkles, Copy, Share2, Mic, Languages, Loader2, Trash2 } from "lucide-react"
+import { useConversation } from "@/hooks/use-conversation"
 import { useAuth } from "@/hooks/use-auth"
-import { luciApiFetch } from "@/lib/api"
-
-type Message = {
-  id: number
-  role: "assistant" | "user"
-  text: string
-}
 
 const SUGGESTIONS = [
-  { icon: Music, label: "Lofi Beats" },
-  { icon: Sparkles, label: "Sons ambientes" },
-  { icon: Music, label: "Clássico & Motivacional" },
+  "Qual a previsão do tempo para hoje?",
+  "Qual a cotação do dólar e do bitcoin agora?",
+  "Quando é o próximo feriado nacional?",
+  "Toque um lofi relaxante no LuciMusic",
 ]
 
 export function ChatView() {
   const { user } = useAuth()
-  const firstName = user?.name.split(" ")[0] ?? ""
-  const [messages, setMessages] = useState<Message[]>(() => [
-    { id: 1, role: "assistant", text: `Olá, ${firstName}! Como posso te ajudar hoje?` },
-    { id: 2, role: "user", text: "Recomende uma playlist para estudar." },
-    {
-      id: 3,
-      role: "assistant",
-      text: "Claro! Separei três opções de foco para acompanhar seus estudos. Toque para ouvir no player.",
-    },
-  ])
+  const { messages, isProcessing, sendTextMessage, clearConversation } = useConversation()
   const [input, setInput] = useState("")
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
-  const [isTyping, setIsTyping] = useState(false)
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
 
-  async function send(text: string) {
-    const value = text.trim()
-    if (!value || isTyping) return
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, isProcessing])
 
-    const userMsg: Message = { id: Date.now(), role: "user", text: value }
-    const botMsgId = Date.now() + 1
-    const initialBotMsg: Message = { id: botMsgId, role: "assistant", text: "" }
-
-    setMessages((prev) => [...prev, userMsg, initialBotMsg])
+  const handleSend = async (text: string) => {
+    const trimmed = text.trim()
+    if (!trimmed || isProcessing) return
     setInput("")
-    setIsTyping(true)
-
-    try {
-      const res = await luciApiFetch("/api/v1/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: value,
-          userId: user?.name || "Lucas",
-          history: messages.map((m) => ({ role: m.role, content: m.text })),
-        }),
-      })
-
-      if (!res.ok) throw new Error("Chat failed")
-
-      const contentType = res.headers.get("content-type") || ""
-
-      if (contentType.includes("text/event-stream")) {
-        const reader = res.body?.getReader()
-        const decoder = new TextDecoder()
-        let fullText = ""
-
-        if (reader) {
-          while (true) {
-            const { done, value: chunkVal } = await reader.read()
-            if (done) break
-
-            const chunk = decoder.decode(chunkVal, { stream: true })
-            const lines = chunk.split("\n")
-
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const dataStr = line.replace("data: ", "").trim()
-                if (dataStr === "[DONE]") continue
-
-                try {
-                  const parsed = JSON.parse(dataStr)
-                  if (parsed.chunk) {
-                    fullText += parsed.chunk
-                    setMessages((prev) =>
-                      prev.map((m) => (m.id === botMsgId ? { ...m, text: fullText } : m))
-                    )
-                  }
-                } catch {}
-              }
-            }
-          }
-        }
-      } else {
-        const data = await res.json()
-        setMessages((prev) =>
-          prev.map((m) => (m.id === botMsgId ? { ...m, text: data.content || "" } : m))
-        )
-      }
-    } catch (err) {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === botMsgId ? { ...m, text: "Desculpe, ocorreu um erro ao processar sua mensagem." } : m
-        )
-      )
-    } finally {
-      setIsTyping(false)
-    }
+    await sendTextMessage(trimmed)
   }
 
   return (
-    <div className="flex h-full flex-col animate-view-in">
-      <div className="flex items-center justify-between px-5 pb-3 pt-3">
+    <div className="flex h-full flex-col bg-background animate-view-in select-none">
+      {/* ─── Header do Chat ─── */}
+      <div className="flex items-center justify-between px-5 pb-3 pt-3 border-b border-border/50 bg-background/80 backdrop-blur-md">
         <div>
-          <h1 className="text-lg font-semibold text-foreground">Chat com a Luci</h1>
-          <p className="text-xs text-muted-foreground">Assistente inteligente</p>
+          <h1 className="text-base font-semibold text-foreground flex items-center gap-1.5">
+            Chat Luci
+            <span className="text-[10px] uppercase font-semibold px-1.5 py-0.2 rounded-full bg-primary/10 text-primary border border-primary/20">
+              Cérebro Único
+            </span>
+          </h1>
+          <p className="text-[11px] text-muted-foreground">Memória Omnichannel Unificada</p>
         </div>
-        <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Sparkles className="size-4" aria-hidden="true" />
-        </span>
-      </div>
-
-      <div className="flex-1 space-y-4 overflow-y-auto px-5 pb-2">
-        {messages.map((m) =>
-          m.role === "assistant" ? (
-            <div key={m.id} className="flex items-start gap-2.5">
-              <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <Sparkles className="size-4" aria-hidden="true" />
-              </span>
-              <div className="max-w-[78%]">
-                <div className="rounded-2xl rounded-tl-md border border-border bg-card px-4 py-3 text-sm leading-relaxed text-card-foreground">
-                  {m.text}
-                </div>
-                <div className="mt-1.5 flex gap-3 pl-1 text-muted-foreground">
-                  <button className="flex items-center gap-1 text-xs hover:text-foreground" type="button">
-                    <Copy className="size-3" aria-hidden="true" /> Copiar
-                  </button>
-                  <button className="flex items-center gap-1 text-xs hover:text-foreground" type="button">
-                    <Share2 className="size-3" aria-hidden="true" /> Compartilhar
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div key={m.id} className="flex justify-end">
-              <div className="max-w-[78%] rounded-2xl rounded-tr-md bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground">
-                {m.text}
-              </div>
-            </div>
-          ),
-        )}
-
-        {/* quick replies */}
-        <div className="flex items-start gap-2.5">
-          <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={clearConversation}
+            className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+            title="Limpar Histórico"
+            aria-label="Limpar Histórico"
+          >
+            <Trash2 className="size-4" />
+          </button>
+          <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Sparkles className="size-4" aria-hidden="true" />
           </span>
-          <div className="w-[78%] rounded-2xl rounded-tl-md border border-border bg-card p-2">
-            <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Sugestões rápidas</p>
-            <div className="space-y-1">
-              {SUGGESTIONS.map(({ icon: Icon, label }) => (
+        </div>
+      </div>
+
+      {/* ─── Lista de Mensagens Unificada ─── */}
+      <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4 scrollbar-none pb-4">
+        {messages.map((m) => (
+          <div key={m.id} className="space-y-1">
+            {m.role === "assistant" ? (
+              <div className="flex items-start gap-2.5">
+                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+                  <Sparkles className="size-4" aria-hidden="true" />
+                </span>
+                <div className="max-w-[82%]">
+                  <div className="rounded-2xl rounded-tl-md border border-border bg-card px-4 py-3 text-xs leading-relaxed text-card-foreground shadow-sm">
+                    {/* Badge do canal de origem */}
+                    {m.inputType === "voice" && (
+                      <div className="flex items-center gap-1 text-[10px] font-semibold text-indigo-400 mb-1.5">
+                        <Mic className="size-3" /> Resposta por Voz
+                      </div>
+                    )}
+                    {m.inputType === "interpreter" && (
+                      <div className="flex items-center gap-1 text-[10px] font-semibold text-purple-400 mb-1.5">
+                        <Languages className="size-3" /> Intérprete Simultâneo
+                      </div>
+                    )}
+                    <p className="whitespace-pre-wrap">{m.content}</p>
+                  </div>
+                  <div className="mt-1 flex gap-3 pl-1 text-muted-foreground text-[10px]">
+                    <button
+                      onClick={() => navigator.clipboard.writeText(m.content)}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      type="button"
+                    >
+                      <Copy className="size-3" /> Copiar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-end">
+                <div className="max-w-[82%] rounded-2xl rounded-tr-md bg-primary px-4 py-2.5 text-xs leading-relaxed text-primary-foreground shadow-sm">
+                  {m.inputType === "voice" && (
+                    <div className="flex items-center gap-1 text-[10px] font-medium text-primary-foreground/80 mb-1">
+                      <Mic className="size-3" /> Transcrição de Voz
+                    </div>
+                  )}
+                  {m.inputType === "interpreter" && (
+                    <div className="flex items-center gap-1 text-[10px] font-medium text-primary-foreground/80 mb-1">
+                      <Languages className="size-3" /> Fala do Interlocutor
+                    </div>
+                  )}
+                  <p className="whitespace-pre-wrap">{m.content}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {isProcessing && (
+          <div className="flex items-start gap-2.5">
+            <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+              <Sparkles className="size-4 animate-spin" />
+            </span>
+            <div className="rounded-2xl rounded-tl-md border border-border bg-card px-4 py-3 text-xs text-muted-foreground flex items-center gap-2">
+              <Loader2 className="size-3.5 animate-spin text-primary" />
+              <span>Luci está pensando...</span>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Sugestões Rápidas (Se histórico tiver poucas mensagens) ─── */}
+        {messages.length <= 2 && (
+          <div className="pt-2 space-y-2">
+            <p className="text-[11px] font-medium text-muted-foreground">Sugestões rápidas:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {SUGGESTIONS.map((sug) => (
                 <button
-                  key={label}
+                  key={sug}
                   type="button"
-                  onClick={() => send(label)}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm text-card-foreground transition-colors hover:bg-accent"
+                  onClick={() => handleSend(sug)}
+                  className="px-3 py-1.5 rounded-xl border border-border bg-card/60 hover:bg-accent text-xs text-card-foreground text-left transition-colors"
                 >
-                  <Icon className="size-4 text-primary" aria-hidden="true" />
-                  {label}
+                  {sug}
                 </button>
               ))}
             </div>
           </div>
-        </div>
+        )}
+
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* input */}
+      {/* ─── Input de Texto ─── */}
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          send(input)
+          handleSend(input)
         }}
-        className="flex items-center gap-2 px-5 pb-2 pt-3"
+        className="flex items-center gap-2 px-4 py-2.5 border-t border-border/50 bg-background/90 backdrop-blur-md"
       >
-        <div className="flex flex-1 items-center rounded-full border border-border bg-card px-4">
+        <div className="flex flex-1 items-center rounded-full border border-border bg-card px-4 focus-within:border-primary/50 transition-colors">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Escreva uma mensagem..."
+            placeholder="Escreva uma mensagem para a Luci..."
             aria-label="Mensagem"
-            className="w-full bg-transparent py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+            disabled={isProcessing}
+            className="w-full bg-transparent py-2.5 text-xs text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
         <button
           type="submit"
+          disabled={!input.trim() || isProcessing}
           aria-label="Enviar mensagem"
-          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-95"
+          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-95 disabled:opacity-50 disabled:pointer-events-none shadow-md shadow-primary/20"
         >
-          <Send className="size-5" aria-hidden="true" />
+          <Send className="size-4" aria-hidden="true" />
         </button>
       </form>
     </div>

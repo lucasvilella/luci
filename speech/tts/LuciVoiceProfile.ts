@@ -1,7 +1,7 @@
 /**
  * LuciVoiceProfile.ts
  *
- * Centralized Vocal Identity & Configuration for L.U.C.I.
+ * Centralized Vocal Identity & Configuration for Luci
  *
  * Personality:
  * - Adult Brazilian Female (pt-BR)

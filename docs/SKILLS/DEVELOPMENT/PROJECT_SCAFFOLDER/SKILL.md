@@ -2,12 +2,12 @@
 name: Project Scaffolder
 description: >
   Gera automaticamente a estrutura arquitetural completa de novos módulos,
-  Engines, Providers, Plugins, Packages ou componentes da L.U.C.I.,
+  Engines, Providers, Plugins, Packages ou componentes da Luci,
   seguindo todos os padrões oficiais da plataforma.
 
 version: 1.0
 owner: Lucas
-project: L.U.C.I.
+project: Luci
 architecture: Cognitive Operating System
 
 requires:
@@ -30,7 +30,7 @@ triggers:
 
 ## Objetivo
 
-Gerar automaticamente toda a estrutura inicial de um novo componente da L.U.C.I.
+Gerar automaticamente toda a estrutura inicial de um novo componente da Luci
 
 Esta Skill reduz trabalho repetitivo e garante padronização arquitetural.
 
@@ -141,7 +141,7 @@ Ao final apresentar:
 - criar dependências circulares;
 - ignorar observabilidade;
 - gerar código sem documentação;
-- criar estruturas incompatíveis com os padrões da L.U.C.I.
+- criar estruturas incompatíveis com os padrões da Luci
 
 ---
 

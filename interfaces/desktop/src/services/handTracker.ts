@@ -1,7 +1,7 @@
 /**
  * handTracker.ts
  *
- * Webcam Hand Tracker for L.U.C.I. Ultron Orb UI
+ * Webcam Hand Tracker for Luci Ultron Orb UI
  * Uses MediaPipe / Web Camera inputs to extract 1-hand pinch (rotation)
  * and 2-hand pinch (zoom) gesture coordinates for controlling the 3D Orb.
  */

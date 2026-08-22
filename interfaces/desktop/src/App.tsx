@@ -1,7 +1,7 @@
 /**
- * L.U.C.I. Desktop Interface — Application Root
+ * Luci Desktop Interface — Application Root
  *
- * This is the validation prototype for the L.U.C.I. platform.
+ * This is the validation prototype for the Luci platform.
  * It is NOT the definitive interface.
  */
 

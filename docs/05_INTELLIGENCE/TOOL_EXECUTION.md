@@ -12,7 +12,7 @@ Related Documents:
 - TASK_COORDINATOR.md
 - FAILURE_RECOVERY.md
 - OBSERVABILITY.md
-Summary: O Tool Execution define o ciclo de vida completo da execução de uma capacidade operacional dentro da L.U.C.I.
+Summary: O Tool Execution define o ciclo de vida completo da execução de uma capacidade operacional dentro da Luci
 ---
 
 # TOOL EXECUTION
@@ -23,7 +23,7 @@ Summary: O Tool Execution define o ciclo de vida completo da execução de uma c
 
 # Objetivo
 
-O Tool Execution define o ciclo de vida completo da execução de uma capacidade operacional dentro da L.U.C.I.
+O Tool Execution define o ciclo de vida completo da execução de uma capacidade operacional dentro da Luci
 
 Ele estabelece as etapas, estados, validações, auditoria e tratamento de resultados envolvidos em qualquer interação com ferramentas, dispositivos ou serviços externos.
 
@@ -333,7 +333,7 @@ Execuções relevantes podem originar memórias episódicas.
 
 Exemplo.
 
-"Ontem a L.U.C.I. criou uma reunião para mim."
+"Ontem a Luci criou uma reunião para mim."
 
 ---
 
@@ -407,7 +407,7 @@ O Tool Execution segue os princípios:
 
 # Definição
 
-O Tool Execution representa o ciclo de vida operacional das capacidades executadas pela L.U.C.I., garantindo que toda interação com o mundo externo seja realizada de forma previsível, segura, auditável e integrada ao restante da arquitetura cognitiva da plataforma.
+O Tool Execution representa o ciclo de vida operacional das capacidades executadas pela Luci, garantindo que toda interação com o mundo externo seja realizada de forma previsível, segura, auditável e integrada ao restante da arquitetura cognitiva da plataforma.
 
 ---
 

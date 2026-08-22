@@ -11,7 +11,7 @@ Related Documents:
 - SYSTEM_CONTEXT.md
 - DOMAIN_MODEL.md
 - COGNITIVE_MODEL.md
-Summary: Este documento define os princípios fundamentais que orientam toda decisão arquitetural, técnica e de produto da L.U.C.I.
+Summary: Este documento define os princípios fundamentais que orientam toda decisão arquitetural, técnica e de produto da Luci
 ---
 
 # CORE PRINCIPLES
@@ -22,7 +22,7 @@ Summary: Este documento define os princípios fundamentais que orientam toda dec
 
 # Objetivo
 
-Este documento define os princípios fundamentais que orientam toda decisão arquitetural, técnica e de produto da L.U.C.I.
+Este documento define os princípios fundamentais que orientam toda decisão arquitetural, técnica e de produto da Luci
 
 Nenhuma implementação poderá contrariar estes princípios.
 
@@ -44,7 +44,7 @@ Nenhuma decisão deve privilegiar a interface em detrimento da inteligência.
 
 Existe apenas um cérebro.
 
-A L.U.C.I. nunca será composta por múltiplas inteligências independentes.
+A Luci nunca será composta por múltiplas inteligências independentes.
 
 Todos os dispositivos acessam o mesmo cérebro cognitivo.
 
@@ -191,7 +191,7 @@ Facilita evolução.
 
 # 13. Explicit Planning
 
-Antes de executar qualquer tarefa complexa, a L.U.C.I. deve elaborar um plano.
+Antes de executar qualquer tarefa complexa, a Luci deve elaborar um plano.
 
 Planejamento reduz erros.
 
@@ -242,7 +242,7 @@ Nenhum dado é compartilhado por padrão.
 
 # 17. Explainability
 
-Sempre que possível, a L.U.C.I. deve ser capaz de explicar:
+Sempre que possível, a Luci deve ser capaz de explicar:
 
 - por que respondeu;
 - por que decidiu;
@@ -274,7 +274,7 @@ Nenhuma decisão deve otimizar apenas o curto prazo.
 
 # 20. Evolution Over Configuration
 
-A L.U.C.I. deve aprender.
+A Luci deve aprender.
 
 Não depender de configurações manuais.
 
@@ -366,7 +366,7 @@ Se qualquer resposta for **não**, a solução deve ser reconsiderada.
 
 # Definição
 
-Os princípios deste documento representam as leis fundamentais da L.U.C.I.
+Os princípios deste documento representam as leis fundamentais da Luci
 
 Eles são permanentes.
 

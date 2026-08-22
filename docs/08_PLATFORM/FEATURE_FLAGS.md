@@ -222,7 +222,7 @@ O Feature Flags segue os princípios:
 
 # Definição
 
-O Feature Flags fornece um mecanismo flexível para controlar a disponibilidade de funcionalidades, componentes e comportamentos da L.U.C.I. em tempo de execução. Ele permite evolução gradual, experimentação controlada e implantação segura de novas capacidades, preservando estabilidade e reduzindo riscos operacionais.
+O Feature Flags fornece um mecanismo flexível para controlar a disponibilidade de funcionalidades, componentes e comportamentos da Luci em tempo de execução. Ele permite evolução gradual, experimentação controlada e implantação segura de novas capacidades, preservando estabilidade e reduzindo riscos operacionais.
 
 ---
 

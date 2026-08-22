@@ -1,5 +1,5 @@
 /**
- * ChatMessage — Single message in the L.U.C.I. chat panel
+ * ChatMessage — Single message in the Luci chat panel
  *
  * Minimalist, no speech bubbles, no avatars.
  * Inspired by: Apple Intelligence, Linear, Arc Browser.

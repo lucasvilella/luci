@@ -327,7 +327,7 @@ O Engine Scheduler segue os princípios.
 
 # Definição
 
-O Engine Scheduler representa o componente responsável por organizar a execução dos Cognitive Cycles da L.U.C.I., equilibrando prioridade, políticas, recursos e concorrência para garantir uma plataforma responsiva, eficiente e escalável em qualquer ambiente de execução.
+O Engine Scheduler representa o componente responsável por organizar a execução dos Cognitive Cycles da Luci, equilibrando prioridade, políticas, recursos e concorrência para garantir uma plataforma responsiva, eficiente e escalável em qualquer ambiente de execução.
 
 ---
 

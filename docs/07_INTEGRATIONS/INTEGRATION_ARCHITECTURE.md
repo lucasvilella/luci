@@ -11,22 +11,22 @@ Related Documents:
 - TOOL_ENGINE.md
 - TOOL_REGISTRY.md
 - API_CONTRACTS.md
-Summary: A arquitetura de Integrações define como a L.U.C.I. se conecta a sistemas, dispositivos, plataformas e serviços externos.
+Summary: A arquitetura de Integrações define como a Luci se conecta a sistemas, dispositivos, plataformas e serviços externos.
 ---
 
 # INTEGRATION ARCHITECTURE
 
-> *"A L.U.C.I. não se integra a sistemas. Ela amplia sua percepção e capacidade de agir através deles."*
+> *"A Luci não se integra a sistemas. Ela amplia sua percepção e capacidade de agir através deles."*
 
 ---
 
 # Objetivo
 
-A arquitetura de Integrações define como a L.U.C.I. se conecta a sistemas, dispositivos, plataformas e serviços externos.
+A arquitetura de Integrações define como a Luci se conecta a sistemas, dispositivos, plataformas e serviços externos.
 
 Seu objetivo é permitir que novas integrações sejam adicionadas sem alterar a arquitetura cognitiva da plataforma.
 
-As integrações representam extensões das capacidades da L.U.C.I., nunca da sua inteligência.
+As integrações representam extensões das capacidades da Luci, nunca da sua inteligência.
 
 ---
 
@@ -34,7 +34,7 @@ As integrações representam extensões das capacidades da L.U.C.I., nunca da su
 
 A inteligência permanece no núcleo.
 
-As integrações apenas conectam a L.U.C.I. ao mundo externo.
+As integrações apenas conectam a Luci ao mundo externo.
 
 Toda decisão continua pertencendo aos Cognitive Engines.
 
@@ -290,11 +290,11 @@ Toda integração segue os princípios.
 
 # Definição
 
-A Integration Architecture define a camada responsável por conectar a L.U.C.I. ao mundo externo por meio de contratos padronizados, mantendo a inteligência desacoplada das tecnologias específicas e permitindo que novos sistemas, dispositivos e serviços sejam incorporados sem impacto na arquitetura cognitiva da plataforma.
+A Integration Architecture define a camada responsável por conectar a Luci ao mundo externo por meio de contratos padronizados, mantendo a inteligência desacoplada das tecnologias específicas e permitindo que novos sistemas, dispositivos e serviços sejam incorporados sem impacto na arquitetura cognitiva da plataforma.
 
 ---
 
-> **"As integrações expandem o alcance da L.U.C.I.; a inteligência continua sendo uma só."**
+> **"As integrações expandem o alcance da Luci; a inteligência continua sendo uma só."**
 
 ---
 

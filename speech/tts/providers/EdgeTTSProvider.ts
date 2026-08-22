@@ -1,7 +1,7 @@
 /**
  * EdgeTTSProvider.ts
  *
- * Microsoft Edge Neural TTS Provider for L.U.C.I.
+ * Microsoft Edge Neural TTS Provider for Luci
  * Ultra-fluent, natural, 100% native Brazilian Portuguese voice engine.
  * Zero cost, no API keys, fast response times.
  */
@@ -79,7 +79,7 @@ export class EdgeTTSProvider implements ITTSProvider {
       };
     } catch (error: any) {
       if (fs.existsSync(tempFile)) {
-        try { fs.unlinkSync(tempFile); } catch {}
+        try { fs.unlinkSync(tempFile); } catch { }
       }
       this.activeRequests.delete(options.requestId);
       throw new Error(`[EdgeTTSProvider] Synthesis failed: ${error.message}`);

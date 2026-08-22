@@ -11,18 +11,18 @@ Related Documents:
 - CONTEXT_CORE.md
 - CONVERSATION_ENGINE.md
 - TASK_COORDINATOR.md
-Summary: A Interface de Voz permite que usuários interajam com a L.U.C.I. através de conversação natural, contínua e contextual.
+Summary: A Interface de Voz permite que usuários interajam com a Luci através de conversação natural, contínua e contextual.
 ---
 
 # VOICE INTERFACE
 
-> *"A voz é a forma mais natural de conversar com a L.U.C.I."*
+> *"A voz é a forma mais natural de conversar com a Luci"*
 
 ---
 
 # Objetivo
 
-A Interface de Voz permite que usuários interajam com a L.U.C.I. através de conversação natural, contínua e contextual.
+A Interface de Voz permite que usuários interajam com a Luci através de conversação natural, contínua e contextual.
 
 Seu objetivo é transformar a comunicação por voz em uma experiência semelhante à conversa entre pessoas, preservando contexto, memória e continuidade.
 
@@ -34,7 +34,7 @@ A voz não representa comandos.
 
 Representa diálogo.
 
-A L.U.C.I. deve compreender intenção, contexto e continuidade sem exigir comandos rígidos.
+A Luci deve compreender intenção, contexto e continuidade sem exigir comandos rígidos.
 
 ---
 
@@ -196,7 +196,7 @@ Esses dados enriquecem o Context Core.
 
 # Natural Conversation
 
-A L.U.C.I. deve compreender:
+A Luci deve compreender:
 
 - referências anteriores;
 - pronomes;
@@ -312,7 +312,7 @@ A Interface de Voz segue os princípios.
 
 # Definição
 
-A Voice Interface representa a manifestação conversacional da L.U.C.I., permitindo interações por voz contínuas, naturais e contextualizadas. Ela transforma fala em diálogo, preservando identidade, contexto e Session, independentemente do dispositivo utilizado.
+A Voice Interface representa a manifestação conversacional da Luci, permitindo interações por voz contínuas, naturais e contextualizadas. Ela transforma fala em diálogo, preservando identidade, contexto e Session, independentemente do dispositivo utilizado.
 
 ---
 

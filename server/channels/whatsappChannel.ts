@@ -3,7 +3,7 @@
  *
  * WhatsApp Web bridge using @whiskeysockets/baileys and qrcode-terminal.
  * Displays QR Code in console for pairing.
- * Receives messages from WhatsApp and processes them via L.U.C.I.'s ModelRouter.
+ * Receives messages from WhatsApp and processes them via Luci's ModelRouter.
  */
 
 import { ModelRouter } from '../../core/orchestrator/ModelRouter';

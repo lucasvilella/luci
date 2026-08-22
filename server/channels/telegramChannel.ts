@@ -3,7 +3,7 @@
  *
  * Channel connector for Telegram Bot API using Telegraf.
  * Supports receiving text & voice messages from Telegram on mobile devices
- * and responding with text & voice notes using L.U.C.I.'s Cognitive ModelRouter & Memory.
+ * and responding with text & voice notes using Luci's Cognitive ModelRouter & Memory.
  */
 
 import { Telegraf } from 'telegraf';
@@ -39,7 +39,7 @@ export class TelegramChannel {
 
     // Command /start
     this.bot.command('start', async (ctx) => {
-      await ctx.reply('Olá! Sou a L.U.C.I. (Lógica Ubíqua de Consciência Integrada). Como posso te ajudar hoje?');
+      await ctx.reply('Olá! Sou a Luci (Lógica Ubíqua de Consciência Integrada). Como posso te ajudar hoje?');
     });
 
     // Handle Text Messages

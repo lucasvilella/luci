@@ -1,7 +1,7 @@
 /**
  * tool_router.ts
  *
- * Smart Tool Router for L.U.C.I. (Inspired by Jarvis Local Desktop & OpenJarvis)
+ * Smart Tool Router for Luci (Inspired by Jarvis Local Desktop & OpenJarvis)
  *
  * Filters available MCP servers and tools dynamically based on input relevance,
  * preventing context window saturation when hundreds of tools are installed.

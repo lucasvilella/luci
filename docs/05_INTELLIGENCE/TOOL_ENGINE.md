@@ -438,7 +438,7 @@ O Tool Engine segue os princípios:
 
 # Definição
 
-O Tool Engine representa a camada operacional da L.U.C.I., responsável por transformar capacidades solicitadas em execuções reais sobre ferramentas, dispositivos e serviços externos. Ele abstrai tecnologias específicas, padroniza resultados e garante que toda interação com o mundo externo ocorra de forma segura, consistente e auditável.
+O Tool Engine representa a camada operacional da Luci, responsável por transformar capacidades solicitadas em execuções reais sobre ferramentas, dispositivos e serviços externos. Ele abstrai tecnologias específicas, padroniza resultados e garante que toda interação com o mundo externo ocorra de forma segura, consistente e auditável.
 
 ---
 

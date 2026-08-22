@@ -12,7 +12,7 @@ Related Documents:
 - ENGINE_SCHEDULER.md
 - EVENT_ROUTER.md
 - FAILURE_RECOVERY.md
-Summary: O Cognitive Cycle representa a unidade operacional da L.U.C.I.
+Summary: O Cognitive Cycle representa a unidade operacional da Luci
 ---
 
 # COGNITIVE CYCLE
@@ -23,7 +23,7 @@ Summary: O Cognitive Cycle representa a unidade operacional da L.U.C.I.
 
 # Objetivo
 
-O Cognitive Cycle representa a unidade operacional da L.U.C.I.
+O Cognitive Cycle representa a unidade operacional da Luci
 
 Toda interação, evento, automação ou processo iniciado dentro da plataforma é executado como um Cognitive Cycle.
 
@@ -39,7 +39,7 @@ Uma Session representa um propósito.
 
 Um Cycle representa uma execução.
 
-Da mesma forma que um sistema operacional executa processos independentes, a L.U.C.I. executa Cognitive Cycles.
+Da mesma forma que um sistema operacional executa processos independentes, a Luci executa Cognitive Cycles.
 
 ---
 
@@ -507,7 +507,7 @@ O Cognitive Cycle segue os princípios.
 
 # Definição
 
-O Cognitive Cycle representa a unidade operacional da L.U.C.I.
+O Cognitive Cycle representa a unidade operacional da Luci
 
 Ele encapsula toda execução cognitiva, mantendo contexto temporário, estado, eventos e progresso enquanto coordena a passagem pelos Engines até a produção de um resultado. Ao término, preserva apenas as informações necessárias para aprendizado e auditoria, mantendo a Session íntegra e contínua.
 

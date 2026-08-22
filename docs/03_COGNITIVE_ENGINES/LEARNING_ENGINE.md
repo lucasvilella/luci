@@ -25,7 +25,7 @@ Summary: O Learning Engine é responsável por transformar experiências em evol
 
 O Learning Engine é responsável por transformar experiências em evolução cognitiva.
 
-Ele observa continuamente os ciclos da L.U.C.I., identifica padrões, seleciona informações relevantes e decide quando uma experiência deve se tornar memória, conhecimento ou apenas permanecer como contexto temporário.
+Ele observa continuamente os ciclos da Luci, identifica padrões, seleciona informações relevantes e decide quando uma experiência deve se tornar memória, conhecimento ou apenas permanecer como contexto temporário.
 
 Nenhum outro Engine altera diretamente a inteligência permanente do sistema.
 
@@ -37,7 +37,7 @@ Toda interação gera informação.
 
 Poucas geram aprendizado.
 
-A L.U.C.I. não busca memorizar tudo.
+A Luci não busca memorizar tudo.
 
 Ela busca evoluir continuamente sem perder clareza, coerência e eficiência.
 
@@ -434,7 +434,7 @@ O Learning Engine segue os princípios.
 
 # Definição
 
-O Learning Engine representa o mecanismo de evolução contínua da L.U.C.I.
+O Learning Engine representa o mecanismo de evolução contínua da Luci
 
 Ele observa todos os ciclos cognitivos, transforma experiências em memória, consolida padrões em conhecimento e garante que o Mega Brain evolua de forma consistente, rastreável e contextual ao longo do tempo.
 

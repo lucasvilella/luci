@@ -11,7 +11,7 @@ Related Documents:
 - WORKSPACE_CORE.md
 - CONTEXT_CORE.md
 - COGNITIVE_LOOP.md
-Summary: O Identity Core é responsável por representar, identificar e gerenciar todas as identidades que interagem com a L.U.C.I.
+Summary: O Identity Core é responsável por representar, identificar e gerenciar todas as identidades que interagem com a Luci
 ---
 
 # IDENTITY CORE
@@ -22,7 +22,7 @@ Summary: O Identity Core é responsável por representar, identificar e gerencia
 
 # Objetivo
 
-O Identity Core é responsável por representar, identificar e gerenciar todas as identidades que interagem com a L.U.C.I.
+O Identity Core é responsável por representar, identificar e gerenciar todas as identidades que interagem com a Luci
 
 Ele garante que cada pessoa possua sua própria história, memória, preferências, permissões e contexto, preservando privacidade e continuidade entre dispositivos.
 
@@ -32,7 +32,7 @@ A identidade é o ponto de entrada do Mega Brain.
 
 # Filosofia
 
-A L.U.C.I. não conversa com dispositivos.
+A Luci não conversa com dispositivos.
 
 Ela conversa com pessoas.
 
@@ -174,7 +174,7 @@ Desconhecido
 41%
 ```
 
-Quando a confiança estiver abaixo do limite configurado, a L.U.C.I. deve confirmar a identidade antes de acessar informações sensíveis.
+Quando a confiança estiver abaixo do limite configurado, a Luci deve confirmar a identidade antes de acessar informações sensíveis.
 
 ---
 
@@ -350,7 +350,7 @@ Toda operação sensível depende da identidade confirmada.
 
 Quando houver dúvida.
 
-A L.U.C.I. deve solicitar confirmação.
+A Luci deve solicitar confirmação.
 
 Exemplo.
 
@@ -400,7 +400,7 @@ Essas capacidades podem ser adicionadas sem alterar a arquitetura pública.
 
 # Definição
 
-O Identity Core representa todas as pessoas que interagem com a L.U.C.I.
+O Identity Core representa todas as pessoas que interagem com a Luci
 
 Ele garante que cada usuário possua sua própria continuidade cognitiva, preservando contexto, memória, privacidade e permissões em qualquer dispositivo, Workspace ou interface.
 

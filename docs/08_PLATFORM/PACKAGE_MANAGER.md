@@ -11,7 +11,7 @@ Related Documents:
 - INTEGRATION_MANAGER.md
 - TOOL_REGISTRY.md
 - FEATURE_FLAGS.md
-Summary: O Package Manager é responsável por instalar, atualizar, remover e gerenciar todos os pacotes distribuíveis da L.U.C.I.
+Summary: O Package Manager é responsável por instalar, atualizar, remover e gerenciar todos os pacotes distribuíveis da Luci
 ---
 
 # PACKAGE MANAGER
@@ -22,7 +22,7 @@ Summary: O Package Manager é responsável por instalar, atualizar, remover e ge
 
 # Objetivo
 
-O Package Manager é responsável por instalar, atualizar, remover e gerenciar todos os pacotes distribuíveis da L.U.C.I.
+O Package Manager é responsável por instalar, atualizar, remover e gerenciar todos os pacotes distribuíveis da Luci
 
 Ele atua como o sistema oficial de distribuição da plataforma, garantindo consistência, compatibilidade e segurança durante todo o ciclo de vida dos Packages.
 
@@ -266,7 +266,7 @@ O Package Manager segue os princípios:
 
 # Definição
 
-O Package Manager é o sistema oficial de distribuição da L.U.C.I., responsável por instalar e gerenciar pacotes compostos por componentes reutilizáveis da plataforma. Ele garante compatibilidade, segurança, versionamento e integridade durante todo o ciclo de vida dos Packages, permitindo que o ecossistema evolua de forma organizada e previsível.
+O Package Manager é o sistema oficial de distribuição da Luci, responsável por instalar e gerenciar pacotes compostos por componentes reutilizáveis da plataforma. Ele garante compatibilidade, segurança, versionamento e integridade durante todo o ciclo de vida dos Packages, permitindo que o ecossistema evolua de forma organizada e previsível.
 
 ---
 

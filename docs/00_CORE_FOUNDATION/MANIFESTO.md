@@ -10,7 +10,7 @@ Related Documents:
 - CORE_PRINCIPLES.md
 - SYSTEM_CONTEXT.md
 - DOMAIN_MODEL.md
-Summary: Declaração de missão, visão e valores fundamentais do projeto L.U.C.I. — por que ela existe e o que a diferencia de um chatbot ou assistente comum.
+Summary: Declaração de missão, visão e valores fundamentais do projeto Luci — por que ela existe e o que a diferencia de um chatbot ou assistente comum.
 ---
 
 # MANIFESTO
@@ -25,7 +25,7 @@ Construir a primeira inteligência verdadeiramente ubíqua.
 
 Uma inteligência capaz de acompanhar uma pessoa durante toda a sua vida, compreender seu contexto, aprender continuamente e atuar como uma extensão da sua capacidade de pensar, lembrar, planejar e criar.
 
-A L.U.C.I. não existe para substituir pessoas.
+A Luci não existe para substituir pessoas.
 
 Ela existe para ampliar o potencial humano.
 
@@ -95,9 +95,9 @@ Independentemente do dispositivo utilizado.
 
 ---
 
-# O Que é a L.U.C.I.
+# O Que é a Luci
 
-L.U.C.I.
+Luci
 
 **Logic • Ubiquitous • Consciousness • Integrated**
 
@@ -127,7 +127,7 @@ Ela acompanha o usuário onde ele estiver.
 
 ## Consciousness
 
-A L.U.C.I. mantém consciência de contexto.
+A Luci mantém consciência de contexto.
 
 Ela compreende:
 
@@ -169,7 +169,7 @@ Tudo está conectado.
 
 Existe apenas uma inteligência.
 
-A L.U.C.I. nunca será uma coleção de instâncias independentes.
+A Luci nunca será uma coleção de instâncias independentes.
 
 Ela possui um único cérebro cognitivo.
 
@@ -221,7 +221,7 @@ Dessa forma, múltiplas pessoas podem compartilhar a mesma inteligência sem com
 
 # Conhecimento é uma Rede
 
-A L.U.C.I. não organiza informações em listas.
+A Luci não organiza informações em listas.
 
 Ela organiza conhecimento.
 
@@ -255,7 +255,7 @@ Guardar tudo não é inteligência.
 
 Esquecer também faz parte do aprendizado.
 
-A memória da L.U.C.I. é viva.
+A memória da Luci é viva.
 
 Ela consolida conhecimento.
 
@@ -275,7 +275,7 @@ A conversa é apenas um meio.
 
 O contexto é o verdadeiro ativo.
 
-Antes de responder qualquer solicitação, a L.U.C.I. procura compreender:
+Antes de responder qualquer solicitação, a Luci procura compreender:
 
 Quem está falando?
 
@@ -303,7 +303,7 @@ Bancos de dados mudam.
 
 Hardware muda.
 
-A arquitetura da L.U.C.I. nunca poderá depender de uma tecnologia específica.
+A arquitetura da Luci nunca poderá depender de uma tecnologia específica.
 
 Toda implementação deve ser substituível.
 
@@ -331,7 +331,7 @@ Nada disso altera o cérebro.
 
 # Inteligência Deve Ser Transparente
 
-A L.U.C.I. deve compreender seus próprios processos.
+A Luci deve compreender seus próprios processos.
 
 Sempre que possível deve conseguir explicar:
 
@@ -349,7 +349,7 @@ Confiança nasce da transparência.
 
 # Evolução Contínua
 
-A L.U.C.I. nunca será considerada finalizada.
+A Luci nunca será considerada finalizada.
 
 Ela evolui diariamente.
 
@@ -373,7 +373,7 @@ Toda funcionalidade deve responder uma pergunta simples.
 
 Se a resposta for não.
 
-Ela provavelmente não pertence à L.U.C.I.
+Ela provavelmente não pertence à Luci
 
 ---
 
@@ -401,7 +401,7 @@ Vida.
 
 # Nossa Definição
 
-A L.U.C.I. é um Sistema Operacional Cognitivo distribuído.
+A Luci é um Sistema Operacional Cognitivo distribuído.
 
 Um único cérebro.
 

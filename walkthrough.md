@@ -1,6 +1,6 @@
 # Walkthrough: Integração Multicanal (WhatsApp & Telegram) + Resposta por Voz em Áudio
 
-A **L.U.C.I.** agora é um **Assistente Cognitivo Multicanal**, capaz de responder a você no aplicativo de desktop, no **Telegram** e no **WhatsApp**, enviando mensagens de texto e respostas em **voz gerada (.mp3 / .ogg)** diretamente no chat do seu celular!
+A **Luci** agora é um **Assistente Cognitivo Multicanal**, capaz de responder a você no aplicativo de desktop, no **Telegram** e no **WhatsApp**, enviando mensagens de texto e respostas em **voz gerada (.mp3 / .ogg)** diretamente no chat do seu celular!
 
 ---
 
@@ -8,7 +8,7 @@ A **L.U.C.I.** agora é um **Assistente Cognitivo Multicanal**, capaz de respond
 
 ### 1. Serviço de Síntese de Áudio para Mensagens de Voz (`audioSynthesisService.ts`)
 - Gera arquivos de áudio `.mp3` locais em `storage/audio/` a partir de qualquer texto de resposta.
-- Permite que a L.U.C.I. responda a você por nota de voz tanto no Telegram quanto no WhatsApp.
+- Permite que a Luci responda a você por nota de voz tanto no Telegram quanto no WhatsApp.
 
 ### 2. Conector do Telegram (`telegramChannel.ts`)
 - Integrado via `Telegraf`.

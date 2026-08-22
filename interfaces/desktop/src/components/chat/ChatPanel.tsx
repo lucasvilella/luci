@@ -1,5 +1,5 @@
 /**
- * ChatPanel — The L.U.C.I. conversation panel
+ * ChatPanel — The Luci conversation panel
  *
  * Occupies ~30% of the screen width on the right side.
  * Glassmorphism background, smooth scrolling, minimalist design.
@@ -81,7 +81,7 @@ class AudioPlayerQueue {
       try {
         this.currentSourceNode.stop();
         this.currentSourceNode.disconnect();
-      } catch {}
+      } catch { }
       this.currentSourceNode = null;
     }
     this.isPlaying = false;
@@ -146,7 +146,7 @@ export function stopAllSpeech() {
   if ('speechSynthesis' in window) {
     try {
       window.speechSynthesis.cancel();
-    } catch {}
+    } catch { }
   }
 }
 

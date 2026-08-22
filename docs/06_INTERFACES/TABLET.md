@@ -11,18 +11,18 @@ Related Documents:
 - COGNITIVE_SESSION.md
 - CONTEXT_CORE.md
 - EVENT_ROUTER.md
-Summary: A Interface Tablet foi projetada para ambientes compartilhados, permitindo que múltiplos usuários utilizem a mesma instância física da L.U.C.I. com segurança, privacidade e continuidade.
+Summary: A Interface Tablet foi projetada para ambientes compartilhados, permitindo que múltiplos usuários utilizem a mesma instância física da Luci com segurança, privacidade e continuidade.
 ---
 
 # TABLET INTERFACE
 
-> *"O Tablet é a presença compartilhada da L.U.C.I., oferecendo uma experiência personalizada para cada pessoa sem deixar de ser um dispositivo coletivo."*
+> *"O Tablet é a presença compartilhada da Luci, oferecendo uma experiência personalizada para cada pessoa sem deixar de ser um dispositivo coletivo."*
 
 ---
 
 # Objetivo
 
-A Interface Tablet foi projetada para ambientes compartilhados, permitindo que múltiplos usuários utilizem a mesma instância física da L.U.C.I. com segurança, privacidade e continuidade.
+A Interface Tablet foi projetada para ambientes compartilhados, permitindo que múltiplos usuários utilizem a mesma instância física da Luci com segurança, privacidade e continuidade.
 
 Seu principal papel é servir como um ponto central de interação em casas, escritórios, laboratórios e salas de reunião.
 
@@ -34,7 +34,7 @@ O Tablet pertence ao ambiente.
 
 Não ao usuário.
 
-A L.U.C.I. adapta automaticamente a experiência conforme a Identity ativa, preservando a privacidade de cada pessoa.
+A Luci adapta automaticamente a experiência conforme a Identity ativa, preservando a privacidade de cada pessoa.
 
 Existe uma única inteligência.
 
@@ -67,7 +67,7 @@ Session
 
 ↓
 
-L.U.C.I.
+Luci
 ```
 
 ---
@@ -169,7 +169,7 @@ Cada painel respeita as permissões da Identity.
 
 # Family Experience
 
-A mesma L.U.C.I. responde de maneira diferente para cada pessoa.
+A mesma Luci responde de maneira diferente para cada pessoa.
 
 Exemplo.
 
@@ -365,7 +365,7 @@ A Interface Tablet segue os princípios:
 
 # Definição
 
-A Interface Tablet representa o principal ponto de interação compartilhado da L.U.C.I., permitindo que diferentes pessoas utilizem a mesma inteligência de forma segura, personalizada e contínua. Ela adapta automaticamente a experiência conforme a Identity ativa, preservando contexto, privacidade e acesso aos recursos do Sistema Operacional Cognitivo.
+A Interface Tablet representa o principal ponto de interação compartilhado da Luci, permitindo que diferentes pessoas utilizem a mesma inteligência de forma segura, personalizada e contínua. Ela adapta automaticamente a experiência conforme a Identity ativa, preservando contexto, privacidade e acesso aos recursos do Sistema Operacional Cognitivo.
 
 ---
 

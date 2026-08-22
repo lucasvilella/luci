@@ -1,5 +1,5 @@
 /**
- * L.U.C.I. Orb Animation Engine
+ * Luci Orb Animation Engine
  *
  * Declares animation parameters for each External State matching futuristic reference visual designs.
  */
@@ -108,10 +108,10 @@ export function lerpParams(
     a: [number, number, number],
     b: [number, number, number],
   ): [number, number, number] => [
-    lerpNum(a[0], b[0]),
-    lerpNum(a[1], b[1]),
-    lerpNum(a[2], b[2]),
-  ];
+      lerpNum(a[0], b[0]),
+      lerpNum(a[1], b[1]),
+      lerpNum(a[2], b[2]),
+    ];
 
   return {
     noiseFrequency: lerpNum(from.noiseFrequency, to.noiseFrequency),

@@ -1,7 +1,7 @@
 """
 f5_tts_server.py
 
-High-performance F5-TTS FastAPI service for L.U.C.I.
+High-performance F5-TTS FastAPI service for Luci
 Replaces XTTS-v2 with 5-10x faster inference while maintaining voice cloning quality.
 
 Features:
@@ -51,7 +51,7 @@ from pydantic import BaseModel
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-app = FastAPI(title="L.U.C.I. F5-TTS Official Voice Service")
+app = FastAPI(title="Luci F5-TTS Official Voice Service")
 
 # ─── Global State ───
 f5_model = None

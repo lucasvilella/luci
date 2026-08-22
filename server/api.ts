@@ -57,10 +57,10 @@ app.post('/api/chat', async (req, res) => {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
-      
+
       // Flush headers
       res.flushHeaders();
-      
+
       // Send metadata first
       res.write(`data: ${JSON.stringify({ type: 'REASONING', latencyMs: result.latencyMs })}\n\n`);
 
@@ -179,5 +179,5 @@ app.get('/api/brasil/holidays/:year', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`L.U.C.I. Backend API running at http://localhost:${port}`);
+  console.log(`Luci Backend API running at http://localhost:${port}`);
 });

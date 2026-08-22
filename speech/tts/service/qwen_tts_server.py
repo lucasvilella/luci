@@ -14,7 +14,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
-app = FastAPI(title="L.U.C.I. Qwen3-TTS 0.6B Local Service")
+app = FastAPI(title="Luci Qwen3-TTS 0.6B Local Service")
 
 class TTSRequest(BaseModel):
     text: str

@@ -1,7 +1,7 @@
 /**
- * L.U.C.I. Orb State Machine — Types
+ * Luci Orb State Machine — Types
  *
- * These types represent the External State layer of the L.U.C.I. State Machine.
+ * These types represent the External State layer of the Luci State Machine.
  * Reference: docs/01_ARCHITECTURE/STATE_MACHINE.md
  *
  * External States are what the user perceives.

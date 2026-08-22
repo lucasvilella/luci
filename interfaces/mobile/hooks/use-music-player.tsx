@@ -10,29 +10,39 @@ import {
   useState,
   type ReactNode,
 } from "react"
-import type { DeezerTrack } from "@/lib/deezer"
-import { formatDuration } from "@/lib/deezer"
+import {
+  type LuciTrack,
+  type LyricsData,
+  formatSeconds,
+  fetchLyrics,
+  fetchRadioTracks,
+  toggleLikeTrack,
+  fetchLikedTracks,
+  recordTrackPlayed,
+} from "@/lib/lucimusic"
 
-// ─── Types ───────────────────────────────────────────────────────────
+// ─── Tipos ───────────────────────────────────────────────────────────
 
-type RepeatMode = "off" | "all" | "one"
+export type RepeatMode = "off" | "all" | "one"
 
-type MusicPlayerState = {
-  currentTrack: DeezerTrack | null
-  queue: DeezerTrack[]
+export type MusicPlayerState = {
+  currentTrack: LuciTrack | null
+  queue: LuciTrack[]
   queueIndex: number
   isPlaying: boolean
   isLoading: boolean
-  progress: number       // current time in seconds
-  duration: number       // total duration in seconds
-  volume: number         // 0-1
+  progress: number       // tempo atual em segundos
+  duration: number       // duração total em segundos
+  volume: number         // 0..1
   shuffle: boolean
   repeat: RepeatMode
-  liked: Set<number>     // track IDs
+  likedIds: Set<string>  // IDs das músicas curtidas
+  lyrics: LyricsData | null
+  loadingLyrics: boolean
 }
 
-type MusicPlayerActions = {
-  playTrack: (track: DeezerTrack, context?: DeezerTrack[]) => void
+export type MusicPlayerActions = {
+  playTrack: (track: LuciTrack, contextQueue?: LuciTrack[]) => void
   togglePlay: () => void
   pause: () => void
   resume: () => void
@@ -42,290 +52,342 @@ type MusicPlayerActions = {
   setVolume: (v: number) => void
   toggleShuffle: () => void
   toggleRepeat: () => void
-  toggleLike: (trackId: number) => void
-  isLiked: (trackId: number) => boolean
+  toggleLike: (track: LuciTrack) => Promise<void>
+  isLiked: (trackId: string) => boolean
   formatTime: (s: number) => string
+  addToQueue: (track: LuciTrack) => void
+  removeFromQueue: (index: number) => void
+  loadLyricsForCurrent: () => Promise<void>
 }
 
-type MusicPlayerContextValue = MusicPlayerState & MusicPlayerActions
+export type MusicPlayerContextValue = MusicPlayerState & MusicPlayerActions
 
-// ─── Context ─────────────────────────────────────────────────────────
+// ─── Contexto ─────────────────────────────────────────────────────────
 
 const MusicPlayerContext = createContext<MusicPlayerContextValue | null>(null)
 
-// ─── Helpers ─────────────────────────────────────────────────────────
-
-const LIKED_KEY = "luci.music.liked"
-const VOLUME_KEY = "luci.music.volume"
-
-function loadLiked(): Set<number> {
-  if (typeof window === "undefined") return new Set()
-  try {
-    const raw = localStorage.getItem(LIKED_KEY)
-    return raw ? new Set(JSON.parse(raw)) : new Set()
-  } catch {
-    return new Set()
+declare global {
+  interface Window {
+    YT: any
+    onYouTubeIframeAPIReady: () => void
   }
 }
-
-function saveLiked(liked: Set<number>) {
-  localStorage.setItem(LIKED_KEY, JSON.stringify([...liked]))
-}
-
-function loadVolume(): number {
-  if (typeof window === "undefined") return 0.8
-  try {
-    const v = localStorage.getItem(VOLUME_KEY)
-    return v ? parseFloat(v) : 0.8
-  } catch {
-    return 0.8
-  }
-}
-
-async function fetchAudioUrl(track: DeezerTrack): Promise<{ url: string; duration?: number }> {
-  const key = `${track.artist.name} - ${track.title}`
-  const cached = audioUrlCache.get(key)
-  if (cached) return { url: cached }
-
-  try {
-    const res = await fetch(`/api/music/stream?q=${encodeURIComponent(key)}`)
-    if (res.ok) {
-      const data = await res.json()
-      if (data.url && data.url.startsWith("http")) {
-        audioUrlCache.set(key, data.url)
-        return { url: data.url, duration: data.duration }
-      }
-    }
-  } catch (err) {
-    console.warn("[MusicPlayer] yt-dlp stream fetch failed:", err)
-  }
-
-  // Fallback to Deezer preview only if yt-dlp totally fails
-  return { url: track.preview || "", duration: 30 }
-}
-
-// ─── Provider ────────────────────────────────────────────────────────
 
 export function MusicPlayerProvider({ children }: { children: ReactNode }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const [currentTrack, setCurrentTrack] = useState<DeezerTrack | null>(null)
-  const [queue, setQueue] = useState<DeezerTrack[]>([])
-  const [queueIndex, setQueueIndex] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolumeState] = useState(0.8)
-  const [shuffle, setShuffle] = useState(false)
+  const [currentTrack, setCurrentTrack] = useState<LuciTrack | null>(null)
+  const [queue, setQueue] = useState<LuciTrack[]>([])
+  const [queueIndex, setQueueIndex] = useState<number>(-1)
+  const [isPlaying, setIsPlaying] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [progress, setProgress] = useState<number>(0)
+  const [duration, setDuration] = useState<number>(0)
+  const [volume, setVolumeState] = useState<number>(1)
+  const [shuffle, setShuffle] = useState<boolean>(false)
   const [repeat, setRepeat] = useState<RepeatMode>("off")
-  const [liked, setLiked] = useState<Set<number>>(new Set())
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
+  const [lyrics, setLyrics] = useState<LyricsData | null>(null)
+  const [loadingLyrics, setLoadingLyrics] = useState<boolean>(false)
 
-  // Initialize on mount
+  const originalQueueRef = useRef<LuciTrack[]>([])
+  const ytPlayerRef = useRef<any>(null)
+  const isPlayerReadyRef = useRef<boolean>(false)
+  const progressIntervalRef = useRef<any>(null)
+
+  // ─── 1. Inicializar YouTube IFrame Player (SimpMusic Engine Oficial) ───
   useEffect(() => {
-    setLiked(loadLiked())
-    setVolumeState(loadVolume())
+    // Carrega script do YouTube IFrame API se ainda não existir
+    if (!document.getElementById("yt-iframe-api")) {
+      const tag = document.createElement("script")
+      tag.id = "yt-iframe-api"
+      tag.src = "https://www.youtube.com/iframe_api"
+      const firstScriptTag = document.getElementsByTagName("script")[0]
+      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag)
+    }
 
-    const audio = new Audio()
-    audio.preload = "auto"
-    audioRef.current = audio
+    const initPlayer = () => {
+      if (window.YT && window.YT.Player) {
+        ytPlayerRef.current = new window.YT.Player("youtube-audio-engine", {
+          height: "1",
+          width: "1",
+          playerVars: {
+            autoplay: 1,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            playsinline: 1,
+            rel: 0,
+            origin: window.location.origin,
+          },
+          events: {
+            onReady: () => {
+              isPlayerReadyRef.current = true
+            },
+            onStateChange: (event: any) => {
+              // 1 = PLAYING, 2 = PAUSED, 0 = ENDED, 3 = BUFFERING
+              if (event.data === 1) {
+                setIsPlaying(true)
+                setIsLoading(false)
+                if (ytPlayerRef.current?.getDuration) {
+                  const d = ytPlayerRef.current.getDuration()
+                  if (d > 0) setDuration(d)
+                }
+              } else if (event.data === 2) {
+                setIsPlaying(false)
+              } else if (event.data === 3) {
+                setIsLoading(true)
+              } else if (event.data === 0) {
+                handleTrackEnded()
+              }
+            },
+            onError: (err: any) => {
+              console.error("[SimpMusic Engine] Erro no reprodutor:", err)
+              setIsLoading(false)
+              setIsPlaying(false)
+            },
+          },
+        })
+      }
+    }
+
+    if (window.YT && window.YT.Player) {
+      initPlayer()
+    } else {
+      window.onYouTubeIframeAPIReady = initPlayer
+    }
+
+    // Intervalo suave de atualização do progresso (a cada 250ms)
+    progressIntervalRef.current = setInterval(() => {
+      if (ytPlayerRef.current && isPlayerReadyRef.current) {
+        try {
+          if (typeof ytPlayerRef.current.getCurrentTime === "function") {
+            const cur = ytPlayerRef.current.getCurrentTime()
+            if (typeof cur === "number" && !isNaN(cur)) {
+              setProgress(cur)
+            }
+          }
+          if (typeof ytPlayerRef.current.getDuration === "function") {
+            const dur = ytPlayerRef.current.getDuration()
+            if (typeof dur === "number" && dur > 0) {
+              setDuration(dur)
+            }
+          }
+        } catch {}
+      }
+    }, 250)
+
+    // Carregar curtidas iniciais
+    fetchLikedTracks().then((tracks) => {
+      setLikedIds(new Set(tracks.map((t) => t.id)))
+    }).catch(() => {})
 
     return () => {
-      audio.pause()
-      audio.src = ""
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current)
+      try {
+        ytPlayerRef.current?.destroy()
+      } catch {}
     }
   }, [])
 
-  // Sync volume
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = volume
-    localStorage.setItem(VOLUME_KEY, String(volume))
-  }, [volume])
-
-  const loadAndPlay = useCallback(async (track: DeezerTrack) => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    setCurrentTrack(track)
+  // ─── 2. Reproduzir Faixa ───
+  const playTrack = useCallback(async (track: LuciTrack, contextQueue?: LuciTrack[]) => {
     setIsLoading(true)
+    setCurrentTrack(track)
+    setLyrics(null)
     setProgress(0)
+    setDuration(track.duration || 0)
 
-    try {
-      const res = await fetchAudioUrl(track)
-      if (!res.url) throw new Error("No stream URL returned")
-      audio.src = res.url
-      audio.load()
-      if (res.duration && res.duration > 30) {
-        setDuration(res.duration)
-      }
-      await audio.play()
-    } catch (err) {
-      console.error("[MusicPlayer] playback error:", err)
-      if (track.preview) {
-        audio.src = track.preview
-        audio.load()
-        audio.play().catch(() => {})
-      }
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  const playTrack = useCallback((track: DeezerTrack, context?: DeezerTrack[]) => {
-    if (context) {
-      setQueue(context)
-      const idx = context.findIndex((t) => t.id === track.id)
+    // Fila
+    if (contextQueue && contextQueue.length > 0) {
+      originalQueueRef.current = contextQueue
+      const idx = contextQueue.findIndex((t) => t.id === track.id)
+      setQueue(contextQueue)
       setQueueIndex(idx >= 0 ? idx : 0)
-    }
-    loadAndPlay(track)
-  }, [loadAndPlay])
-
-  const togglePlay = useCallback(() => {
-    const audio = audioRef.current
-    if (!audio) return
-    if (audio.paused) {
-      audio.play().catch(() => {})
     } else {
-      audio.pause()
+      setQueue([track])
+      setQueueIndex(0)
+      originalQueueRef.current = [track]
+
+      fetchRadioTracks(track.id).then((related) => {
+        if (related.length > 0) {
+          setQueue((prev) => [...prev, ...related])
+          originalQueueRef.current = [...originalQueueRef.current, ...related]
+        }
+      }).catch(() => {})
     }
-  }, [])
 
-  const pause = useCallback(() => {
-    audioRef.current?.pause()
-  }, [])
+    recordTrackPlayed(track)
 
-  const queueRef = useRef<DeezerTrack[]>([])
-  const queueIndexRef = useRef<number>(0)
-  const shuffleRef = useRef<boolean>(false)
-  const repeatRef = useRef<RepeatMode>("off")
-
-  useEffect(() => {
-    queueRef.current = queue
-  }, [queue])
-
-  useEffect(() => {
-    queueIndexRef.current = queueIndex
-  }, [queueIndex])
-
-  useEffect(() => {
-    shuffleRef.current = shuffle
-  }, [shuffle])
-
-  useEffect(() => {
-    repeatRef.current = repeat
-  }, [repeat])
-
-  const resume = useCallback(() => {
-    audioRef.current?.play().catch(() => {})
-  }, [])
-
-  const nextTrack = useCallback(() => {
-    const q = queueRef.current
-    const curIdx = queueIndexRef.current
-    if (q.length === 0) return
-
-    let nextIdx: number
-    if (shuffleRef.current) {
-      nextIdx = Math.floor(Math.random() * q.length)
-    } else {
-      nextIdx = curIdx + 1
-      if (nextIdx >= q.length) {
-        nextIdx = 0 // loop back to first song in playlist
-      }
-    }
-    setQueueIndex(nextIdx)
-    queueIndexRef.current = nextIdx
-    loadAndPlay(q[nextIdx])
-  }, [loadAndPlay])
-
-  const nextTrackRef = useRef(nextTrack)
-  useEffect(() => {
-    nextTrackRef.current = nextTrack
-  }, [nextTrack])
-
-  // Audio event listeners
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    const onTimeUpdate = () => setProgress(audio.currentTime)
-    const onDurationChange = () => setDuration(audio.duration || 0)
-    const onEnded = () => {
-      if (repeatRef.current === "one") {
-        audio.currentTime = 0
-        audio.play().catch(() => {})
+    // Tocar no player oficial
+    const startPlay = () => {
+      if (ytPlayerRef.current && typeof ytPlayerRef.current.loadVideoById === "function") {
+        ytPlayerRef.current.loadVideoById(track.id)
+        ytPlayerRef.current.playVideo()
+        setIsPlaying(true)
       } else {
-        // Automatically play the next song!
-        nextTrackRef.current()
+        setTimeout(startPlay, 200)
       }
     }
-    const onPlay = () => setIsPlaying(true)
-    const onPause = () => setIsPlaying(false)
-    const onWaiting = () => setIsLoading(true)
-    const onCanPlay = () => setIsLoading(false)
+    startPlay()
 
-    audio.addEventListener("timeupdate", onTimeUpdate)
-    audio.addEventListener("durationchange", onDurationChange)
-    audio.addEventListener("ended", onEnded)
-    audio.addEventListener("play", onPlay)
-    audio.addEventListener("pause", onPause)
-    audio.addEventListener("waiting", onWaiting)
-    audio.addEventListener("canplay", onCanPlay)
-
-    return () => {
-      audio.removeEventListener("timeupdate", onTimeUpdate)
-      audio.removeEventListener("durationchange", onDurationChange)
-      audio.removeEventListener("ended", onEnded)
-      audio.removeEventListener("play", onPlay)
-      audio.removeEventListener("pause", onPause)
-      audio.removeEventListener("waiting", onWaiting)
-      audio.removeEventListener("canplay", onCanPlay)
-    }
+    // Letras
+    fetchLyrics(track.id, track.title, track.artist, track.duration)
+      .then((l) => setLyrics(l))
+      .catch(() => {})
   }, [])
 
-  const prev = useCallback(() => {
-    const audio = audioRef.current
-    // If more than 3s in, restart current track
-    if (audio && audio.currentTime > 3) {
-      audio.currentTime = 0
+  // ─── 3. Próxima / Fim de Faixa ───
+  const handleTrackEnded = useCallback(() => {
+    if (repeat === "one") {
+      if (ytPlayerRef.current?.seekTo) {
+        ytPlayerRef.current.seekTo(0, true)
+        ytPlayerRef.current.playVideo()
+      }
       return
     }
-    if (queue.length === 0) return
-    let prevIdx = queueIndex - 1
-    if (prevIdx < 0) {
-      if (repeat === "all") prevIdx = queue.length - 1
-      else prevIdx = 0
-    }
-    setQueueIndex(prevIdx)
-    loadAndPlay(queue[prevIdx])
-  }, [queue, queueIndex, repeat, loadAndPlay])
 
-  const seek = useCallback((seconds: number) => {
-    if (audioRef.current) audioRef.current.currentTime = seconds
+    if (queueIndex < queue.length - 1) {
+      const nextIdx = queueIndex + 1
+      setQueueIndex(nextIdx)
+      playTrack(queue[nextIdx], queue)
+    } else if (repeat === "all" && queue.length > 0) {
+      setQueueIndex(0)
+      playTrack(queue[0], queue)
+    } else {
+      setIsPlaying(false)
+    }
+  }, [queueIndex, queue, repeat, playTrack])
+
+  const next = useCallback(() => {
+    if (queue.length === 0) return
+    if (queueIndex < queue.length - 1) {
+      const nextIdx = queueIndex + 1
+      setQueueIndex(nextIdx)
+      playTrack(queue[nextIdx], queue)
+    } else if (repeat === "all") {
+      setQueueIndex(0)
+      playTrack(queue[0], queue)
+    }
+  }, [queue, queueIndex, repeat, playTrack])
+
+  const prev = useCallback(() => {
+    if (progress > 3 && ytPlayerRef.current?.seekTo) {
+      ytPlayerRef.current.seekTo(0, true)
+      setProgress(0)
+      return
+    }
+    if (queueIndex > 0) {
+      const prevIdx = queueIndex - 1
+      setQueueIndex(prevIdx)
+      playTrack(queue[prevIdx], queue)
+    } else if (ytPlayerRef.current?.seekTo) {
+      ytPlayerRef.current.seekTo(0, true)
+      setProgress(0)
+    }
+  }, [progress, queue, queueIndex, playTrack])
+
+  const togglePlay = useCallback(() => {
+    if (!ytPlayerRef.current) return
+    if (isPlaying) {
+      ytPlayerRef.current.pauseVideo()
+      setIsPlaying(false)
+    } else {
+      ytPlayerRef.current.playVideo()
+      setIsPlaying(true)
+    }
+  }, [isPlaying])
+
+  const pause = useCallback(() => {
+    ytPlayerRef.current?.pauseVideo()
+    setIsPlaying(false)
+  }, [])
+
+  const resume = useCallback(() => {
+    ytPlayerRef.current?.playVideo()
+    setIsPlaying(true)
+  }, [])
+
+  const seek = useCallback((secs: number) => {
+    if (ytPlayerRef.current?.seekTo) {
+      ytPlayerRef.current.seekTo(secs, true)
+      setProgress(secs)
+    }
   }, [])
 
   const setVolume = useCallback((v: number) => {
-    setVolumeState(Math.max(0, Math.min(1, v)))
+    const clamped = Math.max(0, Math.min(1, v))
+    setVolumeState(clamped)
+    if (ytPlayerRef.current?.setVolume) {
+      ytPlayerRef.current.setVolume(clamped * 100)
+    }
   }, [])
 
-  const toggleShuffle = useCallback(() => setShuffle((s) => !s), [])
+  const toggleShuffle = useCallback(() => {
+    setShuffle((prev) => {
+      const nextShuffle = !prev
+      if (nextShuffle) {
+        if (queue.length > 1 && currentTrack) {
+          const rest = queue.filter((t) => t.id !== currentTrack.id)
+          const shuffled = [...rest].sort(() => Math.random() - 0.5)
+          setQueue([currentTrack, ...shuffled])
+          setQueueIndex(0)
+        }
+      } else {
+        setQueue(originalQueueRef.current)
+        if (currentTrack) {
+          const idx = originalQueueRef.current.findIndex((t) => t.id === currentTrack.id)
+          setQueueIndex(idx >= 0 ? idx : 0)
+        }
+      }
+      return nextShuffle
+    })
+  }, [queue, currentTrack])
 
   const toggleRepeat = useCallback(() => {
-    setRepeat((r) => (r === "off" ? "all" : r === "all" ? "one" : "off"))
+    setRepeat((prev) => (prev === "off" ? "all" : prev === "all" ? "one" : "off"))
   }, [])
 
-  const toggleLike = useCallback((trackId: number) => {
-    setLiked((prev) => {
-      const next = new Set(prev)
-      if (next.has(trackId)) next.delete(trackId)
-      else next.add(trackId)
-      saveLiked(next)
-      return next
+  const toggleLike = useCallback(async (track: LuciTrack) => {
+    const liked = likedIds.has(track.id)
+    setLikedIds((prev) => {
+      const nextSet = new Set(prev)
+      if (liked) nextSet.delete(track.id)
+      else nextSet.add(track.id)
+      return nextSet
     })
+    try {
+      await toggleLikeTrack(track, liked)
+    } catch {
+      setLikedIds((prev) => {
+        const revert = new Set(prev)
+        if (liked) revert.add(track.id)
+        else revert.delete(track.id)
+        return revert
+      })
+    }
+  }, [likedIds])
+
+  const isLiked = useCallback((id: string) => likedIds.has(id), [likedIds])
+
+  const addToQueue = useCallback((track: LuciTrack) => {
+    setQueue((prev) => [...prev, track])
   }, [])
 
-  const isLiked = useCallback((trackId: number) => liked.has(trackId), [liked])
+  const removeFromQueue = useCallback((idx: number) => {
+    setQueue((prev) => prev.filter((_, i) => i !== idx))
+  }, [])
 
-  // ─── Context Value ───────────────────────────────────────────────
+  const loadLyricsForCurrent = useCallback(async () => {
+    if (!currentTrack) return
+    setLoadingLyrics(true)
+    try {
+      const l = await fetchLyrics(currentTrack.id, currentTrack.title, currentTrack.artist, currentTrack.duration)
+      setLyrics(l)
+    } finally {
+      setLoadingLyrics(false)
+    }
+  }, [currentTrack])
+
+  const formatTime = useCallback((s: number) => formatSeconds(s), [])
 
   const value = useMemo<MusicPlayerContextValue>(
     () => ({
@@ -339,12 +401,14 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       volume,
       shuffle,
       repeat,
-      liked,
+      likedIds,
+      lyrics,
+      loadingLyrics,
       playTrack,
       togglePlay,
       pause,
       resume,
-      next: nextTrack,
+      next,
       prev,
       seek,
       setVolume,
@@ -352,27 +416,71 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       toggleRepeat,
       toggleLike,
       isLiked,
-      formatTime: formatDuration,
+      formatTime,
+      addToQueue,
+      removeFromQueue,
+      loadLyricsForCurrent,
     }),
     [
-      currentTrack, queue, queueIndex, isPlaying, isLoading,
-      progress, duration, volume, shuffle, repeat, liked,
-      playTrack, togglePlay, pause, resume, nextTrack, prev,
-      seek, setVolume, toggleShuffle, toggleRepeat, toggleLike, isLiked,
+      currentTrack,
+      queue,
+      queueIndex,
+      isPlaying,
+      isLoading,
+      progress,
+      duration,
+      volume,
+      shuffle,
+      repeat,
+      likedIds,
+      lyrics,
+      loadingLyrics,
+      playTrack,
+      togglePlay,
+      pause,
+      resume,
+      next,
+      prev,
+      seek,
+      setVolume,
+      toggleShuffle,
+      toggleRepeat,
+      toggleLike,
+      isLiked,
+      formatTime,
+      addToQueue,
+      removeFromQueue,
+      loadLyricsForCurrent,
     ]
   )
 
   return (
     <MusicPlayerContext.Provider value={value}>
       {children}
+      {/* Contêiner invisível do motor oficial do YouTube IFrame (SimpMusic Engine) */}
+      <div
+        id="youtube-audio-engine-container"
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          width: "1px",
+          height: "1px",
+          opacity: 0.01,
+          pointerEvents: "none",
+          zIndex: -1,
+        }}
+      >
+        <div id="youtube-audio-engine" />
+      </div>
     </MusicPlayerContext.Provider>
   )
 }
 
-// ─── Hook ────────────────────────────────────────────────────────────
-
 export function useMusicPlayer() {
-  const ctx = useContext(MusicPlayerContext)
-  if (!ctx) throw new Error("useMusicPlayer must be used within MusicPlayerProvider")
-  return ctx
+  const context = useContext(MusicPlayerContext)
+  if (!context) {
+    throw new Error("useMusicPlayer deve ser usado dentro de um MusicPlayerProvider")
+  }
+  return context
 }

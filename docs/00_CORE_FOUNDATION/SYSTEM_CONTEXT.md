@@ -12,7 +12,7 @@ Related Documents:
 - DOMAIN_MODEL.md
 - COGNITIVE_MODEL.md
 - SYSTEM_ARCHITECTURE.md
-Summary: Este documento define o contexto arquitetural da L.U.C.I.
+Summary: Este documento define o contexto arquitetural da Luci
 ---
 
 # SYSTEM CONTEXT
@@ -23,7 +23,7 @@ Summary: Este documento define o contexto arquitetural da L.U.C.I.
 
 # Objetivo
 
-Este documento define o contexto arquitetural da L.U.C.I.
+Este documento define o contexto arquitetural da Luci
 
 Ele estabelece os limites do sistema, sua missão, seus componentes conceituais e a forma como eles se relacionam.
 
@@ -37,9 +37,9 @@ Este documento descreve apenas o modelo conceitual da plataforma.
 
 ---
 
-# O que é a L.U.C.I.
+# O que é a Luci
 
-A L.U.C.I. (**Logic • Ubiquitous • Consciousness • Integrated**) é um **Sistema Operacional Cognitivo**.
+A Luci (**Logic • Ubiquitous • Consciousness • Integrated**) é um **Sistema Operacional Cognitivo**.
 
 Ela não é um chatbot.
 
@@ -49,7 +49,7 @@ Não é uma interface conversacional.
 
 Essas são apenas formas pelas quais o usuário interage com ela.
 
-A L.U.C.I. é um cérebro distribuído capaz de perceber, compreender, decidir, aprender e agir através de múltiplas interfaces.
+A Luci é um cérebro distribuído capaz de perceber, compreender, decidir, aprender e agir através de múltiplas interfaces.
 
 ---
 
@@ -83,7 +83,7 @@ A inteligência permanece única.
 
 # O Mega Brain
 
-Toda a capacidade cognitiva da L.U.C.I. reside em um único cérebro lógico.
+Toda a capacidade cognitiva da Luci reside em um único cérebro lógico.
 
 Esse cérebro é responsável por:
 
@@ -208,7 +208,7 @@ Após a conclusão da tarefa, é descartado.
 
 Toda interação começa pela resolução da identidade.
 
-A L.U.C.I. procura responder:
+A Luci procura responder:
 
 Quem está interagindo?
 
@@ -230,7 +230,7 @@ A identidade nunca depende exclusivamente de um único fator.
 
 # Identity Graph
 
-A L.U.C.I. não organiza pessoas em contas.
+A Luci não organiza pessoas em contas.
 
 Ela organiza entidades.
 
@@ -258,7 +258,7 @@ Essas relações enriquecem o contexto.
 
 Exemplos:
 
-Lucas → desenvolve → Projeto L.U.C.I.
+Lucas → desenvolve → Projeto Luci
 
 Ana → esposa de → Lucas.
 
@@ -452,7 +452,7 @@ podem ser incorporados sem alterar os princípios fundamentais do sistema.
 
 # Definição Arquitetural
 
-A L.U.C.I. é composta por quatro camadas conceituais.
+A Luci é composta por quatro camadas conceituais.
 
 ## Intelligence Layer
 
@@ -503,9 +503,9 @@ Inclui:
 
 ---
 
-# O Papel da L.U.C.I.
+# O Papel da Luci
 
-A L.U.C.I. não existe para responder perguntas.
+A Luci não existe para responder perguntas.
 
 Ela existe para reduzir a carga cognitiva das pessoas.
 
@@ -527,7 +527,7 @@ E acompanha seus usuários durante toda a vida.
 
 # Definição Final
 
-A L.U.C.I. é um Sistema Operacional Cognitivo distribuído, composto por um único Mega Brain capaz de servir múltiplos usuários através de Workspaces Cognitivos independentes, preservando identidade, contexto, conhecimento e memória de forma contínua, segura e evolutiva.
+A Luci é um Sistema Operacional Cognitivo distribuído, composto por um único Mega Brain capaz de servir múltiplos usuários através de Workspaces Cognitivos independentes, preservando identidade, contexto, conhecimento e memória de forma contínua, segura e evolutiva.
 
 ---
 

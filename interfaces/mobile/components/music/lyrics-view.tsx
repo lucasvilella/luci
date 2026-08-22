@@ -1,26 +1,9 @@
 "use client"
 
-import Image from "next/image"
-import { ChevronLeft, MoreVertical, Play, Pause, Heart, SkipBack, SkipForward } from "lucide-react"
+import { useEffect, useRef } from "react"
+import { ChevronLeft, Play, Pause, SkipBack, SkipForward, Mic2, Loader2 } from "lucide-react"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
-import { getHiResCover } from "@/lib/deezer"
-
-const SAMPLE_LYRICS = [
-  { section: "( Verse 1 )" },
-  { text: "Sleepin', You're On Your Tippy Toes" },
-  { text: "Creepin' Around Like No One Knows" },
-  { text: "Think You're So Criminal" },
-  { text: "Bruises On Both My Knees For You" },
-  { text: "Don't Say Thank You Or Please" },
-  { text: "I Do What I Want When I'm Wanting To" },
-  { text: "My Soul? So Cynical", active: true },
-  { section: "( Verse 2 )" },
-  { text: "Sleepin', You're On Your Tippy Toes" },
-  { text: "Creepin' Around Like No One Knows" },
-  { text: "Think You're So Criminal" },
-  { text: "Bruises On Both My Knees For You" },
-]
 
 export function LyricsView() {
   const { pop } = useMusicNavigation()
@@ -32,132 +15,150 @@ export function LyricsView() {
     prev,
     progress,
     duration,
-    toggleLike,
-    isLiked,
+    seek,
+    lyrics,
+    loadingLyrics,
     formatTime,
   } = useMusicPlayer()
 
+  const activeLineRef = useRef<HTMLDivElement | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
+  // Encontra o índice da linha ativa baseado no tempo atual do áudio
+  const activeLineIndex = lyrics?.lines ? lyrics.lines.reduce((acc, line, idx) => {
+    if (progress >= line.time) {
+      return idx
+    }
+    return acc
+  }, -1) : -1
+
+  // Auto-scroll suave para manter a linha ativa centralizada
+  useEffect(() => {
+    if (activeLineRef.current && containerRef.current) {
+      activeLineRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      })
+    }
+  }, [activeLineIndex])
+
   if (!currentTrack) return null
 
-  const coverUrl = getHiResCover(currentTrack, "xl")
-  const pct = duration > 0 ? (progress / duration) * 100 : 0
-  const liked = isLiked(currentTrack.id)
-
   return (
-    <div className="relative flex h-full flex-col bg-[#0d0d0d] overflow-hidden animate-view-in">
-      {/* Blurred background cover */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src={coverUrl}
-          alt={currentTrack.album.title}
-          fill
-          className="object-cover opacity-25 blur-3xl scale-125"
+    <div className="relative flex h-full flex-col bg-[#08080A] text-white animate-view-in select-none overflow-hidden">
+      {/* ─── Fundo com Blur da Capa ─── */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <img
+          src={currentTrack.thumbnail || "/placeholder.jpg"}
+          alt={currentTrack.title}
+          className="size-full object-cover opacity-20 blur-3xl scale-125"
         />
         <div className="absolute inset-0 bg-black/60 backdrop-blur-md" />
       </div>
 
-      {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-5 pb-2 pt-4">
-        <button type="button" onClick={pop} aria-label="Voltar">
-          <ChevronLeft className="size-6 text-white/70" />
+      {/* ─── Header ─── */}
+      <header className="relative z-10 flex items-center justify-between px-5 pt-3 pb-2 border-b border-white/5 bg-[#08080A]/80 backdrop-blur-xl">
+        <button
+          type="button"
+          onClick={pop}
+          className="flex size-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-zinc-300 transition-colors"
+          aria-label="Voltar"
+        >
+          <ChevronLeft className="size-5" />
         </button>
-        <p className="text-sm font-semibold text-white truncate max-w-[200px]">
-          {currentTrack.title_short || currentTrack.title}
-        </p>
-        <button type="button" aria-label="Mais opções">
-          <MoreVertical className="size-5 text-white/70" />
-        </button>
-      </div>
 
-      {/* Lyrics content */}
-      <div className="relative z-10 flex-1 overflow-y-auto px-6 py-4 space-y-4 text-center">
-        {SAMPLE_LYRICS.map((line, idx) =>
-          line.section ? (
-            <p key={idx} className="text-xs font-semibold uppercase tracking-wider text-white/40 pt-4">
-              {line.section}
-            </p>
-          ) : (
-            <div key={idx} className="flex items-center justify-center gap-2">
-              {line.active && <Play className="size-3.5 fill-current text-music-accent shrink-0" />}
-              <p
-                className={`text-lg font-bold transition-all ${
-                  line.active
-                    ? "text-white scale-105"
-                    : "text-white/30 hover:text-white/60 cursor-pointer"
+        <div className="text-center min-w-0 px-2">
+          <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-400">
+            Letras Sincronizadas
+          </span>
+          <p className="text-xs font-semibold text-white truncate max-w-[200px]">
+            {currentTrack.title}
+          </p>
+        </div>
+
+        <div className="size-9" />
+      </header>
+
+      {/* ─── Corpo das Letras ─── */}
+      <div
+        ref={containerRef}
+        className="relative z-10 flex-1 overflow-y-auto px-6 py-8 space-y-6 text-center scrollbar-none"
+      >
+        {loadingLyrics ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3 text-zinc-500">
+            <Loader2 className="size-7 animate-spin text-indigo-400" />
+            <p className="text-xs">Sincronizando letras com LRCLIB...</p>
+          </div>
+        ) : lyrics?.has_synced && lyrics.lines.length > 0 ? (
+          lyrics.lines.map((line, idx) => {
+            const isActive = idx === activeLineIndex
+            const isPast = idx < activeLineIndex
+
+            return (
+              <div
+                key={`${line.time}-${idx}`}
+                ref={isActive ? activeLineRef : null}
+                onClick={() => seek(line.time)}
+                className={`transition-all duration-300 cursor-pointer py-1.5 px-3 rounded-xl ${
+                  isActive
+                    ? "text-lg font-bold text-white scale-105 bg-indigo-500/20 shadow-lg shadow-indigo-500/10"
+                    : isPast
+                    ? "text-sm font-medium text-zinc-500 hover:text-zinc-300"
+                    : "text-sm font-medium text-zinc-400/80 hover:text-zinc-200"
                 }`}
               >
-                {line.text}
-              </p>
-            </div>
-          )
+                {line.text || "♪"}
+              </div>
+            )
+          })
+        ) : (
+          <div className="py-20 text-center space-y-4">
+            <Mic2 className="size-10 mx-auto text-zinc-600 stroke-1" />
+            <p className="text-sm font-semibold text-zinc-300">Letra em Texto Simples</p>
+            <p className="text-xs text-zinc-400 leading-relaxed whitespace-pre-line max-w-sm mx-auto">
+              {lyrics?.plain || "Nenhuma letra disponível para esta música no momento."}
+            </p>
+          </div>
         )}
       </div>
 
-      {/* Bottom Sticky Player Bar */}
-      <div className="relative z-10 border-t border-white/10 bg-black/80 backdrop-blur-xl px-5 pt-3 pb-4">
+      {/* ─── Mini Barra de Controle na Base ─── */}
+      <footer className="relative z-10 flex items-center justify-between px-6 py-3 border-t border-white/10 bg-[#08080A]/90 backdrop-blur-xl">
+        <div className="text-[11px] font-mono text-zinc-400">
+          {formatTime(progress)} / {formatTime(duration)}
+        </div>
+
         <div className="flex items-center gap-3">
-          <div className="relative size-12 shrink-0 overflow-hidden rounded-xl">
-            <Image
-              src={getHiResCover(currentTrack, "small")}
-              alt={currentTrack.album.title}
-              fill
-              className="object-cover"
-            />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-white">
-              {currentTrack.title_short || currentTrack.title}
-            </p>
-            <p className="truncate text-xs text-white/50">{currentTrack.artist.name}</p>
-          </div>
           <button
             type="button"
-            onClick={() => toggleLike(currentTrack.id)}
-            className="p-1"
+            onClick={prev}
+            className="p-1.5 text-zinc-300 hover:text-white"
+            aria-label="Faixa Anterior"
           >
-            <Heart
-              className={`size-5 transition-colors ${
-                liked ? "fill-music-accent text-music-accent" : "text-white/40"
-              }`}
-            />
-          </button>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="mt-3">
-          <div className="h-1 w-full overflow-hidden rounded-full bg-white/20">
-            <div
-              className="h-full rounded-full bg-music-accent transition-all duration-150"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <div className="mt-1 flex justify-between text-[10px] tabular-nums text-white/40">
-            <span>{formatTime(progress)}</span>
-            <span>{formatTime(duration || currentTrack.duration)}</span>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="mt-2 flex items-center justify-center gap-6">
-          <button type="button" onClick={prev} className="text-white">
             <SkipBack className="size-5 fill-current" />
           </button>
           <button
             type="button"
             onClick={togglePlay}
-            className="flex size-11 items-center justify-center rounded-full bg-music-accent text-black"
+            className="size-9 rounded-full bg-white text-black flex items-center justify-center shadow-md active:scale-95"
+            aria-label={isPlaying ? "Pausar" : "Reproduzir"}
           >
             {isPlaying ? (
-              <Pause className="size-5 fill-current" />
+              <Pause className="size-4.5 fill-black" />
             ) : (
-              <Play className="size-5 translate-x-0.5 fill-current" />
+              <Play className="size-4.5 fill-black ml-0.5" />
             )}
           </button>
-          <button type="button" onClick={next} className="text-white">
+          <button
+            type="button"
+            onClick={next}
+            className="p-1.5 text-zinc-300 hover:text-white"
+            aria-label="Próxima Faixa"
+          >
             <SkipForward className="size-5 fill-current" />
           </button>
         </div>
-      </div>
+      </footer>
     </div>
   )
 }

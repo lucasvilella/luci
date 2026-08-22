@@ -31,7 +31,7 @@ Seu papel é organizar instruções, contexto, objetivos, restrições, ferramen
 
 # Filosofia
 
-A L.U.C.I. nunca escreve prompts diretamente.
+A Luci nunca escreve prompts diretamente.
 
 Ela constrói uma representação estruturada da tarefa.
 
@@ -332,11 +332,11 @@ O Prompt Engine segue os princípios:
 
 # Definição
 
-O Prompt Engine representa o componente responsável por transformar o estado cognitivo da L.U.C.I. em uma especificação de inferência estruturada e independente de fornecedores, convertendo-a para o formato esperado por cada modelo de Inteligência Artificial sem acoplar a arquitetura às particularidades de qualquer tecnologia.
+O Prompt Engine representa o componente responsável por transformar o estado cognitivo da Luci em uma especificação de inferência estruturada e independente de fornecedores, convertendo-a para o formato esperado por cada modelo de Inteligência Artificial sem acoplar a arquitetura às particularidades de qualquer tecnologia.
 
 ---
 
-> **"Prompts são apenas uma linguagem. A intenção da L.U.C.I. é muito maior do que isso."**
+> **"Prompts são apenas uma linguagem. A intenção da Luci é muito maior do que isso."**
 
 ---
 

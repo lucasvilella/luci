@@ -11,7 +11,7 @@ Related Documents:
 - TOOL_REGISTRY.md
 - INTEGRATION_MANAGER.md
 - INTERFACE_ARCHITECTURE.md
-Summary: A Platform Architecture define a infraestrutura lógica que sustenta o Sistema Operacional Cognitivo da L.U.C.I.
+Summary: A Platform Architecture define a infraestrutura lógica que sustenta o Sistema Operacional Cognitivo da Luci
 ---
 
 # PLATFORM ARCHITECTURE
@@ -22,7 +22,7 @@ Summary: A Platform Architecture define a infraestrutura lógica que sustenta o 
 
 # Objetivo
 
-A Platform Architecture define a infraestrutura lógica que sustenta o Sistema Operacional Cognitivo da L.U.C.I.
+A Platform Architecture define a infraestrutura lógica que sustenta o Sistema Operacional Cognitivo da Luci
 
 Ela é responsável por administrar identidades, permissões, configurações, extensões, atualizações e recursos compartilhados, oferecendo um ambiente estável para todos os componentes da arquitetura.
 
@@ -34,7 +34,7 @@ Ela fornece o ecossistema onde a inteligência opera.
 
 # Filosofia
 
-A L.U.C.I. é composta por duas grandes camadas.
+A Luci é composta por duas grandes camadas.
 
 - Plataforma
 - Inteligência
@@ -294,7 +294,7 @@ A Platform Architecture segue os princípios:
 
 # Definição
 
-A Platform Architecture representa a camada administrativa e operacional da L.U.C.I., responsável por fornecer identidade, configuração, extensibilidade, segurança e gerenciamento do ambiente onde o Sistema Operacional Cognitivo executa suas capacidades. Ela desacopla a infraestrutura operacional da inteligência, permitindo evolução independente de ambas.
+A Platform Architecture representa a camada administrativa e operacional da Luci, responsável por fornecer identidade, configuração, extensibilidade, segurança e gerenciamento do ambiente onde o Sistema Operacional Cognitivo executa suas capacidades. Ela desacopla a infraestrutura operacional da inteligência, permitindo evolução independente de ambas.
 
 ---
 

@@ -6,7 +6,7 @@ Version: 1.1
 Owner: Lucas Vilella
 
 Purpose:
-Este documento reúne ideias, conceitos e possibilidades identificadas durante a construção da arquitetura da L.U.C.I.
+Este documento reúne ideias, conceitos e possibilidades identificadas durante a construção da arquitetura da Luci
 Nenhuma destas propostas faz parte obrigatoriamente da implementação atual.
 Elas representam direções futuras para evolução da plataforma.
 
@@ -30,7 +30,7 @@ Cada ideia abaixo agora possui um campo **Status**: ✅ significa que já foi ad
 
 # Introdução
 
-Durante a elaboração da documentação oficial da L.U.C.I., diversas ideias surgiram naturalmente.
+Durante a elaboração da documentação oficial da Luci, diversas ideias surgiram naturalmente.
 
 Nem todas pertencem à versão atual da plataforma.
 
@@ -235,7 +235,7 @@ Trocar Claude por Gemini.
 
 Trocar Gemini por Llama.
 
-O comportamento da L.U.C.I. permanece exatamente igual.
+O comportamento da Luci permanece exatamente igual.
 
 ---
 
@@ -431,9 +431,9 @@ Memória distribuída entre diferentes nós.
 
 # 32. Federation Expansion
 
-**Status:** 🔜 Adiado — federação só faz sentido com múltiplas instâncias reais (ex.: outra família rodando sua própria L.U.C.I.).
+**Status:** 🔜 Adiado — federação só faz sentido com múltiplas instâncias reais (ex.: outra família rodando sua própria Luci).
 
-Federação de múltiplas instâncias da L.U.C.I.
+Federação de múltiplas instâncias da Luci
 
 ---
 
@@ -524,7 +524,7 @@ Uma ideia somente poderá migrar para a documentação oficial quando:
 
 # Visão de Longo Prazo
 
-A L.U.C.I. não é apenas uma aplicação.
+A Luci não é apenas uma aplicação.
 
 Não é apenas uma IA.
 
@@ -538,7 +538,7 @@ Toda evolução deve aproximar a plataforma dessa visão.
 
 # Definição
 
-O Architecture Evolution é um documento vivo que registra possibilidades futuras para a evolução da L.U.C.I. Ele preserva ideias identificadas durante o processo de arquitetura, permitindo que novas capacidades sejam avaliadas e incorporadas de forma planejada, sem comprometer a estabilidade e os princípios fundamentais da plataforma.
+O Architecture Evolution é um documento vivo que registra possibilidades futuras para a evolução da Luci Ele preserva ideias identificadas durante o processo de arquitetura, permitindo que novas capacidades sejam avaliadas e incorporadas de forma planejada, sem comprometer a estabilidade e os princípios fundamentais da plataforma.
 
 ---
 

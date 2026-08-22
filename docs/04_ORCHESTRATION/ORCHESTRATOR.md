@@ -14,7 +14,7 @@ Related Documents:
 - TASK_COORDINATOR.md
 - FAILURE_RECOVERY.md
 - COGNITIVE_LOOP.md
-Summary: O Orchestrator é o Kernel Cognitivo da L.U.C.I.
+Summary: O Orchestrator é o Kernel Cognitivo da Luci
 ---
 
 # ORCHESTRATOR
@@ -25,7 +25,7 @@ Summary: O Orchestrator é o Kernel Cognitivo da L.U.C.I.
 
 # Objetivo
 
-O Orchestrator é o Kernel Cognitivo da L.U.C.I.
+O Orchestrator é o Kernel Cognitivo da Luci
 
 Seu papel é coordenar toda a execução da plataforma, garantindo que Cores, Engines, Workflows, Ferramentas e Interfaces operem de forma consistente, previsível e escalável.
 
@@ -497,7 +497,7 @@ O Orchestrator segue os princípios.
 
 # Definição
 
-O Orchestrator representa o Kernel Cognitivo da L.U.C.I.
+O Orchestrator representa o Kernel Cognitivo da Luci
 
 Ele coordena todo o ciclo de vida da plataforma, supervisionando Sessions, Cycles, Engines e Workflows sem participar diretamente da inteligência do sistema. Sua função é garantir ordem, isolamento, escalabilidade e observabilidade para que a cognição possa evoluir de forma segura e consistente.
 

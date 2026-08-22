@@ -13,7 +13,7 @@ Related Documents:
 - COGNITIVE_MODEL.md
 - IDENTITY_AND_WORKSPACES.md
 - SYSTEM_ARCHITECTURE.md
-Summary: Este documento define o universo conceitual da L.U.C.I.
+Summary: Este documento define o universo conceitual da Luci
 ---
 
 # DOMAIN MODEL
@@ -24,11 +24,11 @@ Summary: Este documento define o universo conceitual da L.U.C.I.
 
 # Objetivo
 
-Este documento define o universo conceitual da L.U.C.I.
+Este documento define o universo conceitual da Luci
 
 Antes de existir código, APIs ou bancos de dados, existem conceitos.
 
-Esses conceitos representam tudo aquilo que a L.U.C.I. é capaz de compreender.
+Esses conceitos representam tudo aquilo que a Luci é capaz de compreender.
 
 O objetivo deste documento é estabelecer uma linguagem comum para toda a arquitetura.
 
@@ -38,7 +38,7 @@ Nenhum componente poderá criar novos conceitos fundamentais sem que este docume
 
 # Filosofia
 
-A L.U.C.I. não enxerga tabelas.
+A Luci não enxerga tabelas.
 
 Não enxerga documentos.
 
@@ -60,7 +60,7 @@ Cada entidade pode possuir relacionamentos.
 
 # Os Grandes Domínios
 
-Todo o conhecimento da L.U.C.I. pertence a um destes domínios.
+Todo o conhecimento da Luci pertence a um destes domínios.
 
 ```
 Identity
@@ -83,7 +83,7 @@ Esses domínios são independentes, mas profundamente conectados.
 
 A Entity é a unidade fundamental do sistema.
 
-Tudo que existe para a L.U.C.I. é uma entidade.
+Tudo que existe para a Luci é uma entidade.
 
 Exemplos:
 
@@ -267,7 +267,7 @@ Diferente da memória, conhecimento não depende de quando aconteceu.
 
 Exemplo.
 
-Lucas desenvolve a L.U.C.I.
+Lucas desenvolve a Luci
 
 Isso é conhecimento.
 
@@ -281,7 +281,7 @@ Representa algo que uma identidade deseja alcançar.
 
 Exemplos.
 
-Criar a L.U.C.I.
+Criar a Luci
 
 Aprender inglês.
 
@@ -377,7 +377,7 @@ API
 
 sensor
 
-ou decisão da própria L.U.C.I.
+ou decisão da própria Luci
 
 ---
 
@@ -504,11 +504,11 @@ Desenvolve
 
 ↓
 
-Projeto L.U.C.I.
+Projeto Luci
 ```
 
 ```
-Projeto L.U.C.I.
+Projeto Luci
 
 ↓
 
@@ -605,7 +605,7 @@ Nem todas chegam ao estado final.
 
 # O Grafo
 
-A L.U.C.I. compreende o mundo como um único grafo.
+A Luci compreende o mundo como um único grafo.
 
 ```
 Pessoa
@@ -679,7 +679,7 @@ Context
 
 # Definição Final
 
-O Domain Model representa o universo que a L.U.C.I. é capaz de compreender.
+O Domain Model representa o universo que a Luci é capaz de compreender.
 
 Toda funcionalidade futura deverá ser construída utilizando esses conceitos.
 

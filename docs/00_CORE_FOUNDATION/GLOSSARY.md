@@ -14,7 +14,7 @@ Related Documents:
 - COGNITIVE_MODEL.md
 - IDENTITY_AND_WORKSPACES.md
 - NAMING_CONVENTIONS.md
-Summary: Este documento define o significado oficial dos termos utilizados na documentação da L.U.C.I.
+Summary: Este documento define o significado oficial dos termos utilizados na documentação da Luci
 ---
 
 # GLOSSARY
@@ -25,7 +25,7 @@ Summary: Este documento define o significado oficial dos termos utilizados na do
 
 # Objetivo
 
-Este documento define o significado oficial dos termos utilizados na documentação da L.U.C.I.
+Este documento define o significado oficial dos termos utilizados na documentação da Luci
 
 Todo documento técnico deve utilizar estes termos exatamente como definidos aqui.
 
@@ -41,7 +41,7 @@ A consistência da linguagem faz parte da arquitetura.
 
 ## Action
 
-Uma operação que será executada pela L.U.C.I.
+Uma operação que será executada pela Luci
 
 Pode envolver resposta, automação, uso de ferramentas ou qualquer efeito externo.
 
@@ -84,7 +84,7 @@ A atenção representa o foco cognitivo do sistema.
 
 ## Brain
 
-A inteligência central da L.U.C.I.
+A inteligência central da Luci
 
 Existe apenas um.
 
@@ -154,7 +154,7 @@ O contexto é temporário e dinâmico.
 
 ## Conversation
 
-Uma interação entre uma identidade e a L.U.C.I.
+Uma interação entre uma identidade e a Luci
 
 Nem toda conversa gera memória.
 
@@ -266,7 +266,7 @@ Não decide.
 
 A unidade fundamental do Knowledge Graph.
 
-Tudo que existe para a L.U.C.I. é uma Entity.
+Tudo que existe para a Luci é uma Entity.
 
 ---
 
@@ -320,7 +320,7 @@ Agente.
 
 ## Integration
 
-Qualquer sistema externo conectado à L.U.C.I.
+Qualquer sistema externo conectado à Luci
 
 Exemplos:
 
@@ -388,7 +388,7 @@ Uma Feature Flag nunca contém lógica cognitiva — apenas liga/desliga capacid
 
 ## Mega Brain
 
-Nome oficial da inteligência central da L.U.C.I.
+Nome oficial da inteligência central da Luci
 
 Existe apenas um Mega Brain.
 
@@ -558,7 +558,7 @@ Toda nova terminologia deverá ser adicionada aqui antes de ser utilizada na doc
 
 # Definição
 
-O Glossário estabelece a linguagem oficial da L.U.C.I.
+O Glossário estabelece a linguagem oficial da Luci
 
 Uma linguagem consistente reduz ambiguidades, facilita a evolução da arquitetura e garante que pessoas e inteligências artificiais compartilhem o mesmo entendimento sobre o sistema.
 

@@ -38,7 +38,7 @@ A maioria dos objetivos humanos não é concluída imediatamente.
 
 Projetos, estudos, viagens, reformas, empresas e relacionamentos evoluem continuamente.
 
-A L.U.C.I. deve acompanhar essa evolução naturalmente.
+A Luci deve acompanhar essa evolução naturalmente.
 
 ---
 
@@ -369,7 +369,7 @@ O Workflow Manager segue os princípios.
 
 # Definição
 
-O Workflow Manager representa o componente responsável por coordenar estratégias de longo prazo da L.U.C.I., acompanhando objetivos persistentes através de estágios, tarefas e Cognitive Cycles, garantindo continuidade, adaptação e rastreabilidade durante toda a vida de um projeto.
+O Workflow Manager representa o componente responsável por coordenar estratégias de longo prazo da Luci, acompanhando objetivos persistentes através de estágios, tarefas e Cognitive Cycles, garantindo continuidade, adaptação e rastreabilidade durante toda a vida de um projeto.
 
 ---
 

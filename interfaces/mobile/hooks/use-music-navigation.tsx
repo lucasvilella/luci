@@ -7,7 +7,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 export type MusicScreen =
   | { type: "home" }
   | { type: "now-playing" }
-  | { type: "artist"; artistId: number }
+  | { type: "artist"; artistId: string | number }
   | { type: "lyrics" }
   | { type: "search" }
   | { type: "playlists" }
@@ -21,7 +21,7 @@ type MusicNavigationContextValue = {
   push: (screen: MusicScreen) => void
   pop: () => void
   reset: () => void
-  goToArtist: (artistId: number) => void
+  goToArtist: (artistId: string | number) => void
   goToNowPlaying: () => void
   goToLyrics: () => void
   goToSearch: () => void
@@ -56,7 +56,7 @@ export function MusicNavigationProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const goToArtist = useCallback(
-    (artistId: number) => push({ type: "artist", artistId }),
+    (artistId: string | number) => push({ type: "artist", artistId }),
     [push]
   )
 

@@ -12,7 +12,7 @@ Related Documents:
 - COGNITIVE_BUS.md
 - STATE_MACHINE.md
 - API_CONTRACTS.md
-Summary: Este documento define o **Cognitive Loop**, o ciclo oficial de funcionamento da inteligência da L.U.C.I.
+Summary: Este documento define o **Cognitive Loop**, o ciclo oficial de funcionamento da inteligência da Luci
 ---
 
 # COGNITIVE LOOP
@@ -23,7 +23,7 @@ Summary: Este documento define o **Cognitive Loop**, o ciclo oficial de funciona
 
 # Objetivo
 
-Este documento define o **Cognitive Loop**, o ciclo oficial de funcionamento da inteligência da L.U.C.I.
+Este documento define o **Cognitive Loop**, o ciclo oficial de funcionamento da inteligência da Luci
 
 Todo comportamento da plataforma, independentemente da origem do estímulo, percorre esse ciclo.
 
@@ -49,7 +49,7 @@ Model
 Output
 ```
 
-A L.U.C.I. funciona de forma diferente.
+A Luci funciona de forma diferente.
 
 Ela opera através de ciclos cognitivos contínuos.
 
@@ -643,13 +643,13 @@ Todo Cognitive Loop segue os seguintes princípios.
 
 # Definição
 
-O Cognitive Loop representa o processo contínuo pelo qual a L.U.C.I. transforma estímulos em compreensão, compreensão em decisões, decisões em ações e ações em evolução.
+O Cognitive Loop representa o processo contínuo pelo qual a Luci transforma estímulos em compreensão, compreensão em decisões, decisões em ações e ações em evolução.
 
 Ele é o mecanismo que permite ao Mega Brain aprender continuamente sem perder previsibilidade, mantendo identidade, contexto, Workspaces e memória sincronizados durante toda a vida da plataforma.
 
 ---
 
-> **"A inteligência não acontece quando a L.U.C.I. responde. Ela acontece durante todo o ciclo que torna essa resposta possível."**
+> **"A inteligência não acontece quando a Luci responde. Ela acontece durante todo o ciclo que torna essa resposta possível."**
 
 ---
 

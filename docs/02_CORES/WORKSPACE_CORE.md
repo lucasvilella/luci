@@ -11,7 +11,7 @@ Related Documents:
 - CONTEXT_CORE.md
 - KNOWLEDGE_CORE.md
 - COGNITIVE_LOOP.md
-Summary: O Workspace Core representa os ambientes cognitivos permanentes da L.U.C.I.
+Summary: O Workspace Core representa os ambientes cognitivos permanentes da Luci
 ---
 
 # WORKSPACE CORE
@@ -22,7 +22,7 @@ Summary: O Workspace Core representa os ambientes cognitivos permanentes da L.U.
 
 # Objetivo
 
-O Workspace Core representa os ambientes cognitivos permanentes da L.U.C.I.
+O Workspace Core representa os ambientes cognitivos permanentes da Luci
 
 Todo ciclo cognitivo ocorre dentro de exatamente um Workspace.
 
@@ -36,7 +36,7 @@ Ele é a unidade organizacional do Mega Brain.
 
 A maioria dos assistentes organiza informações por conversa.
 
-A L.U.C.I. organiza informações por contexto de vida.
+A Luci organiza informações por contexto de vida.
 
 Uma conversa termina.
 
@@ -235,7 +235,7 @@ Mas apenas um permanece ativo.
 
 # Alternância
 
-A L.U.C.I. pode alternar automaticamente entre Workspaces.
+A Luci pode alternar automaticamente entre Workspaces.
 
 Exemplos.
 
@@ -585,7 +585,7 @@ Essas capacidades poderão ser adicionadas sem alterar a arquitetura pública.
 
 # Definição
 
-O Workspace Core representa os ambientes cognitivos permanentes da L.U.C.I.
+O Workspace Core representa os ambientes cognitivos permanentes da Luci
 
 Ele organiza toda a inteligência por domínios da vida, garantindo que contexto, memória, objetivos, conhecimento e permissões permaneçam consistentes, isolados e persistentes ao longo do tempo.
 

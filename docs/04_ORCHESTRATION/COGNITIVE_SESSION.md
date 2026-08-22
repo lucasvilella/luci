@@ -27,7 +27,7 @@ Summary: A Cognitive Session representa uma unidade persistente de contexto orie
 
 A Cognitive Session representa uma unidade persistente de contexto orientada a um objetivo.
 
-Ela agrupa múltiplos Cognitive Cycles relacionados ao mesmo propósito, permitindo que a L.U.C.I. acompanhe projetos, tarefas, relações e objetivos durante dias, meses ou até anos.
+Ela agrupa múltiplos Cognitive Cycles relacionados ao mesmo propósito, permitindo que a Luci acompanhe projetos, tarefas, relações e objetivos durante dias, meses ou até anos.
 
 Uma Session é muito mais que um histórico de conversa.
 
@@ -43,7 +43,7 @@ Uma pessoa não inicia um novo cérebro sempre que retoma um assunto.
 
 Ela continua exatamente de onde parou.
 
-A L.U.C.I. deve funcionar da mesma maneira.
+A Luci deve funcionar da mesma maneira.
 
 ---
 
@@ -437,7 +437,7 @@ A Cognitive Session segue os princípios:
 
 # Definição
 
-A Cognitive Session representa a unidade persistente de trabalho da L.U.C.I.
+A Cognitive Session representa a unidade persistente de trabalho da Luci
 
 Ela organiza objetivos de longo prazo, mantém contexto compartilhado, reúne múltiplos Cycles e preserva a continuidade cognitiva necessária para que projetos, relações e tarefas evoluam naturalmente ao longo do tempo.
 

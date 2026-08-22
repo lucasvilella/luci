@@ -1,7 +1,7 @@
 /**
  * EventBus
  *
- * Lightweight, decoupled internal Pub/Sub Event Bus for L.U.C.I. 2.0.
+ * Lightweight, decoupled internal Pub/Sub Event Bus for Luci 2.0.
  * Allows modules (ConversationEngine, ModelRouter, MemoryManager, Speech recognition)
  * to communicate asynchronously without direct coupling.
  */
@@ -24,7 +24,7 @@ export class EventBus {
   private static instance: EventBus;
   private listeners: Map<EventType, Set<EventCallback>> = new Map();
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): EventBus {
     if (!EventBus.instance) {

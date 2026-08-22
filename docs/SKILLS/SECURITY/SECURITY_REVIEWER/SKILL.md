@@ -2,12 +2,12 @@
 name: Security Reviewer
 description: >
   Avalia implementações sob a perspectiva de segurança, verificando aderência às
-  políticas da L.U.C.I., identificando riscos, vulnerabilidades e violações
+  políticas da Luci, identificando riscos, vulnerabilidades e violações
   arquiteturais antes da aprovação.
 
 version: 1.0
 owner: Lucas
-project: L.U.C.I.
+project: Luci
 architecture: Cognitive Operating System
 
 requires:
@@ -27,7 +27,7 @@ triggers:
 
 ## Objetivo
 
-Garantir que toda implementação esteja em conformidade com os princípios de segurança da L.U.C.I.
+Garantir que toda implementação esteja em conformidade com os princípios de segurança da Luci
 
 A segurança deve ser tratada como um requisito arquitetural, não como uma validação posterior.
 

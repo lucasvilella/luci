@@ -7,7 +7,7 @@ description: >
 
 version: 1.0
 owner: Lucas
-project: L.U.C.I.
+project: Luci
 architecture: Cognitive Operating System
 
 requires:
@@ -27,7 +27,7 @@ triggers:
 
 ## Objetivo
 
-Documentar decisões arquiteturais relevantes da L.U.C.I.
+Documentar decisões arquiteturais relevantes da Luci
 
 Toda decisão importante deve possuir contexto, justificativa e consequências claramente registradas.
 

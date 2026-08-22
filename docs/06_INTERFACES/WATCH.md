@@ -11,7 +11,7 @@ Related Documents:
 - COGNITIVE_SESSION.md
 - CONTEXT_CORE.md
 - TASK_COORDINATOR.md
-Summary: A Interface Watch foi projetada para fornecer acesso imediato às capacidades da L.U.C.I. através de interações extremamente rápidas.
+Summary: A Interface Watch foi projetada para fornecer acesso imediato às capacidades da Luci através de interações extremamente rápidas.
 ---
 
 # WATCH INTERFACE
@@ -22,7 +22,7 @@ Summary: A Interface Watch foi projetada para fornecer acesso imediato às capac
 
 # Objetivo
 
-A Interface Watch foi projetada para fornecer acesso imediato às capacidades da L.U.C.I. através de interações extremamente rápidas.
+A Interface Watch foi projetada para fornecer acesso imediato às capacidades da Luci através de interações extremamente rápidas.
 
 Seu foco é reduzir atrito.
 
@@ -100,7 +100,7 @@ Exemplos.
 
 A voz representa a principal forma de interação.
 
-O usuário pode conversar naturalmente com a L.U.C.I.
+O usuário pode conversar naturalmente com a Luci
 
 Respostas longas devem ser evitadas.
 
@@ -260,7 +260,7 @@ A Interface Watch segue os princípios.
 
 # Definição
 
-A Interface Watch representa a forma mais rápida e discreta de interação com a L.U.C.I., oferecendo respostas curtas, ações imediatas e notificações inteligentes sem interromper o fluxo natural do usuário. Ela funciona como uma extensão permanente da presença da plataforma no cotidiano.
+A Interface Watch representa a forma mais rápida e discreta de interação com a Luci, oferecendo respostas curtas, ações imediatas e notificações inteligentes sem interromper o fluxo natural do usuário. Ela funciona como uma extensão permanente da presença da plataforma no cotidiano.
 
 ---
 

@@ -1,7 +1,7 @@
 /**
  * VoiceProviderManager.ts
  *
- * Automated Routing Manager for L.U.C.I. Voice Engine.
+ * Automated Routing Manager for Luci Voice Engine.
  * Monitors Time To First Audio (TTFA), Latency, Failures, and Offline state.
  * Implements Hysteresis Cooldown to prevent flapping between providers.
  */
@@ -28,7 +28,7 @@ export class VoiceProviderManager {
   private metrics: Map<string, ProviderMetrics> = new Map();
   private activeProviderName: string = 'F5TTS';
   private lastSwitchTime: number = 0;
-  
+
   // Configuration
   private readonly cooldownMs: number = 15000;
   private readonly latencyThresholdMs: number = 2500;

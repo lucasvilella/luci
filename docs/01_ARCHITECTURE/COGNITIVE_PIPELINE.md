@@ -12,7 +12,7 @@ Related Documents:
 - COGNITIVE_BUS.md
 - STATE_MACHINE.md
 - API_CONTRACTS.md
-Summary: Este documento descreve o pipeline oficial de execução da L.U.C.I.
+Summary: Este documento descreve o pipeline oficial de execução da Luci
 ---
 
 # EXECUTION PIPELINE
@@ -23,7 +23,7 @@ Summary: Este documento descreve o pipeline oficial de execução da L.U.C.I.
 
 # Objetivo
 
-Este documento descreve o pipeline oficial de execução da L.U.C.I.
+Este documento descreve o pipeline oficial de execução da Luci
 
 Enquanto o **Cognitive Loop** descreve como a inteligência pensa, este documento descreve como uma interação percorre tecnicamente a plataforma.
 
@@ -653,7 +653,7 @@ Todo Execution Pipeline segue as seguintes regras.
 
 # Definição
 
-O Execution Pipeline representa o fluxo operacional oficial da L.U.C.I.
+O Execution Pipeline representa o fluxo operacional oficial da Luci
 
 Ele garante que toda interação percorra um caminho previsível, rastreável e escalável, preservando contexto, identidade, observabilidade e consistência em todas as execuções.
 

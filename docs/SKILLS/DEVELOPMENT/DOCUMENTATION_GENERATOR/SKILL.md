@@ -1,13 +1,13 @@
 ---
 name: Documentation Generator
 description: >
-  Gera documentação técnica seguindo rigorosamente o padrão oficial da L.U.C.I.
+  Gera documentação técnica seguindo rigorosamente o padrão oficial da Luci
   Deve ser utilizada para criar novos documentos, atualizar documentação existente
   ou documentar componentes da arquitetura.
 
 version: 1.0
 owner: Lucas
-project: L.U.C.I.
+project: Luci
 architecture: Cognitive Operating System
 
 requires:
@@ -28,7 +28,7 @@ triggers:
 
 ## Objetivo
 
-Gerar documentação consistente com o padrão oficial da L.U.C.I.
+Gerar documentação consistente com o padrão oficial da Luci
 
 Todo documento deve preservar a identidade arquitetural da plataforma.
 
@@ -179,7 +179,7 @@ Todo documento deve conter:
 
 Toda documentação gerada deve:
 
-- seguir exatamente o padrão da L.U.C.I.;
+- seguir exatamente o padrão da Luci;
 - ser consistente com a arquitetura;
 - utilizar o vocabulário oficial;
 - estar pronta para inclusão na pasta docs;

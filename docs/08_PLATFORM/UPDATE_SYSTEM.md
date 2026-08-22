@@ -268,7 +268,7 @@ O Update System segue os princípios:
 
 # Definição
 
-O Update System gerencia a evolução contínua da L.U.C.I., permitindo que componentes da plataforma sejam atualizados de forma independente, segura e auditável. Sua arquitetura garante compatibilidade, possibilidade de reversão e mínima interrupção da operação, sustentando um ciclo de evolução constante do Sistema Operacional Cognitivo.
+O Update System gerencia a evolução contínua da Luci, permitindo que componentes da plataforma sejam atualizados de forma independente, segura e auditável. Sua arquitetura garante compatibilidade, possibilidade de reversão e mínima interrupção da operação, sustentando um ciclo de evolução constante do Sistema Operacional Cognitivo.
 
 ---
 

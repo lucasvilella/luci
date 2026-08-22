@@ -1,7 +1,7 @@
 /**
  * AutonomousVoiceCacheManager.ts
  *
- * Intelligent Autonomous Cache & Voice Asset Predictor for L.U.C.I.
+ * Intelligent Autonomous Cache & Voice Asset Predictor for Luci
  * 
  * Capabilities:
  *  1. Frequency Analysis: Tracks phrase repetition and automatically promotes hot phrases to disk cache.

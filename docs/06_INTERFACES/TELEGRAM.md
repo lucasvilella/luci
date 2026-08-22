@@ -11,18 +11,18 @@ Related Documents:
 - CONTEXT_CORE.md
 - CONVERSATION_ENGINE.md
 - EVENT_ROUTER.md
-Summary: A Interface Telegram permite que usuários interajam com a L.U.C.I. através de mensagens assíncronas, mantendo contexto, continuidade e acesso às capacidades do Sistema Operacional Cognitivo.
+Summary: A Interface Telegram permite que usuários interajam com a Luci através de mensagens assíncronas, mantendo contexto, continuidade e acesso às capacidades do Sistema Operacional Cognitivo.
 ---
 
 # TELEGRAM INTERFACE
 
-> *"O Telegram transforma qualquer conversa em um ponto de acesso permanente à L.U.C.I."*
+> *"O Telegram transforma qualquer conversa em um ponto de acesso permanente à Luci"*
 
 ---
 
 # Objetivo
 
-A Interface Telegram permite que usuários interajam com a L.U.C.I. através de mensagens assíncronas, mantendo contexto, continuidade e acesso às capacidades do Sistema Operacional Cognitivo.
+A Interface Telegram permite que usuários interajam com a Luci através de mensagens assíncronas, mantendo contexto, continuidade e acesso às capacidades do Sistema Operacional Cognitivo.
 
 Ela oferece uma experiência conversacional adaptada ao ambiente de mensagens, preservando a mesma inteligência disponível nas demais Interfaces.
 
@@ -125,7 +125,7 @@ A Session pode continuar exatamente do ponto anterior.
 
 # Compartilhamento
 
-O Telegram permite compartilhar diretamente com a L.U.C.I.:
+O Telegram permite compartilhar diretamente com a Luci:
 
 - links;
 - PDFs;
@@ -142,7 +142,7 @@ Esses conteúdos podem enriquecer o Context Core.
 
 Quando utilizada em grupos.
 
-A L.U.C.I. responde apenas quando:
+A Luci responde apenas quando:
 
 - mencionada;
 - autorizada;
@@ -275,7 +275,7 @@ A Interface Telegram segue os princípios.
 
 # Definição
 
-A Interface Telegram representa um canal de comunicação assíncrono da L.U.C.I., permitindo conversas contínuas, compartilhamento de conteúdo e execução de ações dentro do mesmo estado cognitivo existente nas demais Interfaces. Ela adapta a experiência ao ambiente de mensagens sem fragmentar identidade, memória ou contexto.
+A Interface Telegram representa um canal de comunicação assíncrono da Luci, permitindo conversas contínuas, compartilhamento de conteúdo e execução de ações dentro do mesmo estado cognitivo existente nas demais Interfaces. Ela adapta a experiência ao ambiente de mensagens sem fragmentar identidade, memória ou contexto.
 
 ---
 

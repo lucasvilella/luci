@@ -1,7 +1,7 @@
 /**
  * KokoroTTSProvider.ts
  *
- * Local ONNX Kokoro-82M Text-To-Speech Provider for L.U.C.I.
+ * Local ONNX Kokoro-82M Text-To-Speech Provider for Luci
  * Runs 100% offline with zero cloud API dependencies.
  */
 

@@ -27,13 +27,13 @@ O AI Provider Manager é responsável por gerenciar todos os provedores de Intel
 
 Ele abstrai completamente as diferenças entre APIs, modelos, autenticação, limites, custos e formatos de resposta, oferecendo uma interface única para o restante da arquitetura.
 
-Nenhum componente da L.U.C.I. conhece diretamente OpenAI, Anthropic, Google, Ollama ou qualquer outro fornecedor.
+Nenhum componente da Luci conhece diretamente OpenAI, Anthropic, Google, Ollama ou qualquer outro fornecedor.
 
 ---
 
 # Filosofia
 
-A inteligência da L.U.C.I. não pertence a um modelo.
+A inteligência da Luci não pertence a um modelo.
 
 Os modelos são apenas mecanismos capazes de fornecer determinadas capacidades cognitivas.
 
@@ -120,7 +120,7 @@ Exemplos.
 
 ## Adapter
 
-Cada Provider possui um Adapter responsável por traduzir a interface padrão da L.U.C.I. para a API específica do fornecedor.
+Cada Provider possui um Adapter responsável por traduzir a interface padrão da Luci para a API específica do fornecedor.
 
 ```
 Provider Adapter
@@ -362,11 +362,11 @@ O AI Provider Manager segue os princípios:
 
 # Definição
 
-O AI Provider Manager representa a camada de abstração entre a L.U.C.I. e qualquer fornecedor de Inteligência Artificial. Ele padroniza a comunicação, protege a arquitetura contra mudanças externas e garante que a plataforma permaneça independente de tecnologias específicas, permitindo a integração transparente de modelos locais, em nuvem ou híbridos.
+O AI Provider Manager representa a camada de abstração entre a Luci e qualquer fornecedor de Inteligência Artificial. Ele padroniza a comunicação, protege a arquitetura contra mudanças externas e garante que a plataforma permaneça independente de tecnologias específicas, permitindo a integração transparente de modelos locais, em nuvem ou híbridos.
 
 ---
 
-> **"Os modelos são intercambiáveis. A inteligência da L.U.C.I. não é."**
+> **"Os modelos são intercambiáveis. A inteligência da Luci não é."**
 
 ---
 

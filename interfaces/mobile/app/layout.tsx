@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { AuthProvider } from '@/hooks/use-auth'
+import { ConversationProvider } from '@/hooks/use-conversation'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -46,7 +47,11 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="font-sans antialiased" style={{ fontFamily: "'Geist', system-ui, sans-serif" }}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ConversationProvider>
+            {children}
+          </ConversationProvider>
+        </AuthProvider>
       </body>
     </html>
   )

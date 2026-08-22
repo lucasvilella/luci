@@ -1,12 +1,12 @@
 ---
 name: Provider Generator
 description: >
-  Projeta e gera a arquitetura de novos Providers para a L.U.C.I.,
+  Projeta e gera a arquitetura de novos Providers para a Luci,
   garantindo integração segura, desacoplada e consistente com a arquitetura oficial da plataforma.
 
 version: 1.0
 owner: Lucas
-project: L.U.C.I.
+project: Luci
 architecture: Cognitive Operating System
 
 requires:
@@ -28,7 +28,7 @@ triggers:
 
 ## Objetivo
 
-Projetar novos Providers respeitando integralmente a arquitetura da L.U.C.I.
+Projetar novos Providers respeitando integralmente a arquitetura da Luci
 
 Providers conectam a plataforma a sistemas externos.
 
@@ -209,7 +209,7 @@ Sempre apresentar:
 - armazenar credenciais no código;
 - retornar estruturas específicas da API externa para o Core.
 
-Sempre adapte a integração para os contratos internos da L.U.C.I.
+Sempre adapte a integração para os contratos internos da Luci
 
 ---
 
@@ -224,4 +224,4 @@ Todo Provider gerado deve:
 - possuir configuração externa;
 - ser resiliente;
 - ser completamente observável;
-- integrar-se naturalmente à arquitetura da L.U.C.I.
+- integrar-se naturalmente à arquitetura da Luci

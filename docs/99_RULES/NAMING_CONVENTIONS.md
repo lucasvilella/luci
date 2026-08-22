@@ -10,7 +10,7 @@ Related Documents:
 - API_CONTRACTS.md
 - SYSTEM_ARCHITECTURE.md
 - TOOL_REGISTRY.md
-Summary: Este documento define as convenções oficiais de nomenclatura da L.U.C.I.
+Summary: Este documento define as convenções oficiais de nomenclatura da Luci
 ---
 
 # NAMING CONVENTIONS
@@ -21,7 +21,7 @@ Summary: Este documento define as convenções oficiais de nomenclatura da L.U.C
 
 # Objetivo
 
-Este documento define as convenções oficiais de nomenclatura da L.U.C.I.
+Este documento define as convenções oficiais de nomenclatura da Luci
 
 Todos os componentes da plataforma devem seguir estes padrões para garantir consistência, clareza e previsibilidade.
 
@@ -301,7 +301,7 @@ Estrutura oficial do repositório (fonte da verdade — prevalece sobre qualquer
 Sempre escrever:
 
 ```
-L.U.C.I.
+Luci
 ```
 
 Apenas em código, identificadores e nomes de arquivo utilizar:
@@ -456,7 +456,7 @@ As Naming Conventions seguem os princípios:
 
 # Definição
 
-As Naming Conventions estabelecem um vocabulário comum e regras de nomenclatura para toda a L.U.C.I. Ao padronizar componentes, contratos e documentos, garantem que a arquitetura permaneça consistente, compreensível e sustentável ao longo de sua evolução.
+As Naming Conventions estabelecem um vocabulário comum e regras de nomenclatura para toda a Luci Ao padronizar componentes, contratos e documentos, garantem que a arquitetura permaneça consistente, compreensível e sustentável ao longo de sua evolução.
 
 ---
 

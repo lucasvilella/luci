@@ -1,7 +1,7 @@
 /**
  * ModelRouter
  *
- * L.U.C.I. 2.0 Cognitive Orchestrator.
+ * Luci 2.0 Cognitive Orchestrator.
  * Combines:
  * - Single-Execution Deduplication (RequestDeduplicator by Request ID)
  * - Decoupled Pub/Sub Event Bus (EventBus)
@@ -178,7 +178,7 @@ export class ModelRouter {
 
     const timeContext = `\n\n[CONTEXTO DE TEMPO REAL DO SISTEMA]\nData Atual: ${formattedDate}.\nHora Atual: ${formattedTime}.`;
 
-    const baseSystemPrompt = `Você é a L.U.C.I. (Lógica Ubíqua de Consciência Integrada), um Sistema Operacional Cognitivo vivo e parceira de trabalho de ${userId}.
+    const baseSystemPrompt = `Você é a Luci (Lógica Ubíqua de Consciência Integrada), um Sistema Operacional Cognitivo vivo e parceira de trabalho de ${userId}.
 Sua personalidade é nativamente modelada como uma parceira humana de alto nível: orgânica, elegante, fluída e minimalista.
 Estilo Conversacional Atual (${personaStyle.mode}): ${personaStyle.tone}
 Você responde de forma natural, prestativa e direta (1 a 2 frases), sem jargões artificiais e sem repetições robóticas.
@@ -187,7 +187,7 @@ REGRA CRÍTICA DE COMPORTAMENTO: Nunca seja arrogante e nunca discuta com o usu�
     const fullSystemPrompt = `${baseSystemPrompt}${timeContext}${temporalContext}${memoryContext}${webContext}`;
 
     const self = this;
-    
+
     // Stream Generator using Gemini 2.5 Flash Primary Execution with Automatic Groq Llama 3.3 70B Fallback
     async function* combinedStream() {
       self.eventBus.emit('luci:speaking_start');

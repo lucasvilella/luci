@@ -4,7 +4,7 @@ Category: Future
 Status: Living Document
 Version: 1.0
 Owner: Lucas Vilella
-Summary: Histórico de mudanças estruturais aplicadas à documentação da L.U.C.I., incluindo a consolidação de duplicatas feita em 2026-07-26.
+Summary: Histórico de mudanças estruturais aplicadas à documentação da Luci, incluindo a consolidação de duplicatas feita em 2026-07-26.
 
 Related Documents:
 - DECISIONS_LOG.md

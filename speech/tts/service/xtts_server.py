@@ -1,7 +1,7 @@
 """
 xtts_server.py
 
-High-performance XTTS-v2 FastAPI service for L.U.C.I.
+High-performance XTTS-v2 FastAPI service for Luci
 Features:
   - Model + embeddings preloaded in GPU memory at startup
   - FP16 inference for ~30-40% latency reduction
@@ -75,7 +75,7 @@ if not hasattr(transformers.pytorch_utils, "isin_mps_friendly"):
 
 from TTS.api import TTS
 
-app = FastAPI(title="L.U.C.I. XTTS-v2 Official Voice Service")
+app = FastAPI(title="Luci XTTS-v2 Official Voice Service")
 
 # ─── Global State ───
 tts_model = None

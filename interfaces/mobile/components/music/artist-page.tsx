@@ -1,135 +1,142 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Image from "next/image"
-import { ChevronLeft, MoreVertical } from "lucide-react"
-import {
-  getArtist,
-  getArtistTopTracks,
-  getArtistAlbums,
-  type DeezerArtist,
-  type DeezerTrack,
-  type DeezerAlbum,
-} from "@/lib/deezer"
+import { ChevronLeft, Play, Disc, Music, Loader2 } from "lucide-react"
+import { fetchArtist, type ArtistDetails } from "@/lib/lucimusic"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
-import { TrackRow } from "./track-row"
+import { useMusicPlayer } from "@/hooks/use-music-player"
+import { TrackImage } from "./track-image"
 
-export function ArtistPage({ artistId }: { artistId: number }) {
+export function ArtistPage({ artistId }: { artistId: string | number }) {
   const { pop } = useMusicNavigation()
-  const [artist, setArtist] = useState<DeezerArtist | null>(null)
-  const [tracks, setTracks] = useState<DeezerTrack[]>([])
-  const [albums, setAlbums] = useState<DeezerAlbum[]>([])
+  const { playTrack, currentTrack, isPlaying } = useMusicPlayer()
+  const [artist, setArtist] = useState<ArtistDetails | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setLoading(true)
-    Promise.all([
-      getArtist(artistId),
-      getArtistTopTracks(artistId, 10),
-      getArtistAlbums(artistId, 6),
-    ])
-      .then(([a, t, alb]) => {
-        setArtist(a)
-        setTracks(t.data)
-        setAlbums(alb.data)
-      })
+    fetchArtist(String(artistId))
+      .then((data) => setArtist(data))
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [artistId])
 
   return (
-    <div className="flex h-full flex-col bg-[#0d0d0d] animate-view-in">
-      {/* Header controls overlay */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-5 pb-2 pt-4">
+    <div className="flex h-full flex-col bg-[#08080A] text-white animate-view-in select-none">
+      {/* ─── Header Controls ─── */}
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-5 pt-3 pb-2 bg-gradient-to-b from-black/80 to-transparent">
         <button
           type="button"
           onClick={pop}
           aria-label="Voltar"
-          className="flex size-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-md"
+          className="flex size-9 items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/10"
         >
-          <ChevronLeft className="size-6 text-white" />
-        </button>
-        <button
-          type="button"
-          aria-label="Mais opções"
-          className="flex size-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-md"
-        >
-          <MoreVertical className="size-5 text-white" />
+          <ChevronLeft className="size-5" />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-4">
+      <div className="flex-1 overflow-y-auto pb-28">
         {loading ? (
-          <div className="flex h-60 items-center justify-center">
-            <div className="size-8 animate-spin rounded-full border-2 border-music-accent border-t-transparent" />
+          <div className="flex flex-col items-center justify-center py-32 gap-3 text-zinc-500">
+            <Loader2 className="size-7 animate-spin text-indigo-400" />
+            <p className="text-xs">Carregando perfil do artista...</p>
           </div>
         ) : artist ? (
           <>
-            {/* Hero Image */}
-            <div className="relative h-64 w-full">
-              <Image
-                src={artist.picture_xl || artist.picture_big || artist.picture}
+            {/* ─── Hero Artista ─── */}
+            <div className="relative h-60 w-full overflow-hidden">
+              <TrackImage
+                src={artist.thumbnail}
                 alt={artist.name}
-                fill
-                sizes="100vw"
-                className="object-cover"
-                priority
+                className="size-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-black/30" />
-            </div>
-
-            {/* Artist Info */}
-            <div className="px-5 -mt-6 relative z-10 text-center">
-              <h1 className="text-2xl font-bold text-white">{artist.name}</h1>
-              <p className="mt-1 text-xs text-white/50">
-                {artist.nb_album} Álbuns · {artist.nb_fan.toLocaleString("pt-BR")} Fãs
-              </p>
-              <p className="mt-2 text-xs leading-relaxed text-white/40 line-clamp-3">
-                Ouça os maiores sucessos, novos lançamentos e álbuns completos de {artist.name}.
-              </p>
-            </div>
-
-            {/* Albums horizontal scroll */}
-            {albums.length > 0 && (
-              <div className="mt-6">
-                <div className="mb-3 px-5">
-                  <h2 className="text-base font-bold text-white">Álbuns</h2>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#08080A] via-[#08080A]/40 to-transparent" />
+              <div className="absolute bottom-4 left-5 right-5 flex justify-between items-end">
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-400">
+                    Artista Verificado
+                  </span>
+                  <h1 className="text-xl font-bold text-white leading-tight mt-0.5">
+                    {artist.name}
+                  </h1>
                 </div>
-                <div className="flex gap-4 overflow-x-auto px-5 scrollbar-hide">
-                  {albums.map((album) => (
-                    <div
-                      key={album.id}
-                      className="flex w-32 shrink-0 flex-col gap-2 transition-transform active:scale-[0.97]"
-                    >
-                      <div className="relative aspect-square w-full overflow-hidden rounded-2xl">
-                        <Image
-                          src={album.cover_medium || album.cover}
-                          alt={album.title}
-                          fill
-                          sizes="128px"
-                          className="object-cover"
+                {artist.top_tracks.length > 0 && (
+                  <button
+                    onClick={() => playTrack(artist.top_tracks[0], artist.top_tracks)}
+                    className="size-11 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+                    aria-label="Tocar Artista"
+                  >
+                    <Play className="size-5 fill-white ml-0.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* ─── Top Músicas ─── */}
+            <div className="px-5 py-4 space-y-4">
+              {artist.top_tracks.length > 0 && (
+                <section className="space-y-2">
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                    <Music className="size-3.5 text-indigo-400" /> Populares
+                  </h2>
+                  <div className="space-y-1">
+                    {artist.top_tracks.map((track, idx) => (
+                      <div
+                        key={track.id}
+                        onClick={() => playTrack(track, artist.top_tracks)}
+                        className={`flex items-center gap-3 p-2 rounded-xl transition-all cursor-pointer ${
+                          currentTrack?.id === track.id ? "bg-indigo-500/15 border border-indigo-500/30" : "hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="w-4 text-center text-xs text-zinc-500 font-mono">{idx + 1}</span>
+                        <TrackImage
+                          src={track.thumbnail}
+                          trackId={track.id}
+                          alt={track.title}
+                          className="size-10 rounded-lg object-cover bg-zinc-800 shrink-0"
                         />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-semibold truncate ${currentTrack?.id === track.id ? "text-indigo-400" : "text-white"}`}>
+                            {track.title}
+                          </p>
+                          <p className="text-[10px] text-zinc-400 truncate mt-0.5">{track.album || artist.name}</p>
+                        </div>
+                        <span className="text-[11px] text-zinc-400 px-2">{track.durationFormatted}</span>
                       </div>
-                      <p className="truncate text-xs font-semibold text-white">{album.title}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                    ))}
+                  </div>
+                </section>
+              )}
 
-            {/* Top Songs */}
-            <div className="mt-6 px-2">
-              <div className="mb-2 flex items-center justify-between px-3">
-                <h2 className="text-base font-bold text-white">Músicas Populares</h2>
-              </div>
-              {tracks.map((track) => (
-                <TrackRow key={track.id} track={track} context={tracks} />
-              ))}
+              {/* ─── Álbuns & Singles ─── */}
+              {artist.albums.length > 0 && (
+                <section className="space-y-2 pt-2">
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                    <Disc className="size-3.5 text-purple-400" /> Discografia & Álbuns
+                  </h2>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {artist.albums.map((album) => (
+                      <div
+                        key={album.id}
+                        className="flex items-center gap-2.5 p-2 rounded-xl bg-white/[0.03] border border-white/5 hover:border-white/15 transition-all cursor-pointer"
+                      >
+                        <TrackImage
+                          src={album.thumbnail}
+                          alt={album.title}
+                          className="size-12 rounded-lg object-cover bg-zinc-800 shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-white truncate">{album.title}</p>
+                          <p className="text-[10px] text-zinc-400 truncate mt-0.5">{album.year || "Álbum"}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
           </>
-        ) : (
-          <p className="p-5 text-center text-white/40">Artista não encontrado</p>
-        )}
+        ) : null}
       </div>
     </div>
   )

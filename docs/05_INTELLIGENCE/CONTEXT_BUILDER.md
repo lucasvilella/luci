@@ -44,7 +44,7 @@ Quanto melhor esse estado for representado, melhores serão as decisões produzi
 
 # Princípio Fundamental
 
-O Context Builder transforma o estado interno da L.U.C.I. em um contexto de inferência.
+O Context Builder transforma o estado interno da Luci em um contexto de inferência.
 
 ```
 Cores
@@ -344,7 +344,7 @@ O Context Builder segue os princípios.
 
 # Definição
 
-O Context Builder representa o componente responsável por transformar o estado cognitivo da L.U.C.I. em um contexto de inferência consistente, relevante e seguro, reunindo informações provenientes dos diversos Cores e componentes da plataforma para fornecer aos modelos exatamente o conhecimento necessário para cada decisão.
+O Context Builder representa o componente responsável por transformar o estado cognitivo da Luci em um contexto de inferência consistente, relevante e seguro, reunindo informações provenientes dos diversos Cores e componentes da plataforma para fornecer aos modelos exatamente o conhecimento necessário para cada decisão.
 
 ---
 

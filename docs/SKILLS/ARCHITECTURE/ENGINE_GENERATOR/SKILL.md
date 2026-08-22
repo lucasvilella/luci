@@ -1,12 +1,12 @@
 ---
 name: Engine Generator
 description: >
-  Projeta e gera a estrutura arquitetural de um novo Cognitive Engine para a L.U.C.I.,
+  Projeta e gera a estrutura arquitetural de um novo Cognitive Engine para a Luci,
   definindo responsabilidades, contratos, eventos, integrações e observabilidade antes da implementação.
 
 version: 1.0
 owner: Lucas
-project: L.U.C.I.
+project: Luci
 architecture: Cognitive Operating System
 
 requires:
@@ -27,7 +27,7 @@ triggers:
 
 ## Objetivo
 
-Projetar um novo Cognitive Engine seguindo rigorosamente a arquitetura oficial da L.U.C.I.
+Projetar um novo Cognitive Engine seguindo rigorosamente a arquitetura oficial da Luci
 
 Todo Engine representa um domínio cognitivo especializado.
 
@@ -192,7 +192,7 @@ Todo Engine gerado deve:
 
 - representar um único domínio cognitivo;
 - possuir responsabilidades bem definidas;
-- integrar-se naturalmente à arquitetura da L.U.C.I.;
+- integrar-se naturalmente à arquitetura da Luci;
 - respeitar todos os Non-Negotiables;
 - ser desacoplado;
 - ser observável;

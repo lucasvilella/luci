@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
-import { Mic, MessageSquare, X, Sparkles, Volume2, Loader2 } from "lucide-react"
+import { Mic, Sparkles, Volume2, Loader2 } from "lucide-react"
 import { luciApiFetch } from "@/lib/api"
+import { useConversation } from "@/hooks/use-conversation"
 
 class AudioPlayerQueue {
   private audioContext: AudioContext | null = null
@@ -106,14 +107,15 @@ export function VoiceOrbView() {
   const [loading, setLoading] = useState(false)
   const [transcript, setTranscript] = useState("")
   const [response, setResponse] = useState("")
-  const [statusText, setStatusText] = useState("Toque no microfone para falar")
+  const [statusText, setStatusText] = useState("Diga 'Luci' ou toque no microfone")
 
   const recognitionRef = useRef<any>(null)
   const silenceTimerRef = useRef<any>(null)
   const capturedTextRef = useRef<string>("")
   const audioQueueRef = useRef<AudioPlayerQueue | null>(null)
-  const streamSentenceCounter = useRef<number>(0)
   const isProcessingRef = useRef<boolean>(false)
+  const isUserActiveSessionRef = useRef<boolean>(false)
+  const isListeningRef = useRef<boolean>(false)
 
   const clearSilenceTimer = () => {
     if (silenceTimerRef.current) {
@@ -122,224 +124,186 @@ export function VoiceOrbView() {
     }
   }
 
+  const { sendVoiceMessage } = useConversation()
+
+  // ─── Síntese e Enfileiramento de Voz TTS ───
   const synthesizeAndEnqueueSentence = useCallback(async (sentence: string, index: number) => {
     const cleanSentence = cleanTextForSpeech(sentence)
     if (cleanSentence.length < 2) return
 
     try {
-      const res = await luciApiFetch("/api/v1/tts/speak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: cleanSentence }),
-      })
-
-      if (!res.ok) return
-      const buffer = await res.arrayBuffer()
-      audioQueueRef.current?.enqueueIndexed(index, buffer)
-    } catch (err) {
-      console.error("TTS fetch error:", err)
-    }
-  }, [])
-
-  const [conversationHistory, setConversationHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([])
-
-  const sendVoiceQuery = useCallback(async (text: string) => {
-    if (!text.trim() || isProcessingRef.current) return
-    isProcessingRef.current = true
-    setLoading(true)
-    setStatusText("Luci está pensando...")
-    setResponse("")
-    streamSentenceCounter.current = 0
-    audioQueueRef.current?.stopAndClear()
-
-    const currentHistory = [...conversationHistory]
-
-    try {
-      const res = await luciApiFetch("/api/v1/chat", {
+      const res = await luciApiFetch("/api/v1/chat/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: text,
-          userId: "Lucas",
-          history: currentHistory,
+          text: cleanSentence,
+          voice: "pt-BR-ThalitaNeural",
         }),
       })
 
-      if (!res.ok) throw new Error("Chat request failed")
-
-      const contentType = res.headers.get("content-type") || ""
-
-      if (contentType.includes("text/event-stream")) {
-        const reader = res.body?.getReader()
-        const decoder = new TextDecoder()
-        let sentenceBuffer = ""
-        let fullText = ""
-
-        if (reader) {
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
-
-            const chunk = decoder.decode(value, { stream: true })
-            const lines = chunk.split("\n")
-
-            for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const dataStr = line.replace("data: ", "").trim()
-                if (dataStr === "[DONE]") continue
-
-                try {
-                  const parsed = JSON.parse(dataStr)
-                  if (parsed.chunk) {
-                    sentenceBuffer += parsed.chunk
-                    fullText += parsed.chunk
-                    setResponse(fullText)
-                    setLoading(false)
-
-                    const match = sentenceBuffer.match(/([^.!?\n]+[.!?\n]+)/)
-                    if (match) {
-                      const fullSentence = match[0]
-                      sentenceBuffer = sentenceBuffer.slice(fullSentence.length)
-                      const currentIndex = streamSentenceCounter.current++
-                      synthesizeAndEnqueueSentence(fullSentence, currentIndex)
-                    }
-                  }
-                } catch {}
-              }
-            }
-          }
-
-          if (sentenceBuffer.trim()) {
-            const currentIndex = streamSentenceCounter.current++
-            synthesizeAndEnqueueSentence(sentenceBuffer.trim(), currentIndex)
-          }
-
-          if (fullText.trim()) {
-            setConversationHistory((prev) => [
-              ...prev,
-              { role: "user", content: text },
-              { role: "assistant", content: fullText.trim() },
-            ])
-          }
-        }
-      } else {
-        const data = await res.json()
-        const reply = data.content || ""
-        setResponse(reply)
-        setLoading(false)
-        synthesizeAndEnqueueSentence(reply, 0)
-        if (reply.trim()) {
-          setConversationHistory((prev) => [
-            ...prev,
-            { role: "user", content: text },
-            { role: "assistant", content: reply.trim() },
-          ])
-        }
+      if (res.ok) {
+        const buffer = await res.arrayBuffer()
+        audioQueueRef.current?.enqueueIndexed(index, buffer)
       }
     } catch (err) {
-      console.error("Voice processing error:", err)
+      console.error("[VoiceOrb] Erro TTS:", err)
+    }
+  }, [])
+
+  // ─── Enviar Mensagem para o Cérebro Unificado ───
+  const sendVoiceQuery = useCallback(async (text: string) => {
+    if (!text.trim() || isProcessingRef.current) return
+    isProcessingRef.current = true
+    isUserActiveSessionRef.current = false
+    clearSilenceTimer()
+
+    try {
+      recognitionRef.current?.stop()
+    } catch {}
+    setListening(false)
+    isListeningRef.current = false
+
+    setLoading(true)
+    setStatusText("Luci está pensando...")
+    setResponse("")
+    audioQueueRef.current?.stopAndClear()
+
+    try {
+      const result = await sendVoiceMessage(text)
+      setResponse(result.reply)
+      setLoading(false)
+      setStatusText(result.reply ? "Luci respondeu" : "Diga 'Luci' ou toque no microfone")
+
+      if (result.audioBase64) {
+        const binaryString = atob(result.audioBase64)
+        const bytes = new Uint8Array(binaryString.length)
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i)
+        }
+        audioQueueRef.current?.enqueueIndexed(0, bytes.buffer)
+      } else if (result.reply) {
+        synthesizeAndEnqueueSentence(result.reply, 0)
+      }
+    } catch (err) {
+      console.error("[VoiceOrb] Erro no processamento de voz:", err)
       setStatusText("Erro na resposta. Tente novamente.")
     } finally {
       isProcessingRef.current = false
       setLoading(false)
     }
-  }, [synthesizeAndEnqueueSentence])
+  }, [sendVoiceMessage, synthesizeAndEnqueueSentence])
 
-  const isContinuousSessionRef = useRef<boolean>(true)
-
+  // ─── Inicialização do Reconhecimento de Voz & Wake Word Contínua ───
   useEffect(() => {
     audioQueueRef.current = new AudioPlayerQueue((isSpeaking) => {
       setSpeaking(isSpeaking)
       if (isSpeaking) {
         setStatusText("Luci está falando...")
-        // Pause recognition while Luci is speaking to avoid hearing herself
         try {
           recognitionRef.current?.stop()
         } catch {}
       } else {
-        // Automatically re-open the mic for continuous conversation when Luci finishes speaking!
-        if (isContinuousSessionRef.current) {
-          setStatusText("Ouvindo sua resposta...")
-          capturedTextRef.current = ""
-          setTranscript("")
-          setTimeout(() => {
-            try {
-              recognitionRef.current?.start()
-              setListening(true)
-            } catch {}
-          }, 300)
-        } else {
-          setStatusText("Toque no microfone para falar")
-        }
+        setStatusText("Diga 'Luci' ou toque no microfone")
+        // Reinicia a escuta contínua de wake word / resposta
+        setTimeout(() => {
+          try {
+            recognitionRef.current?.start()
+          } catch {}
+        }, 400)
       }
     })
 
     const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (SpeechRec) {
       const rec = new SpeechRec()
-      // continuous = false is much more reliable on Android mobile browsers
-      rec.continuous = false
+      rec.continuous = true
       rec.interimResults = true
       rec.lang = "pt-BR"
 
       rec.onstart = () => {
-        setListening(true)
-        setStatusText("Ouvindo você...")
+        isListeningRef.current = true
+        setListening(isUserActiveSessionRef.current)
       }
 
       rec.onresult = (event: any) => {
-        clearSilenceTimer()
+        let interimTranscript = ""
+        let finalTranscript = ""
 
-        let currentText = ""
-        let isFinal = false
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          currentText += event.results[i][0].transcript
-          if (event.results[i].isFinal) isFinal = true
+          const item = event.results[i]
+          if (item.isFinal) {
+            finalTranscript += item[0].transcript
+          } else {
+            interimTranscript += item[0].transcript
+          }
         }
 
-        if (currentText.trim()) {
-          capturedTextRef.current = currentText.trim()
-          setTranscript(capturedTextRef.current)
+        const currentSpeech = (finalTranscript || interimTranscript).trim()
+        if (!currentSpeech) return
 
-          if (isFinal) {
-            // Android finalized sentence: trigger immediately!
-            try {
-              rec.stop()
-            } catch {}
-            setListening(false)
-            sendVoiceQuery(capturedTextRef.current)
+        // 1. Detecção de Wake Word "Luci" / "Lucy" / "Ok Luci" / "Ei Luci"
+        const wakeWordRegex = /\b(luci|lucy|luzi|lusi|ok luci|ei luci|hey luci)\b/i
+        const hasWakeWord = wakeWordRegex.test(currentSpeech)
+
+        if (hasWakeWord && !isUserActiveSessionRef.current) {
+          // Ativação por Wake Word!
+          audioQueueRef.current?.initAudioContext()
+          isUserActiveSessionRef.current = true
+          setListening(true)
+          setStatusText("Ouvindo você...")
+          
+          // Remove a palavra de ativação e captura o comando que veio junto
+          const commandAfterWake = currentSpeech.replace(wakeWordRegex, "").trim()
+          capturedTextRef.current = commandAfterWake
+          setTranscript(commandAfterWake)
+        } else if (isUserActiveSessionRef.current) {
+          // Já está em sessão ativa (ou por toque no botão ou por wake word)
+          capturedTextRef.current = currentSpeech.replace(wakeWordRegex, "").trim()
+          setTranscript(capturedTextRef.current)
+        }
+
+        // 2. Detecção de Silêncio e Envio Rápido
+        if (isUserActiveSessionRef.current && capturedTextRef.current.length >= 2) {
+          clearSilenceTimer()
+
+          // Se a frase foi marcada como final pela API ou após 800ms de silêncio
+          if (finalTranscript.trim()) {
+            const queryToSend = capturedTextRef.current
+            sendVoiceQuery(queryToSend)
           } else {
-            // Silence timer for interim results
             silenceTimerRef.current = setTimeout(() => {
-              const finalText = capturedTextRef.current
-              if (finalText.length >= 2) {
-                try {
-                  rec.stop()
-                } catch {}
-                setListening(false)
-                sendVoiceQuery(finalText)
+              const queryToSend = capturedTextRef.current
+              if (queryToSend.length >= 2) {
+                sendVoiceQuery(queryToSend)
               }
-            }, 900)
+            }, 800)
           }
         }
       }
 
       rec.onerror = (event: any) => {
-        console.warn("Speech recognition error:", event.error)
-        setListening(false)
-        clearSilenceTimer()
+        if (event.error !== "no-speech") {
+          console.warn("[VoiceOrb] Speech error:", event.error)
+        }
       }
 
       rec.onend = () => {
-        setListening(false)
-        clearSilenceTimer()
-        // If we captured speech but recognition ended before timer fired, send it now
-        if (capturedTextRef.current.trim().length >= 2 && !isProcessingRef.current) {
-          sendVoiceQuery(capturedTextRef.current)
+        isListeningRef.current = false
+        // Se não estiver falando nem processando, reinicia automaticamente para manter a escuta contínua de wake word
+        if (!isProcessingRef.current && audioQueueRef.current && !speaking) {
+          setTimeout(() => {
+            try {
+              rec.start()
+            } catch {}
+          }, 300)
         }
       }
 
       recognitionRef.current = rec
+
+      try {
+        rec.start()
+      } catch {}
     }
 
     return () => {
@@ -353,65 +317,49 @@ export function VoiceOrbView() {
         audioQueueRef.current.stopAndClear()
       }
     }
-  }, [sendVoiceQuery])
+  }, [sendVoiceQuery, speaking])
 
-  const toggleMic = () => {
+  // ─── Botão Central Único: Iniciar Escuta ou Cancelar ───
+  const handleCentralMicClick = () => {
     audioQueueRef.current?.initAudioContext()
     clearSilenceTimer()
-    isContinuousSessionRef.current = true
 
     if (speaking) {
+      // Se a Luci estiver falando, o clique interrompe a fala
       audioQueueRef.current?.stopAndClear()
       setSpeaking(false)
+      setStatusText("Diga 'Luci' ou toque no microfone")
+      return
     }
 
-    if (listening) {
-      recognitionRef.current?.stop()
+    if (listening || isUserActiveSessionRef.current) {
+      // Cancelamento: usuário clicou enquanto estava ouvindo para cancelar sem processar
+      isUserActiveSessionRef.current = false
       setListening(false)
-      if (capturedTextRef.current.trim()) {
-        sendVoiceQuery(capturedTextRef.current)
-      }
+      capturedTextRef.current = ""
+      setTranscript("")
+      setStatusText("Cancelado. Diga 'Luci' ou toque no microfone")
+      try {
+        recognitionRef.current?.stop()
+      } catch {}
     } else {
+      // Ativação manual do microfone
+      isUserActiveSessionRef.current = true
+      setListening(true)
       setTranscript("")
       setResponse("")
       capturedTextRef.current = ""
+      setStatusText("Ouvindo você...")
       try {
         recognitionRef.current?.start()
-        setListening(true)
-      } catch (err) {
-        console.warn("Recognition start fallback:", err)
-      }
+      } catch {}
     }
-  }
-
-  const cancelSession = () => {
-    isContinuousSessionRef.current = false
-    clearSilenceTimer()
-    try {
-      recognitionRef.current?.stop()
-    } catch {}
-    setListening(false)
-    audioQueueRef.current?.stopAndClear()
-    setSpeaking(false)
-    setTranscript("")
-    setResponse("")
-    setStatusText("Toque no microfone para falar")
-  }
-
-  const speakDemo = () => {
-    audioQueueRef.current?.initAudioContext()
-    const text = "Olá! Eu sou a Luci. A voz Thalita Neural online já está funcionando com fallback automático e resposta instantânea."
-    setTranscript("Teste de áudio da Luci")
-    setResponse(text)
-    streamSentenceCounter.current = 0
-    audioQueueRef.current?.stopAndClear()
-    synthesizeAndEnqueueSentence(text, 0)
   }
 
   const [appMode, setAppMode] = useState<"assistant" | "interpreter">("assistant")
 
   return (
-    <div className="flex h-full flex-col items-center justify-between px-6 pb-4 pt-2 animate-view-in bg-background">
+    <div className="flex h-full flex-col items-center justify-between px-6 pb-6 pt-2 animate-view-in bg-background select-none">
       {/* ─── Mode Switcher Header ─── */}
       <div className="flex w-full items-center justify-center gap-2 pt-2">
         <div className="flex rounded-full bg-card/80 p-1 border border-border shadow-sm">
@@ -443,18 +391,10 @@ export function VoiceOrbView() {
         </div>
       </div>
 
-      {appMode === "interpreter" && (
-        <div className="mt-1 flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[11px] font-medium text-cyan-300">
-          <span>👨 Homem (PT) ➔ 🇨🇳 Mandarim</span>
-          <span>•</span>
-          <span>👩 Mulher (Mandarim) ➔ 🇧🇷 PT-BR</span>
-        </div>
-      )}
-
-      {/* Interactive Orb */}
+      {/* Orbe Central Interativo */}
       <div className="relative flex flex-1 items-center justify-center">
         <div className="relative flex items-center justify-center">
-          {/* pulsing rings */}
+          {/* Anéis pulsantes */}
           <span
             className={`absolute size-56 rounded-full bg-primary/20 transition-all duration-700 ${
               listening || speaking ? "scale-125 opacity-70 animate-ping" : "scale-90 opacity-20"
@@ -467,12 +407,12 @@ export function VoiceOrbView() {
             }`}
             aria-hidden="true"
           />
-          {/* core orb */}
+          {/* Orbe Core */}
           <div className="relative size-52 animate-orb-pulse">
             <div className="absolute inset-0 animate-orb-rotate rounded-full bg-[conic-gradient(from_0deg,var(--chart-4),var(--primary),var(--chart-2),var(--chart-3),var(--chart-4))] opacity-90 blur-[1px]" />
             <div className="absolute inset-3 rounded-full bg-[radial-gradient(circle_at_30%_30%,var(--chart-3),var(--primary)_55%,var(--chart-4))]" />
             <div className="absolute inset-0 rounded-full shadow-[0_0_60px_-5px_var(--primary)]" />
-            {/* equalizer bars */}
+            {/* Equalizador de barras */}
             <div className="absolute inset-0 flex items-center justify-center gap-1.5">
               {[0.5, 0.9, 0.4, 1, 0.65, 0.85, 0.45].map((h, idx) => (
                 <span
@@ -492,12 +432,13 @@ export function VoiceOrbView() {
         </div>
       </div>
 
+      {/* Status da Luci */}
       <p className="text-sm font-medium text-primary text-center px-4">
         {statusText}
       </p>
 
-      {/* Transcript or AI response */}
-      <div className="mt-4 min-h-24 max-w-xs text-balance text-center text-base font-semibold leading-relaxed text-foreground px-2 overflow-y-auto max-h-32">
+      {/* Transcrição ou Resposta */}
+      <div className="mt-4 min-h-16 max-w-xs text-balance text-center text-base font-semibold leading-relaxed text-foreground px-2 overflow-y-auto max-h-32">
         {loading && (
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin text-primary" />
@@ -505,61 +446,25 @@ export function VoiceOrbView() {
           </div>
         )}
         {transcript && !loading && <p className="text-xs text-muted-foreground mb-1">"{transcript}"</p>}
-        {response || (!transcript && !loading && "Toque no microfone ou em uma sugestão abaixo:")}
-        
-        {!transcript && !response && !loading && (
-          <div className="mt-3 flex flex-wrap justify-center gap-2">
-            {[
-              "Quem é você?",
-              "Como está o trânsito?",
-              "Conte uma curiosidade",
-            ].map((prompt) => (
-              <button
-                key={prompt}
-                type="button"
-                onClick={() => {
-                  audioQueueRef.current?.initAudioContext()
-                  setTranscript(prompt)
-                  sendVoiceQuery(prompt)
-                }}
-                className="rounded-full border border-border bg-card/60 px-3 py-1 text-xs text-foreground hover:bg-accent active:scale-95 transition-all"
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-        )}
+        {response && <p className="text-sm font-medium text-foreground">{response}</p>}
       </div>
 
-      {/* Controls */}
-      <div className="mt-2 flex w-full items-center justify-center gap-6 pb-2">
+      {/* ─── Botão Central Único de Microfone (Ativar / Cancelar) ─── */}
+      <div className="mt-4 flex w-full items-center justify-center pb-2">
         <button
           type="button"
-          onClick={speakDemo}
-          className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-accent active:scale-95"
-          aria-label="Testar voz"
-          title="Testar voz da Luci"
+          onClick={handleCentralMicClick}
+          aria-label={listening ? "Cancelar microfone" : "Ativar microfone"}
+          className={`relative flex size-18 items-center justify-center rounded-full transition-all active:scale-95 shadow-xl ${
+            listening
+              ? "bg-rose-500 text-white shadow-rose-500/40 ring-4 ring-rose-500/30"
+              : "bg-primary text-primary-foreground shadow-[0_10px_40px_-8px_var(--primary)] hover:scale-105"
+          }`}
         >
-          <Volume2 className="size-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={toggleMic}
-          aria-label={listening ? "Parar de ouvir" : "Começar a ouvir"}
-          className="relative flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_10px_40px_-8px_var(--primary)] transition-transform active:scale-95"
-        >
-          {listening && <span className="absolute inset-0 animate-ping rounded-full bg-primary/40" aria-hidden="true" />}
-          <Mic className="relative size-7" aria-hidden="true" />
-        </button>
-
-        <button
-          type="button"
-          onClick={cancelSession}
-          className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-accent active:scale-95"
-          aria-label="Cancelar"
-        >
-          <X className="size-4" />
+          {listening && (
+            <span className="absolute inset-0 animate-ping rounded-full bg-rose-500/40" aria-hidden="true" />
+          )}
+          <Mic className="relative size-8" aria-hidden="true" />
         </button>
       </div>
     </div>

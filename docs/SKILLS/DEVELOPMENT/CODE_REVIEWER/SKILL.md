@@ -2,12 +2,12 @@
 name: Code Reviewer
 description: >
   Realiza revisão técnica e arquitetural de código-fonte, verificando conformidade
-  com os padrões da L.U.C.I., identificando problemas de arquitetura, design,
+  com os padrões da Luci, identificando problemas de arquitetura, design,
   segurança, legibilidade e manutenção antes da aprovação.
 
 version: 1.0
 owner: Lucas
-project: L.U.C.I.
+project: Luci
 architecture: Cognitive Operating System
 
 requires:
@@ -27,7 +27,7 @@ triggers:
 
 ## Objetivo
 
-Realizar revisões técnicas completas garantindo que todo código produzido esteja em conformidade com a arquitetura oficial da L.U.C.I.
+Realizar revisões técnicas completas garantindo que todo código produzido esteja em conformidade com a arquitetura oficial da Luci
 
 A revisão deve priorizar arquitetura antes de detalhes de implementação.
 
@@ -72,7 +72,7 @@ Verifique:
 - desacoplamento;
 - dependências;
 - uso adequado de contratos;
-- aderência à arquitetura da L.U.C.I.
+- aderência à arquitetura da Luci
 
 ---
 
@@ -160,4 +160,4 @@ Toda revisão deve informar claramente:
 
 **Aprovado**, **Aprovado com ajustes** ou **Reprovado**.
 
-A revisão deve ser objetiva, técnica e sempre fundamentada nos documentos oficiais da L.U.C.I.
+A revisão deve ser objetiva, técnica e sempre fundamentada nos documentos oficiais da Luci

@@ -1,5 +1,5 @@
 =====================================================
-PASTA DE FOTOS DE USUÁRIOS — L.U.C.I. BIOMETRIC FACIAL
+PASTA DE FOTOS DE USUÁRIOS — Luci BIOMETRIC FACIAL
 =====================================================
 
 Como adicionar novos usuários por foto:
@@ -16,5 +16,5 @@ Como adicionar novos usuários por foto:
      { "name": "Mariana", "file": "mariana.jpg" }
    ]
 
-3. A L.U.C.I. fará a leitura da imagem e o cálculo dos pontos faciais 
+3. A Luci fará a leitura da imagem e o cálculo dos pontos faciais 
    automaticamente ao inicializar o sistema!

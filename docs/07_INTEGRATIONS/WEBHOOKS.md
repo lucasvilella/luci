@@ -11,18 +11,18 @@ Related Documents:
 - COGNITIVE_BUS.md
 - API_CONTRACTS.md
 - TOOL_ENGINE.md
-Summary: A integração Webhooks permite que sistemas externos enviem eventos espontaneamente para a L.U.C.I., sem necessidade de consultas periódicas.
+Summary: A integração Webhooks permite que sistemas externos enviem eventos espontaneamente para a Luci, sem necessidade de consultas periódicas.
 ---
 
 # WEBHOOKS
 
-> *"Os Webhooks permitem que o mundo converse com a L.U.C.I."*
+> *"Os Webhooks permitem que o mundo converse com a Luci"*
 
 ---
 
 # Objetivo
 
-A integração Webhooks permite que sistemas externos enviem eventos espontaneamente para a L.U.C.I., sem necessidade de consultas periódicas.
+A integração Webhooks permite que sistemas externos enviem eventos espontaneamente para a Luci, sem necessidade de consultas periódicas.
 
 Todos os Webhooks são convertidos em eventos cognitivos padronizados.
 
@@ -251,7 +251,7 @@ A integração segue os princípios.
 
 # Definição
 
-A integração Webhooks permite que sistemas externos notifiquem a L.U.C.I. sobre mudanças de estado em tempo real. Todos os eventos recebidos são autenticados, normalizados e convertidos para o modelo cognitivo da plataforma, preservando desacoplamento, segurança e consistência arquitetural.
+A integração Webhooks permite que sistemas externos notifiquem a Luci sobre mudanças de estado em tempo real. Todos os eventos recebidos são autenticados, normalizados e convertidos para o modelo cognitivo da plataforma, preservando desacoplamento, segurança e consistência arquitetural.
 
 ---
 

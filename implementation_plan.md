@@ -1,6 +1,6 @@
 # Plano de Implementação: Integração Multicanal (WhatsApp & Telegram) + Motor de Áudio Neural
 
-Este plano detalha a expansão da **L.U.C.I.** para se tornar um assistente cognitivo multicanal de alto nível, conectando os canais do **WhatsApp** e **Telegram**, gerando respostas em voz (arquivos de áudio `.mp3`/`.ogg`) e integrando perfeitamente a Memória Cognitiva existente.
+Este plano detalha a expansão da **Luci** para se tornar um assistente cognitivo multicanal de alto nível, conectando os canais do **WhatsApp** e **Telegram**, gerando respostas em voz (arquivos de áudio `.mp3`/`.ogg`) e integrando perfeitamente a Memória Cognitiva existente.
 
 ---
 
@@ -13,7 +13,7 @@ Este plano detalha a expansão da **L.U.C.I.** para se tornar um assistente cogn
 
 > [!TIP]
 > **Respostas em Áudio pelo Celular**:
-> Quando você mandar uma mensagem de texto ou de voz pelo Telegram/WhatsApp, a L.U.C.I. poderá responder tanto com **texto** quanto com uma **nota de voz (.ogg / .mp3)** nativa no seu chat!
+> Quando você mandar uma mensagem de texto ou de voz pelo Telegram/WhatsApp, a Luci poderá responder tanto com **texto** quanto com uma **nota de voz (.ogg / .mp3)** nativa no seu chat!
 
 ---
 
@@ -24,7 +24,7 @@ Este plano detalha a expansão da **L.U.C.I.** para se tornar um assistente cogn
 #### [NEW] [telegramChannel.ts](file:///e:/Projects/luci/server/channels/telegramChannel.ts)
 - Implementa o conector do Telegram.
 - Processa mensagens de texto e áudios de voz recebidos no celular.
-- Roteia as mensagens para o `ModelRouter` da L.U.C.I. preservando a **Memória Cognitiva**.
+- Roteia as mensagens para o `ModelRouter` da Luci preservando a **Memória Cognitiva**.
 - Envia respostas em texto e notas de voz (`voice audio`).
 
 #### [NEW] [whatsappChannel.ts](file:///e:/Projects/luci/server/channels/whatsappChannel.ts)
@@ -56,4 +56,4 @@ Este plano detalha a expansão da **L.U.C.I.** para se tornar um assistente cogn
 
 ### Manual Verification
 1. **Pareamento WhatsApp**: Validar a leitura do QR Code e envio de mensagem de teste via WhatsApp.
-2. **Bot do Telegram**: Testar envio de texto e mensagem de voz pelo aplicativo do Telegram e verificar o retorno sonoro e em texto da L.U.C.I.
+2. **Bot do Telegram**: Testar envio de texto e mensagem de voz pelo aplicativo do Telegram e verificar o retorno sonoro e em texto da Luci

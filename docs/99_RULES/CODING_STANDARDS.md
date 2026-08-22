@@ -11,7 +11,7 @@ Related Documents:
 - DESIGN_RULES.md
 - API_CONTRACTS.md
 - DOCUMENTATION_RULES.md
-Summary: Este documento define os princípios de desenvolvimento de software da L.U.C.I.
+Summary: Este documento define os princípios de desenvolvimento de software da Luci
 ---
 
 # CODING STANDARDS
@@ -22,7 +22,7 @@ Summary: Este documento define os princípios de desenvolvimento de software da 
 
 # Objetivo
 
-Este documento define os princípios de desenvolvimento de software da L.U.C.I.
+Este documento define os princípios de desenvolvimento de software da Luci
 
 Seu propósito é garantir que todo código produzido permaneça consistente, compreensível, desacoplado e alinhado com a arquitetura da plataforma.
 
@@ -255,7 +255,7 @@ Os Coding Standards seguem os princípios:
 
 # Definição
 
-Os Coding Standards estabelecem os princípios de desenvolvimento da L.U.C.I., orientando a implementação de componentes de forma consistente com a arquitetura da plataforma. Seu objetivo é garantir que o código permaneça claro, modular, sustentável e preparado para evoluir ao longo do tempo.
+Os Coding Standards estabelecem os princípios de desenvolvimento da Luci, orientando a implementação de componentes de forma consistente com a arquitetura da plataforma. Seu objetivo é garantir que o código permaneça claro, modular, sustentável e preparado para evoluir ao longo do tempo.
 
 ---
 

@@ -24,16 +24,16 @@ export class ConversationEngine {
   }
 
   private setupListeners(): void {
-    // 1. Instant User Barge-in Interruption: When user starts speaking, stop L.U.C.I. speech immediately
+    // 1. Instant User Barge-in Interruption: When user starts speaking, stop Luci speech immediately
     this.eventBus.on('user:speech_start', () => {
       if (this.isLuciSpeaking) {
-        console.log('[ConversationEngine] 🛑 User Barge-in Interruption detected! Stopping L.U.C.I. speech.');
+        console.log('[ConversationEngine] 🛑 User Barge-in Interruption detected! Stopping Luci speech.');
         this.isLuciSpeaking = false;
         this.eventBus.emit('luci:speaking_end', { reason: 'INTERRUPTED_BY_USER' });
       }
     });
 
-    // 2. Track L.U.C.I. speaking state
+    // 2. Track Luci speaking state
     this.eventBus.on('luci:speaking_start', () => {
       this.isLuciSpeaking = true;
     });
@@ -77,7 +77,7 @@ export class ConversationEngine {
   }
 
   /**
-   * Helper to check if L.U.C.I. is currently speaking.
+   * Helper to check if Luci is currently speaking.
    */
   getIsSpeaking(): boolean {
     return this.isLuciSpeaking;

@@ -8,6 +8,7 @@ Integrates:
 """
 
 import os
+import asyncio
 from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Optional, Dict, Any, List
@@ -21,6 +22,9 @@ from app.core.config import settings
 from app.tools.registry import tool_registry
 from app.tools.music_recognizer import recognize_ambient_music
 from app.services.interpreter_service import UniversalInterpreterSession
+from app.routers.lucimusic import router as lucimusic_router
+from app.routers.chat import router as chat_router
+from app.services.brain_service import brain_service
 
 # Caminho dos arquivos estáticos da interface mobile
 STATIC_DIR = Path(__file__).parent / "static"
@@ -28,10 +32,10 @@ STATIC_DIR = Path(__file__).parent / "static"
 # ─── Middleware de Autenticação Segura (Bearer Token / X-API-Key) ───
 async def verify_api_secret(request: Request):
     """Verifica se a requisição possui a chave secreta da Luci."""
-    # Permite acesso público a endpoints de health, docs, e interface estática
+    # Permite acesso público a endpoints de health, docs, música, chat e interface estática
     path = request.url.path
     public_paths = ["/health", "/docs", "/openapi.json", "/favicon.ico"]
-    if path in public_paths or path == "/" or path.startswith("/_next") or path.startswith("/static"):
+    if path in public_paths or path == "/" or path.startswith("/_next") or path.startswith("/static") or path.startswith("/api/v1/music") or path.startswith("/api/v1/lucimusic") or path.startswith("/api/v1/chat"):
         return True
 
     auth_header = request.headers.get("Authorization", "")
@@ -58,10 +62,13 @@ async def verify_api_secret(request: Request):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print(f"🚀 [Luci Core] Inicializada com sucesso na porta {settings.port}")
-    print(f"🔒 [Security] Proteção por Chave Secreta de API Ativa.")
+    print(f"[Luci Core] Inicializada com sucesso na porta {settings.port}")
+    print(f"[Security] Protecao por Chave Secreta de API Ativa.")
+    # Pré-aquecimento do feed do LuciMusic em background (0ms no primeiro clique)
+    from app.services.lucimusic_service import lucimusic_service
+    asyncio.create_task(lucimusic_service.get_home_feed("lucasmvilella"))
     yield
-    print("🛑 [Luci Core] Desligamento seguro concluído.")
+    print("[Luci Core] Desligamento seguro concluido.")
 
 app = FastAPI(
     title=settings.app_name,
@@ -79,6 +86,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ─── Routers ───
+app.include_router(lucimusic_router)
+app.include_router(chat_router)
 
 # ─── 1. Health Endpoint ───
 @app.get("/health")
@@ -199,6 +210,13 @@ async def interpreter_websocket(
                     if chunk["type"] == "audio":
                         await websocket.send_bytes(chunk["data"])
                     elif chunk["type"] == "text":
+                        # Grava transcrição passiva no Cérebro da Luci
+                        asyncio.create_task(brain_service.record_interpreter_turn(
+                            user_id="lucas",
+                            speaker="Intérprete",
+                            original_text="Áudio em tempo real",
+                            translated_text=chunk["text"]
+                        ))
                         await websocket.send_json({"type": "transcript", "text": chunk["text"]})
                     elif chunk["type"] == "interrupted":
                         await websocket.send_json({"type": "event", "event": "interrupted"})

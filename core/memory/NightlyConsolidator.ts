@@ -1,7 +1,7 @@
 /**
  * NightlyConsolidator
  *
- * Autonomous memory cleaning & consolidation engine for L.U.C.I.
+ * Autonomous memory cleaning & consolidation engine for Luci
  * Runs during idle periods (or nightly maintenance) to:
  * 1. Consolidate recurring episodic memories into permanent semantic knowledge.
  * 2. Promote quarantined facts that received user reinforcement.

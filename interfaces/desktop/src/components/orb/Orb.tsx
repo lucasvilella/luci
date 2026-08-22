@@ -199,16 +199,15 @@ export function Orb({ state }: OrbProps) {
               camera === "starting"
                 ? "Inicializando Câmera..."
                 : cameraOn
-                ? `Gestos Ativos em Segundo Plano (${status.hands} mão(s) visível(is) · Modo: ${status.mode})`
-                : "Ativar Controle por Gestos (G)"
+                  ? `Gestos Ativos em Segundo Plano (${status.hands} mão(s) visível(is) · Modo: ${status.mode})`
+                  : "Ativar Controle por Gestos (G)"
             }
-            className={`w-11 h-11 flex items-center justify-center text-sm rounded-full backdrop-blur-md transition-all duration-200 cursor-pointer ${
-              status.hands > 0
+            className={`w-11 h-11 flex items-center justify-center text-sm rounded-full backdrop-blur-md transition-all duration-200 cursor-pointer ${status.hands > 0
                 ? "bg-gradient-to-br from-cyan-400 to-blue-600 text-white shadow-[0_0_20px_rgba(0,210,255,0.6)] border border-cyan-300 scale-105"
                 : cameraOn
-                ? "bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 text-cyan-300 shadow-[0_0_12px_rgba(0,210,255,0.25)] hover:scale-105"
-                : "bg-white/5 hover:bg-white/10 border border-white/15 text-white/80 hover:scale-105"
-            }`}
+                  ? "bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 text-cyan-300 shadow-[0_0_12px_rgba(0,210,255,0.25)] hover:scale-105"
+                  : "bg-white/5 hover:bg-white/10 border border-white/15 text-white/80 hover:scale-105"
+              }`}
           >
             {camera === "starting" ? (
               <span className="animate-spin text-xs">⏳</span>
@@ -226,11 +225,10 @@ export function Orb({ state }: OrbProps) {
             type="button"
             onClick={() => setShowFaceModal(true)}
             title={status.faceDetected ? `Rosto Detectado: ${status.faceName || "Usuário"}` : "Cadastro de Reconhecimento Facial / Fotos"}
-            className={`w-11 h-11 flex items-center justify-center text-sm rounded-full backdrop-blur-md transition-all duration-200 cursor-pointer ${
-              status.faceDetected
+            className={`w-11 h-11 flex items-center justify-center text-sm rounded-full backdrop-blur-md transition-all duration-200 cursor-pointer ${status.faceDetected
                 ? "bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-[0_0_20px_rgba(52,211,153,0.6)] border border-emerald-300 scale-105"
                 : "bg-white/5 hover:bg-white/10 border border-white/15 text-white/80 hover:scale-105"
-            }`}
+              }`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -293,7 +291,7 @@ export function Orb({ state }: OrbProps) {
               <div className="flex items-center justify-center w-full">
                 <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-cyan-500/30 border-dashed rounded-xl cursor-pointer bg-cyan-950/20 hover:bg-cyan-950/40 transition-all">
                   <span className="text-xs font-mono text-cyan-300 font-medium">📷 SELECIONAR FOTO (.JPG / .PNG)</span>
-                  <span className="text-[10px] text-white/50 mt-1">L.U.C.I. extrai a biometria da foto automaticamente</span>
+                  <span className="text-[10px] text-white/50 mt-1">Luci extrai a biometria da foto automaticamente</span>
                   <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
                 </label>
               </div>

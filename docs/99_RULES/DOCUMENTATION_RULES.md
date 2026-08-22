@@ -10,7 +10,7 @@ Related Documents:
 - CODING_STANDARDS.md
 - DESIGN_RULES.md
 - NAMING_CONVENTIONS.md
-Summary: Este documento estabelece os princípios de documentação da L.U.C.I.
+Summary: Este documento estabelece os princípios de documentação da Luci
 ---
 
 # DOCUMENTATION RULES
@@ -21,7 +21,7 @@ Summary: Este documento estabelece os princípios de documentação da L.U.C.I.
 
 # Objetivo
 
-Este documento estabelece os princípios de documentação da L.U.C.I.
+Este documento estabelece os princípios de documentação da Luci
 
 Seu propósito é garantir que todo conhecimento arquitetural, funcional e técnico permaneça consistente, compreensível e evolutivo ao longo do ciclo de vida da plataforma.
 
@@ -222,7 +222,7 @@ A documentação segue os princípios:
 
 # Definição
 
-As Documentation Rules definem como o conhecimento da L.U.C.I. deve ser registrado, organizado e mantido. Elas garantem que a documentação permaneça uma fonte confiável de entendimento da arquitetura, preservando decisões, responsabilidades e relações entre os componentes ao longo da evolução da plataforma.
+As Documentation Rules definem como o conhecimento da Luci deve ser registrado, organizado e mantido. Elas garantem que a documentação permaneça uma fonte confiável de entendimento da arquitetura, preservando decisões, responsabilidades e relações entre os componentes ao longo da evolução da plataforma.
 
 ---
 

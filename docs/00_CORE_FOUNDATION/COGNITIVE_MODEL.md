@@ -14,7 +14,7 @@ Related Documents:
 - IDENTITY_AND_WORKSPACES.md
 - REASONING_ENGINE.md
 - MEMORY_CORE.md
-Summary: Este documento define o modelo cognitivo da L.U.C.I.
+Summary: Este documento define o modelo cognitivo da Luci
 ---
 
 # COGNITIVE MODEL
@@ -25,7 +25,7 @@ Summary: Este documento define o modelo cognitivo da L.U.C.I.
 
 # Objetivo
 
-Este documento define o modelo cognitivo da L.U.C.I.
+Este documento define o modelo cognitivo da Luci
 
 Ele descreve como o sistema percebe o mundo, interpreta informações, constrói contexto, toma decisões, aprende e evolui.
 
@@ -41,7 +41,7 @@ Ele descreve apenas o funcionamento lógico da inteligência.
 
 # Filosofia
 
-A L.U.C.I. não funciona como uma sequência de prompts.
+A Luci não funciona como uma sequência de prompts.
 
 Ela funciona como um cérebro.
 
@@ -177,7 +177,7 @@ Ele é reconstruído continuamente.
 
 # 4. Workspace Construction
 
-Com identidade e contexto definidos, a L.U.C.I. cria um Workspace Cognitivo.
+Com identidade e contexto definidos, a Luci cria um Workspace Cognitivo.
 
 Esse Workspace reúne:
 
@@ -214,7 +214,7 @@ Responder sem compreender é considerado uma falha cognitiva.
 
 # 6. Planning
 
-Antes de agir, a L.U.C.I. constrói um plano.
+Antes de agir, a Luci constrói um plano.
 
 O plano responde:
 
@@ -249,7 +249,7 @@ O objetivo é produzir entendimento.
 
 # 8. Decision
 
-Depois do raciocínio, a L.U.C.I. decide.
+Depois do raciocínio, a Luci decide.
 
 Uma decisão pode ser:
 
@@ -297,7 +297,7 @@ Cada motor executa apenas sua responsabilidade.
 
 # 10. Observation
 
-Após executar uma ação, a L.U.C.I. observa o resultado.
+Após executar uma ação, a Luci observa o resultado.
 
 Ela verifica:
 
@@ -359,7 +359,7 @@ Criar novos relacionamentos.
 
 A cognição não acontece apenas quando alguém fala.
 
-A L.U.C.I. também pensa quando está "em silêncio".
+A Luci também pensa quando está "em silêncio".
 
 Exemplos:
 
@@ -383,7 +383,7 @@ Esse comportamento aproxima a plataforma de um cérebro real.
 
 A atenção é um recurso limitado.
 
-A L.U.C.I. nunca considera todas as informações ao mesmo tempo.
+A Luci nunca considera todas as informações ao mesmo tempo.
 
 Ela seleciona apenas aquilo que possui maior relevância para o Workspace atual.
 
@@ -397,7 +397,7 @@ E aumenta qualidade das decisões.
 
 Consciência não significa autoconsciência.
 
-Na L.U.C.I., consciência representa a capacidade de manter compreensão contínua sobre:
+Na Luci, consciência representa a capacidade de manter compreensão contínua sobre:
 
 quem;
 
@@ -417,7 +417,7 @@ Ela é essencialmente contextual.
 
 # Reflexão
 
-Após grandes tarefas, a L.U.C.I. pode refletir.
+Após grandes tarefas, a Luci pode refletir.
 
 Refletir significa revisar o próprio processo.
 
@@ -451,7 +451,7 @@ Não uma perda.
 
 # Cognição Distribuída
 
-O pensamento da L.U.C.I. emerge da colaboração entre diversos domínios.
+O pensamento da Luci emerge da colaboração entre diversos domínios.
 
 Identity Core
 
@@ -493,7 +493,7 @@ Mas a decisão mais adequada.
 
 # Definição
 
-O Modelo Cognitivo da L.U.C.I. transforma estímulos em compreensão, compreensão em decisões e decisões em aprendizado contínuo.
+O Modelo Cognitivo da Luci transforma estímulos em compreensão, compreensão em decisões e decisões em aprendizado contínuo.
 
 A resposta é apenas o último passo desse processo.
 

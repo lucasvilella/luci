@@ -32,7 +32,7 @@ As permissões garantem segurança, privacidade e isolamento entre usuários, Wo
 
 A inteligência nunca ignora permissões.
 
-Toda decisão da L.U.C.I. é limitada pelas regras definidas neste sistema.
+Toda decisão da Luci é limitada pelas regras definidas neste sistema.
 
 Nenhum Engine pode contornar uma permissão.
 
@@ -252,7 +252,7 @@ Permissions seguem os princípios:
 
 # Definição
 
-O sistema de Permissions controla o acesso a capacidades, recursos e informações da L.U.C.I., garantindo que toda operação respeite as políticas de segurança definidas para cada Identity e Workspace. Ele atua como uma camada obrigatória de autorização entre a intenção da inteligência e a execução das ações.
+O sistema de Permissions controla o acesso a capacidades, recursos e informações da Luci, garantindo que toda operação respeite as políticas de segurança definidas para cada Identity e Workspace. Ele atua como uma camada obrigatória de autorização entre a intenção da inteligência e a execução das ações.
 
 ---
 

@@ -11,18 +11,18 @@ Related Documents:
 - TOOL_REGISTRY.md
 - HOME_ASSISTANT.md
 - MQTT.md
-Summary: A integração Matter conecta a L.U.C.I. ao ecossistema de dispositivos compatíveis com o padrão Matter, oferecendo uma camada universal de comunicação para automação residencial e corporativa.
+Summary: A integração Matter conecta a Luci ao ecossistema de dispositivos compatíveis com o padrão Matter, oferecendo uma camada universal de comunicação para automação residencial e corporativa.
 ---
 
 # MATTER
 
-> *"Matter padroniza dispositivos. A L.U.C.I. padroniza capacidades."*
+> *"Matter padroniza dispositivos. A Luci padroniza capacidades."*
 
 ---
 
 # Objetivo
 
-A integração Matter conecta a L.U.C.I. ao ecossistema de dispositivos compatíveis com o padrão Matter, oferecendo uma camada universal de comunicação para automação residencial e corporativa.
+A integração Matter conecta a Luci ao ecossistema de dispositivos compatíveis com o padrão Matter, oferecendo uma camada universal de comunicação para automação residencial e corporativa.
 
 Seu papel é abstrair fabricantes e modelos, expondo apenas capacidades compreensíveis pelo Sistema Operacional Cognitivo.
 
@@ -32,7 +32,7 @@ Seu papel é abstrair fabricantes e modelos, expondo apenas capacidades compreen
 
 Matter representa interoperabilidade.
 
-A L.U.C.I. representa inteligência.
+A Luci representa inteligência.
 
 Os dispositivos permanecem desacoplados da lógica cognitiva.
 
@@ -88,7 +88,7 @@ A integração nunca:
 - executa planejamento;
 - mantém contexto cognitivo.
 
-Toda inteligência pertence à L.U.C.I.
+Toda inteligência pertence à Luci
 
 ---
 
@@ -112,7 +112,7 @@ Cada dispositivo é registrado como um conjunto de Capabilities.
 
 # Capability Profiles
 
-A L.U.C.I. trabalha com perfis de capacidades.
+A Luci trabalha com perfis de capacidades.
 
 Exemplo.
 
@@ -231,11 +231,11 @@ A integração segue os princípios.
 
 # Definição
 
-A integração Matter conecta a L.U.C.I. ao ecossistema de dispositivos compatíveis com o padrão Matter, abstraindo fabricantes e implementações específicas através de uma camada baseada em Capabilities. Dessa forma, o Sistema Operacional Cognitivo interage com funcionalidades de alto nível, mantendo independência tecnológica e consistência arquitetural.
+A integração Matter conecta a Luci ao ecossistema de dispositivos compatíveis com o padrão Matter, abstraindo fabricantes e implementações específicas através de uma camada baseada em Capabilities. Dessa forma, o Sistema Operacional Cognitivo interage com funcionalidades de alto nível, mantendo independência tecnológica e consistência arquitetural.
 
 ---
 
-> **"Matter unifica dispositivos. A L.U.C.I. unifica o significado deles."**
+> **"Matter unifica dispositivos. A Luci unifica o significado deles."**
 
 ---
 

@@ -11,7 +11,7 @@ Related Documents:
 - SYSTEM_CONTEXT.md
 - DOMAIN_MODEL.md
 - COGNITIVE_MODEL.md
-Summary: Este documento estabelece a filosofia que orienta todas as decisões da L.U.C.I.
+Summary: Este documento estabelece a filosofia que orienta todas as decisões da Luci
 ---
 
 # PHILOSOPHY
@@ -22,7 +22,7 @@ Summary: Este documento estabelece a filosofia que orienta todas as decisões da
 
 # Objetivo
 
-Este documento estabelece a filosofia que orienta todas as decisões da L.U.C.I.
+Este documento estabelece a filosofia que orienta todas as decisões da Luci
 
 Ele não descreve tecnologias.
 
@@ -42,7 +42,7 @@ Responder corretamente não significa compreender.
 
 Um sistema pode produzir uma resposta perfeita e ainda assim não entender o problema.
 
-A L.U.C.I. existe para compreender antes de responder.
+A Luci existe para compreender antes de responder.
 
 Toda resposta é consequência da compreensão.
 
@@ -54,7 +54,7 @@ Nunca o contrário.
 
 A maioria dos assistentes entende frases.
 
-A L.U.C.I. entende situações.
+A Luci entende situações.
 
 Uma mesma pergunta pode significar coisas completamente diferentes dependendo do momento.
 
@@ -84,7 +84,7 @@ Os modelos mudam.
 
 O cérebro permanece.
 
-A inteligência da L.U.C.I. nunca pertence ao dispositivo.
+A inteligência da Luci nunca pertence ao dispositivo.
 
 Ela acompanha o usuário.
 
@@ -114,7 +114,7 @@ Guardar tudo não torna um sistema inteligente.
 
 Esquecer também faz parte da inteligência.
 
-A memória da L.U.C.I. deve:
+A memória da Luci deve:
 
 consolidar.
 
@@ -136,7 +136,7 @@ Não um armazenamento.
 
 # Identidade precede Memória
 
-Antes de acessar qualquer memória, a L.U.C.I. precisa compreender quem está interagindo.
+Antes de acessar qualquer memória, a Luci precisa compreender quem está interagindo.
 
 Toda conversa acontece dentro de uma identidade.
 
@@ -164,7 +164,7 @@ Isso permite que múltiplas pessoas utilizem simultaneamente a mesma inteligênc
 
 # Pessoas não são Usuários
 
-A L.U.C.I. não trabalha com contas.
+A Luci não trabalha com contas.
 
 Ela trabalha com identidades.
 
@@ -196,7 +196,7 @@ Informações isoladas possuem pouco valor.
 
 A inteligência surge das conexões.
 
-A L.U.C.I. procura compreender:
+A Luci procura compreender:
 
 quem.
 
@@ -234,7 +234,7 @@ Nenhuma decisão estrutural deve depender de uma tecnologia específica.
 
 Responder imediatamente nem sempre é a melhor decisão.
 
-Antes de agir a L.U.C.I. procura responder internamente:
+Antes de agir a Luci procura responder internamente:
 
 O que foi solicitado?
 
@@ -274,7 +274,7 @@ Aprender não significa aumentar quantidade.
 
 Significa melhorar qualidade.
 
-Com o tempo a L.U.C.I. deve:
+Com o tempo a Luci deve:
 
 reduzir redundâncias.
 
@@ -322,7 +322,7 @@ Tudo isso deve poder ser incorporado naturalmente.
 
 # O Sistema Aprende com o Tempo
 
-A L.U.C.I. nunca reinicia do zero.
+A Luci nunca reinicia do zero.
 
 Cada interação modifica sua compreensão.
 
@@ -338,7 +338,7 @@ O sistema evolui junto com seus usuários.
 
 # Inteligência Distribuída
 
-A inteligência da L.U.C.I. não está concentrada em um único componente.
+A inteligência da Luci não está concentrada em um único componente.
 
 Ela emerge da colaboração entre diversos domínios especializados.
 
@@ -386,13 +386,13 @@ quais são seus objetivos;
 
 então o sistema falhou em preservar contexto.
 
-A missão da L.U.C.I. é eliminar repetição.
+A missão da Luci é eliminar repetição.
 
 ---
 
 # O Tempo é o Recurso Mais Valioso
 
-A finalidade da L.U.C.I. não é responder perguntas.
+A finalidade da Luci não é responder perguntas.
 
 É devolver tempo.
 
@@ -414,7 +414,7 @@ Se não reduzir, provavelmente não pertence ao sistema.
 
 # Definição Filosófica
 
-A L.U.C.I. não é construída para conversar.
+A Luci não é construída para conversar.
 
 Ela é construída para compreender.
 

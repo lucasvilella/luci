@@ -1,7 +1,7 @@
 /**
  * voice_manager.ts
  *
- * Voice Pipeline Manager for L.U.C.I. (Inspired by Jarvis Local & Friday Voice Agent)
+ * Voice Pipeline Manager for Luci (Inspired by Jarvis Local & Friday Voice Agent)
  *
  * Handles continuous ambient audio listening, Wake-word ("Luci") detection,
  * Echo cancellation state, Global Dictation Mode (WisprFlow style),

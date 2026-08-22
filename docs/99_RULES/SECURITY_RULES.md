@@ -11,7 +11,7 @@ Related Documents:
 - IDENTITY_AND_WORKSPACES.md
 - LICENSE_MANAGER.md
 - CONFIGURATION.md
-Summary: Este documento estabelece os princípios de segurança da L.U.C.I.
+Summary: Este documento estabelece os princípios de segurança da Luci
 ---
 
 # SECURITY RULES
@@ -22,7 +22,7 @@ Summary: Este documento estabelece os princípios de segurança da L.U.C.I.
 
 # Objetivo
 
-Este documento estabelece os princípios de segurança da L.U.C.I.
+Este documento estabelece os princípios de segurança da Luci
 
 Seu propósito é garantir que todos os componentes da plataforma sejam concebidos, implementados e operados segundo um modelo de segurança por padrão (*Security by Default*) e segurança orientada pela arquitetura (*Security by Architecture*).
 
@@ -254,7 +254,7 @@ As Security Rules seguem os princípios:
 
 # Definição
 
-As Security Rules estabelecem os princípios permanentes de segurança da L.U.C.I. Elas orientam toda a arquitetura para que proteção, isolamento, autorização e auditoria façam parte do próprio desenho da plataforma, garantindo que sua evolução preserve a confiança, a integridade e a confiabilidade do Sistema Operacional Cognitivo.
+As Security Rules estabelecem os princípios permanentes de segurança da Luci Elas orientam toda a arquitetura para que proteção, isolamento, autorização e auditoria façam parte do próprio desenho da plataforma, garantindo que sua evolução preserve a confiança, a integridade e a confiabilidade do Sistema Operacional Cognitivo.
 
 ---
 

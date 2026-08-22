@@ -26,7 +26,7 @@ export function InterfaceSelector({ active, onChange }: InterfaceSelectorProps) 
           L
         </div>
         <span className="font-mono text-sm tracking-wider font-semibold text-white/90">
-          L.U.C.I. <span className="text-xs font-normal text-cyan-400/80">UI SHOWCASE</span>
+          Luci <span className="text-xs font-normal text-cyan-400/80">UI SHOWCASE</span>
         </span>
       </div>
 
@@ -38,18 +38,16 @@ export function InterfaceSelector({ active, onChange }: InterfaceSelectorProps) 
             <button
               key={tab.id}
               onClick={() => onChange(tab.id)}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer ${
-                isActive
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer ${isActive
                   ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/30 border border-cyan-400/40 text-cyan-200 shadow-[0_0_15px_rgba(0,210,255,0.2)]'
                   : 'text-white/60 hover:text-white/90 hover:bg-white/5 border border-transparent'
-              }`}
+                }`}
             >
               <span>{tab.icon}</span>
               <span>{tab.label}</span>
               <span
-                className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                  isActive ? 'bg-cyan-400/20 text-cyan-300' : 'bg-white/5 text-white/40'
-                }`}
+                className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${isActive ? 'bg-cyan-400/20 text-cyan-300' : 'bg-white/5 text-white/40'
+                  }`}
               >
                 {tab.tag}
               </span>

@@ -11,18 +11,18 @@ Related Documents:
 - MQTT.md
 - MATTER.md
 - TOOL_REGISTRY.md
-Summary: A integração Zigbee conecta a L.U.C.I. a dispositivos que utilizam o protocolo Zigbee, oferecendo acesso a sensores, atuadores e equipamentos de automação por meio de uma camada completamente abstrata baseada em Capabilities.
+Summary: A integração Zigbee conecta a Luci a dispositivos que utilizam o protocolo Zigbee, oferecendo acesso a sensores, atuadores e equipamentos de automação por meio de uma camada completamente abstrata baseada em Capabilities.
 ---
 
 # ZIGBEE
 
-> *"O Zigbee conecta dispositivos. A L.U.C.I. conecta significados."*
+> *"O Zigbee conecta dispositivos. A Luci conecta significados."*
 
 ---
 
 # Objetivo
 
-A integração Zigbee conecta a L.U.C.I. a dispositivos que utilizam o protocolo Zigbee, oferecendo acesso a sensores, atuadores e equipamentos de automação por meio de uma camada completamente abstrata baseada em Capabilities.
+A integração Zigbee conecta a Luci a dispositivos que utilizam o protocolo Zigbee, oferecendo acesso a sensores, atuadores e equipamentos de automação por meio de uma camada completamente abstrata baseada em Capabilities.
 
 O protocolo utilizado pelos dispositivos nunca influencia a lógica cognitiva da plataforma.
 
@@ -32,7 +32,7 @@ O protocolo utilizado pelos dispositivos nunca influencia a lógica cognitiva da
 
 Zigbee representa uma tecnologia de comunicação.
 
-A inteligência permanece exclusivamente na L.U.C.I.
+A inteligência permanece exclusivamente na Luci
 
 Toda interação ocorre através de capacidades semânticas.
 
@@ -91,7 +91,7 @@ A integração nunca:
 - mantém contexto cognitivo;
 - cria automações.
 
-Toda inteligência pertence à L.U.C.I.
+Toda inteligência pertence à Luci
 
 ---
 
@@ -240,11 +240,11 @@ A integração segue os princípios.
 
 # Definição
 
-A integração Zigbee conecta a L.U.C.I. a redes de dispositivos baseadas no protocolo Zigbee, abstraindo completamente detalhes físicos e expondo apenas capacidades semânticas para o restante da plataforma. Dessa forma, a inteligência permanece independente da tecnologia de comunicação utilizada pelos dispositivos.
+A integração Zigbee conecta a Luci a redes de dispositivos baseadas no protocolo Zigbee, abstraindo completamente detalhes físicos e expondo apenas capacidades semânticas para o restante da plataforma. Dessa forma, a inteligência permanece independente da tecnologia de comunicação utilizada pelos dispositivos.
 
 ---
 
-> **"A L.U.C.I. não conhece Zigbee. Ela conhece o que cada dispositivo é capaz de fazer."**
+> **"A Luci não conhece Zigbee. Ela conhece o que cada dispositivo é capaz de fazer."**
 
 ---
 

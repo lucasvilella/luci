@@ -11,7 +11,7 @@ Related Documents:
 - AI_PROVIDER_MANAGER.md
 - MEMORY_CORE.md
 - KNOWLEDGE_CORE.md
-Summary: O Token Manager é responsável por administrar o orçamento computacional utilizado durante as inferências da L.U.C.I.
+Summary: O Token Manager é responsável por administrar o orçamento computacional utilizado durante as inferências da Luci
 ---
 
 # TOKEN MANAGER
@@ -22,7 +22,7 @@ Summary: O Token Manager é responsável por administrar o orçamento computacio
 
 # Objetivo
 
-O Token Manager é responsável por administrar o orçamento computacional utilizado durante as inferências da L.U.C.I.
+O Token Manager é responsável por administrar o orçamento computacional utilizado durante as inferências da Luci
 
 Ele controla consumo de tokens, custo financeiro, limites operacionais e utilização eficiente das janelas de contexto disponíveis.
 
@@ -359,7 +359,7 @@ O Token Manager segue os princípios.
 
 # Definição
 
-O Token Manager representa o componente responsável por administrar o orçamento computacional da L.U.C.I., equilibrando consumo de tokens, custo, contexto e desempenho para garantir inferências eficientes, previsíveis e sustentáveis em qualquer ambiente de execução.
+O Token Manager representa o componente responsável por administrar o orçamento computacional da Luci, equilibrando consumo de tokens, custo, contexto e desempenho para garantir inferências eficientes, previsíveis e sustentáveis em qualquer ambiente de execução.
 
 ---
 

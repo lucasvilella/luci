@@ -1,7 +1,7 @@
 /**
  * XTTSProvider.ts
  *
- * Official Primary Voice Provider for L.U.C.I. (Cloned Lucy Voice - XTTS-v2).
+ * Official Primary Voice Provider for Luci (Cloned Lucy Voice - XTTS-v2).
  *
  * Architecture:
  *   1. Primary: HTTP service (xtts_server.py on port 8002) with preloaded model

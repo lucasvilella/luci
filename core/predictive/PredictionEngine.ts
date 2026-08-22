@@ -1,7 +1,7 @@
 /**
  * PredictionEngine
  *
- * Anticipatory Pre-fetch Engine for L.U.C.I. 2.0.
+ * Anticipatory Pre-fetch Engine for Luci 2.0.
  * Analyzes partial speech transcripts as the user speaks to pre-warm tools
  * and APIs before speech finishes, reducing SLA latency to zero.
  */

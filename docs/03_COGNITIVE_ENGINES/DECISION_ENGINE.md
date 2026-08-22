@@ -380,7 +380,7 @@ O Decision Engine segue os princípios.
 
 # Definição
 
-O Decision Engine representa o sistema executivo da L.U.C.I.
+O Decision Engine representa o sistema executivo da Luci
 
 Ele transforma raciocínio em decisões concretas, avaliando riscos, contexto, objetivos, permissões e estratégias antes de autorizar qualquer ação ou resposta.
 

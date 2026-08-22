@@ -1,7 +1,7 @@
 /**
  * F5TTSProvider.ts
  *
- * Primary High-Performance Voice Provider for L.U.C.I. using F5-TTS Flow-Matching.
+ * Primary High-Performance Voice Provider for Luci using F5-TTS Flow-Matching.
  * Achieves 5-10x faster inference (<0.5s per sentence) with zero-shot voice cloning
  * from Lucy's reference audio (lucy_best_ref_24k.wav).
  */

@@ -12,7 +12,7 @@ Related Documents:
 - IDENTITY_CORE.md
 - COGNITIVE_LOOP.md
 - REASONING_ENGINE.md
-Summary: O Context Core representa o estado atual do mundo conhecido pela L.U.C.I.
+Summary: O Context Core representa o estado atual do mundo conhecido pela Luci
 ---
 
 # CONTEXT CORE
@@ -23,7 +23,7 @@ Summary: O Context Core representa o estado atual do mundo conhecido pela L.U.C.
 
 # Objetivo
 
-O Context Core representa o estado atual do mundo conhecido pela L.U.C.I.
+O Context Core representa o estado atual do mundo conhecido pela Luci
 
 Ele reúne informações temporárias, dinâmicas e relevantes para o momento presente, permitindo que toda decisão seja tomada considerando a realidade atual e não apenas conhecimentos armazenados.
 
@@ -425,7 +425,7 @@ O Context Core segue os princípios.
 
 # Definição
 
-O Context Core representa a percepção instantânea da realidade da L.U.C.I.
+O Context Core representa a percepção instantânea da realidade da Luci
 
 Ele reúne informações temporárias sobre pessoas, dispositivos, ambiente e atividades para que todo ciclo cognitivo seja executado considerando o estado atual do mundo, preservando previsibilidade, consistência e consciência situacional.
 

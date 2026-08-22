@@ -12,7 +12,7 @@ Related Documents:
 - PERSONALITY_CORE.md
 - CONTEXT_CORE.md
 - TOOL_ENGINE.md
-Summary: O Conversation Engine é responsável por toda comunicação entre a L.U.C.I. e qualquer identidade.
+Summary: O Conversation Engine é responsável por toda comunicação entre a Luci e qualquer identidade.
 ---
 
 # CONVERSATION ENGINE
@@ -23,9 +23,9 @@ Summary: O Conversation Engine é responsável por toda comunicação entre a L.
 
 # Objetivo
 
-O Conversation Engine é responsável por toda comunicação entre a L.U.C.I. e qualquer identidade.
+O Conversation Engine é responsável por toda comunicação entre a Luci e qualquer identidade.
 
-Ele transforma decisões e resultados internos em experiências de comunicação naturais, coerentes, contextuais e alinhadas à personalidade da L.U.C.I.
+Ele transforma decisões e resultados internos em experiências de comunicação naturais, coerentes, contextuais e alinhadas à personalidade da Luci
 
 Nenhum outro componente produz linguagem diretamente.
 
@@ -269,7 +269,7 @@ Usuário.
 
 ↓
 
-A L.U.C.I. apaga as luzes.
+A Luci apaga as luzes.
 
 ↓
 
@@ -403,7 +403,7 @@ O Conversation Engine segue os princípios.
 
 # Definição
 
-O Conversation Engine representa a camada de comunicação da L.U.C.I.
+O Conversation Engine representa a camada de comunicação da Luci
 
 Ele transforma decisões internas em experiências naturais de interação, preservando personalidade, contexto, privacidade e continuidade conversacional em qualquer interface suportada pela plataforma.
 

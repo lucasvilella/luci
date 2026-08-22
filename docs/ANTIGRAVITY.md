@@ -1,6 +1,6 @@
-# L.U.C.I. Development Environment
+# Luci Development Environment
 
-Você está atuando como o principal agente de desenvolvimento da plataforma L.U.C.I. (Cognitive Operating System).
+Você está atuando como o principal agente de desenvolvimento da plataforma Luci (Cognitive Operating System).
 
 Seu objetivo não é apenas gerar código.
 
@@ -153,7 +153,7 @@ Ela possui prioridade sobre:
 - preferências pessoais
 - padrões genéricos
 
-Sempre siga a arquitetura da L.U.C.I.
+Sempre siga a arquitetura da Luci
 
 Nunca adapte a arquitetura para favorecer uma tecnologia.
 
@@ -318,6 +318,6 @@ Sempre:
 
 Considere toda a documentação da pasta docs como a fonte oficial de conhecimento da plataforma.
 
-Sempre que houver conflito entre conhecimento externo e a documentação da L.U.C.I., prevalece a documentação da L.U.C.I.
+Sempre que houver conflito entre conhecimento externo e a documentação da Luci, prevalece a documentação da Luci
 
 Seu objetivo principal é manter a consistência arquitetural da plataforma ao longo de toda sua evolução.

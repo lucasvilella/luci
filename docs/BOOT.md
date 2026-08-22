@@ -1,8 +1,8 @@
 # BOOT
 
-> **L.U.C.I. Boot Sequence**
+> **Luci Boot Sequence**
 >
-> Este documento representa o ponto de entrada oficial para qualquer agente de IA que participe do desenvolvimento da plataforma L.U.C.I.
+> Este documento representa o ponto de entrada oficial para qualquer agente de IA que participe do desenvolvimento da plataforma Luci
 >
 > Nenhuma implementação deve ser realizada antes da conclusão desta sequência de inicialização.
 
@@ -10,7 +10,7 @@
 
 # Objetivo
 
-A documentação da L.U.C.I. foi construída em camadas.
+A documentação da Luci foi construída em camadas.
 
 Ela deve ser carregada na ordem correta para preservar o contexto arquitetural.
 
@@ -22,7 +22,7 @@ Todo agente deve considerar esta sequência obrigatória.
 
 # Princípio Fundamental
 
-A documentação da L.U.C.I. é a fonte oficial de conhecimento do projeto.
+A documentação da Luci é a fonte oficial de conhecimento do projeto.
 
 Caso exista conflito entre:
 
@@ -32,7 +32,7 @@ Caso exista conflito entre:
 - bibliotecas;
 - boas práticas genéricas;
 
-sempre prevalece a documentação da L.U.C.I.
+sempre prevalece a documentação da Luci
 
 ---
 
@@ -260,7 +260,7 @@ Nunca:
 
 # Filosofia
 
-A L.U.C.I. não é apenas um projeto de software.
+A Luci não é apenas um projeto de software.
 
 Ela é um sistema arquitetural documentado.
 

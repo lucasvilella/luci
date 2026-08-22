@@ -11,7 +11,7 @@ Related Documents:
 - EVENT_ROUTER.md
 - TOOL_ENGINE.md
 - TOOL_REGISTRY.md
-Summary: A integração REST API permite que aplicações externas interajam com a L.U.C.I. de forma padronizada, segura e desacoplada.
+Summary: A integração REST API permite que aplicações externas interajam com a Luci de forma padronizada, segura e desacoplada.
 ---
 
 # REST API
@@ -22,7 +22,7 @@ Summary: A integração REST API permite que aplicações externas interajam com
 
 # Objetivo
 
-A integração REST API permite que aplicações externas interajam com a L.U.C.I. de forma padronizada, segura e desacoplada.
+A integração REST API permite que aplicações externas interajam com a Luci de forma padronizada, segura e desacoplada.
 
 Ela oferece um contrato estável para execução de capacidades, consulta de informações e integração com sistemas de terceiros.
 
@@ -246,7 +246,7 @@ A integração segue os princípios:
 
 # Definição
 
-A integração REST API fornece uma interface programática padronizada para acesso às capacidades da L.U.C.I., convertendo requisições externas em eventos cognitivos processados pela arquitetura central. Ela desacopla clientes da implementação interna e garante estabilidade, segurança e evolução contínua do ecossistema.
+A integração REST API fornece uma interface programática padronizada para acesso às capacidades da Luci, convertendo requisições externas em eventos cognitivos processados pela arquitetura central. Ela desacopla clientes da implementação interna e garante estabilidade, segurança e evolução contínua do ecossistema.
 
 ---
 

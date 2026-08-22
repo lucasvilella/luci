@@ -11,7 +11,7 @@ Related Documents:
 - COGNITIVE_PIPELINE.md
 - API_CONTRACTS.md
 - SECURITY_RULES.md
-Summary: Este documento define como a L.U.C.I. torna seu próprio funcionamento interno inspecionável.
+Summary: Este documento define como a Luci torna seu próprio funcionamento interno inspecionável.
 ---
 
 # OBSERVABILITY
@@ -22,7 +22,7 @@ Summary: Este documento define como a L.U.C.I. torna seu próprio funcionamento 
 
 # Objetivo
 
-Este documento define como a L.U.C.I. torna seu próprio funcionamento interno inspecionável.
+Este documento define como a Luci torna seu próprio funcionamento interno inspecionável.
 
 Ele é referenciado por praticamente todos os outros documentos da arquitetura (Cognitive Bus, Tool Engine, Security Rules, Architectural Principles), mas nunca havia sido escrito como um documento próprio. Este arquivo preenche essa lacuna.
 
@@ -126,7 +126,7 @@ A Observability nunca:
 
 # Definição
 
-A Observability é o sistema que torna o funcionamento interno da L.U.C.I. inspecionável por humanos e por ferramentas de diagnóstico, sem interferir no raciocínio cognitivo em si. Ela é o que transforma "a IA decidiu isso" em "a IA decidiu isso, e aqui está exatamente por quê".
+A Observability é o sistema que torna o funcionamento interno da Luci inspecionável por humanos e por ferramentas de diagnóstico, sem interferir no raciocínio cognitivo em si. Ela é o que transforma "a IA decidiu isso" em "a IA decidiu isso, e aqui está exatamente por quê".
 
 ---
 

@@ -11,7 +11,7 @@ Related Documents:
 - COGNITIVE_PIPELINE.md
 - COGNITIVE_BUS.md
 - API_CONTRACTS.md
-Summary: Este documento define como os componentes internos da L.U.C.I. se comunicam.
+Summary: Este documento define como os componentes internos da Luci se comunicam.
 ---
 
 # MODULE COMMUNICATION
@@ -22,7 +22,7 @@ Summary: Este documento define como os componentes internos da L.U.C.I. se comun
 
 # Objetivo
 
-Este documento define como os componentes internos da L.U.C.I. se comunicam.
+Este documento define como os componentes internos da Luci se comunicam.
 
 A arquitetura foi projetada para minimizar acoplamento, permitir evolução contínua e facilitar escalabilidade.
 
@@ -591,7 +591,7 @@ Toda comunicação deve seguir as seguintes regras.
 
 # Definição
 
-A comunicação entre módulos da L.U.C.I. é baseada em contratos, comandos, consultas e eventos.
+A comunicação entre módulos da Luci é baseada em contratos, comandos, consultas e eventos.
 
 Cada componente conhece apenas as responsabilidades públicas dos demais, permitindo que a plataforma evolua continuamente sem criar dependências rígidas ou comprometer sua arquitetura cognitiva.
 

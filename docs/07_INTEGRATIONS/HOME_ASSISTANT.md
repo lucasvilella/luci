@@ -11,18 +11,18 @@ Related Documents:
 - TOOL_REGISTRY.md
 - CONTEXT_CORE.md
 - EVENT_ROUTER.md
-Summary: A integração com o Home Assistant conecta a L.U.C.I. ao ambiente físico da residência ou de outros espaços inteligentes.
+Summary: A integração com o Home Assistant conecta a Luci ao ambiente físico da residência ou de outros espaços inteligentes.
 ---
 
 # HOME ASSISTANT
 
-> *"O Home Assistant representa os sentidos e os músculos da casa. A inteligência continua sendo da L.U.C.I."*
+> *"O Home Assistant representa os sentidos e os músculos da casa. A inteligência continua sendo da Luci"*
 
 ---
 
 # Objetivo
 
-A integração com o Home Assistant conecta a L.U.C.I. ao ambiente físico da residência ou de outros espaços inteligentes.
+A integração com o Home Assistant conecta a Luci ao ambiente físico da residência ou de outros espaços inteligentes.
 
 Seu papel é disponibilizar dispositivos, sensores, entidades, automações e estados para que possam ser utilizados pela plataforma de forma padronizada e desacoplada.
 
@@ -30,7 +30,7 @@ Seu papel é disponibilizar dispositivos, sensores, entidades, automações e es
 
 # Filosofia
 
-A L.U.C.I. não controla entidades.
+A Luci não controla entidades.
 
 Ela controla capacidades.
 
@@ -89,7 +89,7 @@ A integração nunca:
 - mantém contexto cognitivo;
 - aprende preferências.
 
-Toda inteligência permanece na L.U.C.I.
+Toda inteligência permanece na Luci
 
 ---
 
@@ -138,7 +138,7 @@ Exemplos:
 - iniciar limpeza;
 - executar cena.
 
-A L.U.C.I. nunca utiliza diretamente IDs internos das entidades.
+A Luci nunca utiliza diretamente IDs internos das entidades.
 
 ---
 
@@ -178,7 +178,7 @@ O Context Core interpreta essas informações.
 
 As automações continuam pertencendo ao Home Assistant.
 
-A L.U.C.I. pode:
+A Luci pode:
 
 - iniciar;
 - interromper;
@@ -283,11 +283,11 @@ A integração segue os princípios.
 
 # Definição
 
-A integração com o Home Assistant conecta a L.U.C.I. ao ambiente físico por meio de uma camada de abstração baseada em Capabilities. Ela transforma dispositivos, sensores e automações em recursos compreensíveis pelo Sistema Operacional Cognitivo, preservando o desacoplamento entre inteligência e implementação.
+A integração com o Home Assistant conecta a Luci ao ambiente físico por meio de uma camada de abstração baseada em Capabilities. Ela transforma dispositivos, sensores e automações em recursos compreensíveis pelo Sistema Operacional Cognitivo, preservando o desacoplamento entre inteligência e implementação.
 
 ---
 
-> **"O Home Assistant conhece os dispositivos. A L.U.C.I. compreende a casa."**
+> **"O Home Assistant conhece os dispositivos. A Luci compreende a casa."**
 
 ---
 

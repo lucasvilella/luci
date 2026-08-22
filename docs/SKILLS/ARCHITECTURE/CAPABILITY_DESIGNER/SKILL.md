@@ -1,12 +1,12 @@
 ---
 name: Capability Designer
 description: >
-  Projeta novas Capabilities para a L.U.C.I. identificando responsabilidades,
+  Projeta novas Capabilities para a Luci identificando responsabilidades,
   contratos, eventos, permissões, integrações e impactos arquiteturais antes da implementação.
 
 version: 1.0
 owner: Lucas
-project: L.U.C.I.
+project: Luci
 architecture: Cognitive Operating System
 
 requires:
@@ -27,7 +27,7 @@ triggers:
 
 ## Objetivo
 
-Projetar novas Capabilities respeitando integralmente a arquitetura da L.U.C.I.
+Projetar novas Capabilities respeitando integralmente a arquitetura da Luci
 
 Esta Skill define a arquitetura da funcionalidade antes da implementação.
 
@@ -174,5 +174,5 @@ Toda Capability deve:
 - ser reutilizável;
 - ser desacoplada;
 - possuir contratos claros;
-- integrar-se naturalmente à arquitetura da L.U.C.I.;
+- integrar-se naturalmente à arquitetura da Luci;
 - estar pronta para implementação pelos Engines e Providers apropriados.

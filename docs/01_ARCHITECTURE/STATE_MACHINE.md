@@ -10,7 +10,7 @@ Related Documents:
 - COGNITIVE_LOOP.md
 - COGNITIVE_PIPELINE.md
 - COGNITIVE_BUS.md
-Summary: Este documento define a Máquina de Estados oficial da L.U.C.I.
+Summary: Este documento define a Máquina de Estados oficial da Luci
 ---
 
 # STATE MACHINE
@@ -21,7 +21,7 @@ Summary: Este documento define a Máquina de Estados oficial da L.U.C.I.
 
 # Objetivo
 
-Este documento define a Máquina de Estados oficial da L.U.C.I.
+Este documento define a Máquina de Estados oficial da Luci
 
 A plataforma possui dois níveis independentes de estados:
 
@@ -36,7 +36,7 @@ Essa separação garante uma interface extremamente simples enquanto permite que
 
 O usuário nunca precisa conhecer a complexidade da inteligência.
 
-Ele precisa apenas compreender o comportamento da L.U.C.I.
+Ele precisa apenas compreender o comportamento da Luci
 
 Internamente podem existir dezenas de estados.
 
@@ -99,7 +99,7 @@ Pode significar.
 - recebendo imagem;
 - aguardando conclusão do usuário.
 
-A L.U.C.I. ainda não iniciou o raciocínio.
+A Luci ainda não iniciou o raciocínio.
 
 ---
 
@@ -563,7 +563,7 @@ A Máquina de Estados segue os seguintes princípios.
 
 # Definição
 
-A Máquina de Estados da L.U.C.I. separa explicitamente comportamento perceptível e processamento cognitivo.
+A Máquina de Estados da Luci separa explicitamente comportamento perceptível e processamento cognitivo.
 
 Essa separação permite que a experiência do usuário permaneça simples e intuitiva enquanto a inteligência evolui continuamente sem alterar sua interface.
 

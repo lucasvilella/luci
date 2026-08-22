@@ -11,7 +11,7 @@ Related Documents:
 - NAMING_CONVENTIONS.md
 - SYSTEM_ARCHITECTURE.md
 - SYSTEM_ARCHITECTURE.md
-Summary: Este documento estabelece as regras de projeto arquitetural da L.U.C.I.
+Summary: Este documento estabelece as regras de projeto arquitetural da Luci
 ---
 
 # DESIGN RULES
@@ -22,7 +22,7 @@ Summary: Este documento estabelece as regras de projeto arquitetural da L.U.C.I.
 
 # Objetivo
 
-Este documento estabelece as regras de projeto arquitetural da L.U.C.I.
+Este documento estabelece as regras de projeto arquitetural da Luci
 
 Seu propósito é orientar como novos componentes devem ser concebidos, organizados e integrados à plataforma, preservando simplicidade, desacoplamento e evolução contínua.
 
@@ -261,7 +261,7 @@ As Design Rules seguem os princípios:
 
 # Definição
 
-As Design Rules estabelecem os princípios de projeto utilizados na construção da L.U.C.I. Elas orientam a criação de componentes consistentes com a arquitetura do Sistema Operacional Cognitivo, garantindo que novas funcionalidades sejam incorporadas de forma modular, reutilizável e sustentável ao longo da evolução da plataforma.
+As Design Rules estabelecem os princípios de projeto utilizados na construção da Luci Elas orientam a criação de componentes consistentes com a arquitetura do Sistema Operacional Cognitivo, garantindo que novas funcionalidades sejam incorporadas de forma modular, reutilizável e sustentável ao longo da evolução da plataforma.
 
 ---
 

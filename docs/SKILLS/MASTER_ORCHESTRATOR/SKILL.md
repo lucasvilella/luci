@@ -3,11 +3,11 @@ name: Master Orchestrator
 description: >
   Analisa cada solicitação recebida pelo Antigravity e determina quais Skills
   devem ser executadas, em qual sequência e com quais dependências.
-  Atua como o orquestrador oficial do L.U.C.I. Development Kit.
+  Atua como o orquestrador oficial do Luci Development Kit.
 
 version: 1.0
 owner: Lucas
-project: L.U.C.I.
+project: Luci
 architecture: Cognitive Operating System
 
 requires: []
@@ -192,7 +192,7 @@ Sempre:
 - utilizar o menor número possível de Skills;
 - respeitar a ordem das dependências;
 - evitar etapas redundantes;
-- preservar a arquitetura oficial da L.U.C.I.
+- preservar a arquitetura oficial da Luci
 
 Nunca:
 
@@ -221,7 +221,7 @@ Ao final da análise, apresentar:
 
 # Filosofia
 
-O Master Orchestrator é o ponto central de coordenação do L.U.C.I. Development Kit.
+O Master Orchestrator é o ponto central de coordenação do Luci Development Kit.
 
 Ele garante que cada solicitação siga um fluxo consistente, previsível e alinhado com a arquitetura da plataforma.
 

@@ -1,11 +1,11 @@
 ---
 name: Architecture Guardian
 description: >
-  Revisa propostas arquiteturais, novos componentes e alterações de código para garantir conformidade com a arquitetura da L.U.C.I. Deve ser utilizada antes de criar, modificar ou remover componentes estruturais.
+  Revisa propostas arquiteturais, novos componentes e alterações de código para garantir conformidade com a arquitetura da Luci Deve ser utilizada antes de criar, modificar ou remover componentes estruturais.
 
 version: 1.0
 owner: Lucas
-project: L.U.C.I.
+project: Luci
 architecture: Cognitive Operating System
 
 requires: []
@@ -28,7 +28,7 @@ triggers:
 
 ## Objetivo
 
-Garantir que toda alteração proposta esteja em conformidade com a arquitetura oficial da L.U.C.I.
+Garantir que toda alteração proposta esteja em conformidade com a arquitetura oficial da Luci
 
 Esta skill atua como um arquiteto de software especializado na plataforma.
 

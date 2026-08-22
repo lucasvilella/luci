@@ -1,7 +1,7 @@
 /**
  * graph_memory.ts
  *
- * Graph Memory & Privacy Redactor for L.U.C.I. (Inspired by Jarvis Knowledge Graph)
+ * Graph Memory & Privacy Redactor for Luci (Inspired by Jarvis Knowledge Graph)
  *
  * Stores entities, relationships, user preferences and facts in a relational graph,
  * with automatic redactor layer to filter sensitive tokens (API keys, passwords, credentials).
@@ -95,7 +95,7 @@ export class GraphMemory {
   }
 
   private initDefaultGraph(): void {
-    this.addFactNode('user_primary', 'Lucas Vilella', 'PERSON', 'Usuário primário e criador da L.U.C.I.');
+    this.addFactNode('user_primary', 'Lucas Vilella', 'PERSON', 'Usuário primário e criador da Luci');
     this.addFactNode('pref_theme', 'Tema Visual', 'PREFERENCE', 'Prefere interfaces futuristas em modo escuro com tons neon.');
   }
 }

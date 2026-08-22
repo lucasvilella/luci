@@ -11,7 +11,7 @@ Related Documents:
 - CODING_STANDARDS.md
 - SECURITY_RULES.md
 - AI_BEHAVIOR_RULES.md
-Summary: Este documento reúne os princípios fundamentais da L.U.C.I. que não podem ser violados.
+Summary: Este documento reúne os princípios fundamentais da Luci que não podem ser violados.
 ---
 
 # NON-NEGOTIABLES
@@ -22,7 +22,7 @@ Summary: Este documento reúne os princípios fundamentais da L.U.C.I. que não 
 
 # Objetivo
 
-Este documento reúne os princípios fundamentais da L.U.C.I. que não podem ser violados.
+Este documento reúne os princípios fundamentais da Luci que não podem ser violados.
 
 Eles representam a identidade permanente do Sistema Operacional Cognitivo.
 
@@ -203,7 +203,7 @@ Duplicação é um último recurso.
 
 # NON-NEGOTIABLE 15
 
-## A identidade da L.U.C.I. independe do modelo de IA.
+## A identidade da Luci independe do modelo de IA.
 
 GPT, Claude, Gemini, Llama ou qualquer outro modelo são apenas mecanismos de processamento.
 
@@ -237,15 +237,15 @@ Mudanças devem ser aprovadas com consenso dos responsáveis pela arquitetura da
 
 # Definição
 
-Os Non-Negotiables representam os princípios permanentes da L.U.C.I. Eles definem os limites dentro dos quais toda evolução da plataforma deve ocorrer, preservando sua identidade, consistência arquitetural e visão de longo prazo. Mais do que regras de desenvolvimento, constituem a base filosófica do Sistema Operacional Cognitivo.
+Os Non-Negotiables representam os princípios permanentes da Luci Eles definem os limites dentro dos quais toda evolução da plataforma deve ocorrer, preservando sua identidade, consistência arquitetural e visão de longo prazo. Mais do que regras de desenvolvimento, constituem a base filosófica do Sistema Operacional Cognitivo.
 
 ---
 
 # Juramento Arquitetural
 
-Antes de alterar a arquitetura da L.U.C.I., todo desenvolvedor deve assumir o seguinte compromisso:
+Antes de alterar a arquitetura da Luci, todo desenvolvedor deve assumir o seguinte compromisso:
 
-> **"Toda decisão que eu tomar deverá fortalecer a arquitetura, nunca enfraquecê-la. Priorizarei simplicidade, desacoplamento, observabilidade, segurança e evolução contínua acima de conveniências temporárias. Componentes podem mudar. Tecnologias podem evoluir. A identidade da L.U.C.I. deve permanecer."**
+> **"Toda decisão que eu tomar deverá fortalecer a arquitetura, nunca enfraquecê-la. Priorizarei simplicidade, desacoplamento, observabilidade, segurança e evolução contínua acima de conveniências temporárias. Componentes podem mudar. Tecnologias podem evoluir. A identidade da Luci deve permanecer."**
 
 ---
 

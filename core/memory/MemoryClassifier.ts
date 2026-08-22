@@ -1,7 +1,7 @@
 /**
  * MemoryClassifier
  *
- * Cognitive memory intelligence classifier for L.U.C.I.
+ * Cognitive memory intelligence classifier for Luci
  * Analyzes incoming user transcripts and categorizes them into memory layers
  * assigning a confidence score (0.0 to 1.0) before persistence.
  */
