@@ -18,5 +18,7 @@ class AppSettings(BaseModel):
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
     default_tts_provider: str = os.getenv("DEFAULT_TTS_PROVIDER", "EdgeTTS")
     edge_voice: str = os.getenv("EDGE_VOICE", "pt-BR-FranciscaNeural")
+    luci_api_secret: str = os.getenv("LUCI_API_SECRET") or os.getenv("LUCI_SECRET_TOKEN") or "luci-secret-token-2026"
 
 settings = AppSettings()
+

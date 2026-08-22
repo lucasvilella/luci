@@ -9,8 +9,9 @@ Integrates:
 import os
 from contextlib import asynccontextmanager
 from typing import Optional, Dict, Any
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, UploadFile, File, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, UploadFile, File, HTTPException, Request, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.core.config import settings
@@ -18,9 +19,39 @@ from app.tools.registry import tool_registry
 from app.tools.music_recognizer import recognize_ambient_music
 from app.services.interpreter_service import UniversalInterpreterSession
 
+# ─── Middleware de Autenticação Segura (Bearer Token / X-API-Key) ───
+async def verify_api_secret(request: Request):
+    """Verifica se a requisição possui a chave secreta da Luci."""
+    # Permite endpoint de health público ou com validação
+    if request.url.path in ["/health", "/docs", "/openapi.json"]:
+        return True
+
+    auth_header = request.headers.get("Authorization", "")
+    custom_key = request.headers.get("X-API-Key", "")
+    query_token = request.query_params.get("token", "")
+
+    expected_secret = settings.luci_api_secret
+
+    # 1. Checa Bearer Token
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1].strip()
+        if token == expected_secret:
+            return True
+
+    # 2. Checa cabeçalho X-API-Key ou query parameter ?token=
+    if custom_key == expected_secret or query_token == expected_secret:
+        return True
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Acesso Negado: Chave Secreta da L.U.C.I. inválida ou ausente.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print(f"🚀 [Luci Core] Inicializada com sucesso na porta {settings.port}")
+    print(f"🔒 [Security] Proteção por Chave Secreta de API Ativa.")
     yield
     print("🛑 [Luci Core] Desligamento seguro concluído.")
 
@@ -29,6 +60,7 @@ app = FastAPI(
     description="Backend de Ferramentas Zero-Auth, Intérprete Simultâneo Universal e Reconhecimento Acústico.",
     version=settings.app_version,
     lifespan=lifespan,
+    dependencies=[Depends(verify_api_secret)],
 )
 
 # CORS para React Desktop e Mobile App
@@ -79,12 +111,19 @@ async def recognize_music_file(file: UploadFile = File(...)):
 @app.websocket("/ws/interpreter")
 async def interpreter_websocket(
     websocket: WebSocket,
+    token: Optional[str] = Query(None, description="Chave Secreta de API da Luci"),
     male_voice: Optional[str] = Query("Puck", description="Voz masculina (Puck/Fenrir)"),
     female_voice: Optional[str] = Query("Aoede", description="Voz feminina (Aoede/Kore)"),
 ):
     """
     WebSocket Full-Duplex para Interpretação Simultânea Contínua com Preservação de Gênero Vocal.
     """
+    # Validação de segurança no handshake WebSocket
+    auth_header = websocket.headers.get("Authorization", "").replace("Bearer ", "").strip()
+    if token != settings.luci_api_secret and auth_header != settings.luci_api_secret:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Unauthorized: Token Secreto inválido.")
+        return
+
     await websocket.accept()
 
     session = None
