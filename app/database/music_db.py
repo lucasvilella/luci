@@ -104,12 +104,17 @@ class MusicDatabase:
         conn = get_db_connection()
         cursor = conn.cursor()
         now = int(time.time())
+        track_id = track.get("id")
+        if not track_id:
+            conn.close()
+            return
+
         cursor.execute("""
         INSERT INTO playback_history (user_id, track_id, title, artist, album, thumbnail, duration, played_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             user_id,
-            track.get("id"),
+            track_id,
             track.get("title", "Desconhecido"),
             track.get("artist", "Desconhecido"),
             track.get("album", ""),
@@ -122,13 +127,14 @@ class MusicDatabase:
 
     @staticmethod
     def get_history(user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
-        """Retorna as faixas mais recentemente ouvidas pelo usuário."""
+        """Retorna faixas ÚNICAS (sem duplicatas) recentemente ouvidas."""
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
-        SELECT track_id AS id, title, artist, album, thumbnail, duration, played_at
+        SELECT track_id AS id, title, artist, album, thumbnail, duration, MAX(played_at) as played_at
         FROM playback_history
         WHERE user_id = ?
+        GROUP BY track_id
         ORDER BY played_at DESC
         LIMIT ?
         """, (user_id, limit))
@@ -159,6 +165,9 @@ class MusicDatabase:
         conn = get_db_connection()
         cursor = conn.cursor()
         track_id = track.get("id")
+        if not track_id:
+            conn.close()
+            return False
 
         cursor.execute("SELECT id FROM liked_songs WHERE user_id = ? AND id = ?", (user_id, track_id))
         exists = cursor.fetchone()
@@ -188,18 +197,8 @@ class MusicDatabase:
         return is_liked
 
     @staticmethod
-    def is_liked(user_id: str, track_id: str) -> bool:
-        """Verifica se uma música está curtida."""
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1 FROM liked_songs WHERE user_id = ? AND id = ?", (user_id, track_id))
-        res = cursor.fetchone() is not None
-        conn.close()
-        return res
-
-    @staticmethod
     def get_liked_songs(user_id: str, limit: int = 100) -> List[Dict[str, Any]]:
-        """Retorna a lista de músicas curtidas pelo usuário."""
+        """Retorna as faixas curtidas pelo usuário."""
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
@@ -214,8 +213,18 @@ class MusicDatabase:
         return [dict(r) for r in rows]
 
     @staticmethod
-    def create_playlist(user_id: str, title: str, description: str = "") -> Dict[str, Any]:
-        """Cria uma nova playlist do usuário."""
+    def is_song_liked(user_id: str, track_id: str) -> bool:
+        """Verifica se uma faixa está curtida."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM liked_songs WHERE user_id = ? AND id = ?", (user_id, track_id))
+        row = cursor.fetchone()
+        conn.close()
+        return bool(row)
+
+    @staticmethod
+    def create_playlist(user_id: str, title: str, description: str = "", thumbnail: str = "") -> str:
+        """Cria uma nova playlist para o usuário."""
         import uuid
         playlist_id = f"pl_{uuid.uuid4().hex[:12]}"
         now = int(time.time())
@@ -224,27 +233,21 @@ class MusicDatabase:
         cursor.execute("""
         INSERT INTO user_playlists (id, user_id, title, description, thumbnail, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (playlist_id, user_id, title, description, "", now, now))
+        """, (playlist_id, user_id, title, description, thumbnail, now, now))
         conn.commit()
         conn.close()
-        return {
-            "id": playlist_id,
-            "title": title,
-            "description": description,
-            "track_count": 0,
-            "created_at": now
-        }
+        return playlist_id
 
     @staticmethod
-    def get_playlists(user_id: str) -> List[Dict[str, Any]]:
-        """Retorna todas as playlists do usuário com a contagem de faixas."""
+    def get_user_playlists(user_id: str) -> List[Dict[str, Any]]:
+        """Retorna todas as playlists do usuário com contagem de faixas."""
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
         SELECT p.id, p.title, p.description, p.thumbnail, p.created_at, p.updated_at,
-               COUNT(t.track_id) as track_count
+               COUNT(pt.track_id) as track_count
         FROM user_playlists p
-        LEFT JOIN playlist_tracks t ON p.id = t.playlist_id
+        LEFT JOIN playlist_tracks pt ON p.id = pt.playlist_id
         WHERE p.user_id = ?
         GROUP BY p.id
         ORDER BY p.updated_at DESC
@@ -254,62 +257,65 @@ class MusicDatabase:
         return [dict(r) for r in rows]
 
     @staticmethod
-    def add_track_to_playlist(playlist_id: str, track: Dict[str, Any]):
-        """Adiciona uma faixa a uma playlist."""
+    def add_track_to_playlist(playlist_id: str, track: Dict[str, Any]) -> bool:
+        """Adiciona uma faixa a uma playlist existente."""
         conn = get_db_connection()
         cursor = conn.cursor()
         now = int(time.time())
+        track_id = track.get("id")
 
-        # Descobre a próxima posição
-        cursor.execute("SELECT COALESCE(MAX(position), 0) + 1 FROM playlist_tracks WHERE playlist_id = ?", (playlist_id,))
-        pos = cursor.fetchone()[0]
+        cursor.execute("SELECT MAX(position) FROM playlist_tracks WHERE playlist_id = ?", (playlist_id,))
+        max_pos = cursor.fetchone()[0]
+        next_pos = (max_pos + 1) if max_pos is not None else 0
 
-        cursor.execute("""
-        INSERT OR REPLACE INTO playlist_tracks 
-        (playlist_id, track_id, title, artist, album, thumbnail, duration, added_at, position)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            playlist_id,
-            track.get("id"),
-            track.get("title", ""),
-            track.get("artist", ""),
-            track.get("album", ""),
-            track.get("thumbnail", ""),
-            track.get("duration", 0),
-            now,
-            pos
-        ))
+        try:
+            cursor.execute("""
+            INSERT INTO playlist_tracks (playlist_id, track_id, title, artist, album, thumbnail, duration, added_at, position)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                playlist_id,
+                track_id,
+                track.get("title", "Desconhecido"),
+                track.get("artist", "Desconhecido"),
+                track.get("album", ""),
+                track.get("thumbnail", ""),
+                track.get("duration", 0),
+                now,
+                next_pos
+            ))
+            cursor.execute("UPDATE user_playlists SET updated_at = ? WHERE id = ?", (now, playlist_id))
+            conn.commit()
+            success = True
+        except sqlite3.IntegrityError:
+            success = False
+        finally:
+            conn.close()
 
-        # Atualiza a thumbnail da playlist com a primeira música se vazia
-        cursor.execute("""
-        UPDATE user_playlists 
-        SET updated_at = ?, thumbnail = CASE WHEN thumbnail = '' OR thumbnail IS NULL THEN ? ELSE thumbnail END
-        WHERE id = ?
-        """, (now, track.get("thumbnail", ""), playlist_id))
-
-        conn.commit()
-        conn.close()
+        return success
 
     @staticmethod
-    def get_playlist_details(user_id: str, playlist_id: str) -> Optional[Dict[str, Any]]:
-        """Retorna detalhes da playlist e suas faixas."""
+    def get_playlist_tracks(playlist_id: str) -> List[Dict[str, Any]]:
+        """Retorna todas as faixas de uma playlist em ordem."""
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM user_playlists WHERE id = ? AND user_id = ?", (playlist_id, user_id))
-        playlist = cursor.fetchone()
-        if not playlist:
-            conn.close()
-            return None
-
         cursor.execute("""
         SELECT track_id AS id, title, artist, album, thumbnail, duration, added_at, position
         FROM playlist_tracks
         WHERE playlist_id = ?
         ORDER BY position ASC
         """, (playlist_id,))
-        tracks = cursor.fetchall()
+        rows = cursor.fetchall()
         conn.close()
+        return [dict(r) for r in rows]
 
-        res = dict(playlist)
-        res["tracks"] = [dict(t) for t in tracks]
-        return res
+    @staticmethod
+    def delete_playlist(playlist_id: str, user_id: str) -> bool:
+        """Exclui uma playlist do usuário."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM user_playlists WHERE id = ? AND user_id = ?", (playlist_id, user_id))
+        cursor.execute("DELETE FROM playlist_tracks WHERE playlist_id = ?", (playlist_id,))
+        deleted = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        return deleted

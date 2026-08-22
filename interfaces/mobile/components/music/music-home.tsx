@@ -66,27 +66,23 @@ export function MusicHome() {
     return () => clearInterval(interval)
   }, [])
 
-  const quickPicks = feed?.recently_played && feed.recently_played.length > 0 
-    ? feed.recently_played.slice(0, 6) 
-    : (feed?.trending_brasil?.slice(0, 6) || [])
+  // Desduplicar faixas por id
+  const rawList = feed?.recently_played && feed.recently_played.length > 0
+    ? feed.recently_played
+    : (feed?.trending_brasil || [])
 
-  // Obter saudação com base na hora local
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening"
+  const uniqueTracksMap = new Map<string, LuciTrack>()
+  for (const t of rawList) {
+    if (t.id && !uniqueTracksMap.has(t.id)) {
+      uniqueTracksMap.set(t.id, t)
+    }
+  }
+  const quickPicks = Array.from(uniqueTracksMap.values()).slice(0, 6)
 
   return (
     <div className="flex h-full flex-col bg-[#0b0c10] text-white animate-view-in select-none">
-      {/* ─── 1. Header Oficial do SimpMusic (SimpMusic + Greeting + History + Settings) ─── */}
-      <header className="flex items-center justify-between px-5 pt-4 pb-2 bg-[#0b0c10]">
-        <div>
-          <h1 className="text-xl font-bold text-white font-sans tracking-tight">
-            SimpMusic
-          </h1>
-          <p className="text-sm text-zinc-400 font-medium mt-0.5">
-            {greeting}
-          </p>
-        </div>
-
+      {/* ─── 1. Header Limpo Sem Título (Apenas Ações Direita) ─── */}
+      <header className="flex items-center justify-end px-5 pt-3 pb-2 bg-[#0b0c10]">
         <div className="flex items-center gap-3 text-zinc-300">
           <button
             type="button"
@@ -108,7 +104,7 @@ export function MusicHome() {
       </header>
 
       {/* ─── 2. Conteúdo Rolável Oficial do SimpMusic ─── */}
-      <div className="flex-1 overflow-y-auto px-5 py-3 space-y-7 pb-28 no-scrollbar">
+      <div className="flex-1 overflow-y-auto px-5 py-2 space-y-7 pb-28 no-scrollbar">
         {!feed ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3 text-zinc-500">
             <Loader2 className="size-7 animate-spin text-indigo-500" />
@@ -116,7 +112,7 @@ export function MusicHome() {
           </div>
         ) : (
           <>
-            {/* ─── Seção: LET'S START WITH A RADIO / Quick Picks ─── */}
+            {/* ─── Seção: LET'S START WITH A RADIO / Quick Picks (Sem Duplicatas) ─── */}
             {quickPicks.length > 0 && (
               <section className="space-y-3">
                 <div>
