@@ -20,6 +20,8 @@ from app.database.music_db import MusicDatabase
 stream_url_cache = AsyncTTLCache(default_ttl_seconds=3600 * 4) # 4 horas
 lyrics_cache = AsyncTTLCache(default_ttl_seconds=3600 * 24)     # 24 horas
 home_feed_cache = AsyncTTLCache(default_ttl_seconds=1800)       # 30 minutos
+artist_cache = AsyncTTLCache(default_ttl_seconds=3600 * 6)      # 6 horas
+album_cache = AsyncTTLCache(default_ttl_seconds=3600 * 6)       # 6 horas
 
 class LuciMusicService:
     def __init__(self):
@@ -292,11 +294,30 @@ class LuciMusicService:
         formatted = [self._format_track(t) for t in raw_tracks if t.get("videoId") and t.get("videoId") != track_id]
         return formatted[:limit]
 
+    def _safe_search(self, query: str, filter_type: Optional[str] = None, limit: int = 15) -> List[Dict[str, Any]]:
+        """Executa buscas no YouTube Music com sanitização de caracteres especiais para evitar erros e lentidão."""
+        if not self.ytm or not query:
+            return []
+        clean_q = re.sub(r'[&/\\#+()$~%."*?:;<>{}]', ' ', query)
+        clean_q = ' '.join(clean_q.split()).strip()
+        if not clean_q:
+            return []
+        try:
+            return self.ytm.search(clean_q, filter=filter_type, limit=limit)
+        except Exception as e:
+            print(f"[LuciMusic] _safe_search erro ({clean_q}, {filter_type}): {e}")
+            return []
+
     # ─── 5. Detalhes do Artista ───
     async def get_artist_page(self, artist_id: str) -> Dict[str, Any]:
         """Obtém top músicas e álbuns do artista com fallback inteligente e cache rápido."""
         if not self.ytm:
             return {"name": "", "top_tracks": [], "albums": []}
+
+        cache_key = f"artist_page_{artist_id}"
+        cached = artist_cache.get(cache_key)
+        if cached:
+            return cached
 
         loop = asyncio.get_running_loop()
 
@@ -307,7 +328,7 @@ class LuciMusicService:
             # 1. Se o ID não parece um Channel ID (UC...), busca pelo nome para obter o browseId oficial
             if not target_id.startswith("UC") and not target_id.startswith("MPLA"):
                 try:
-                    search_res = self.ytm.search(target_id, filter="artists", limit=1)
+                    search_res = self._safe_search(target_id, filter_type="artists", limit=1)
                     if search_res and search_res[0].get("browseId"):
                         target_id = search_res[0]["browseId"]
                 except Exception as ex:
@@ -332,33 +353,27 @@ class LuciMusicService:
 
             # Se ainda faltam faixas ou álbuns, faz buscas complementares
             if not top_tracks:
-                try:
-                    song_res = self.ytm.search(artist_id, filter="songs", limit=15)
-                    top_tracks = [self._format_track(t) for t in song_res if t.get("videoId")]
-                except Exception as ex:
-                    print(f"[LuciMusic] Fallback de músicas falhou: {ex}")
+                song_res = self._safe_search(artist_id, filter_type="songs", limit=15)
+                top_tracks = [self._format_track(t) for t in song_res if t.get("videoId")]
 
             if not albums:
-                try:
-                    alb_res = self.ytm.search(artist_id, filter="albums", limit=10)
-                    albums = [
-                        {
-                            "id": a.get("browseId") or a.get("audioPlaylistId"),
-                            "title": a.get("title"),
-                            "year": a.get("year") or "Álbum",
-                            "thumbnail": (a.get("thumbnails") or [{}])[-1].get("url", "")
-                        }
-                        for a in alb_res if a.get("browseId")
-                    ]
-                except Exception as ex:
-                    print(f"[LuciMusic] Fallback de álbuns falhou: {ex}")
+                alb_res = self._safe_search(artist_id, filter_type="albums", limit=10)
+                albums = [
+                    {
+                        "id": a.get("browseId") or a.get("audioPlaylistId"),
+                        "title": a.get("title"),
+                        "year": a.get("year") or "Álbum",
+                        "thumbnail": (a.get("thumbnails") or [{}])[-1].get("url", "")
+                    }
+                    for a in alb_res if a.get("browseId")
+                ]
 
             name = artist_data.get("name") or artist_id
             thumb = (artist_data.get("thumbnails") or [{}])[-1].get("url", "")
             if not thumb and top_tracks:
                 thumb = top_tracks[0].get("thumbnail", "")
 
-            return {
+            result = {
                 "id": target_id,
                 "name": name,
                 "description": artist_data.get("description", ""),
@@ -367,11 +382,19 @@ class LuciMusicService:
                 "albums": albums
             }
 
+            artist_cache.set(cache_key, result)
+            return result
+
         return await loop.run_in_executor(None, _fetch_artist)
 
-    # ─── 5.1 Detalhes do Álbum (Faixas, Data de Lançamento, Mais do Artista e Você Também Pode Gostar) ───
+    # ─── 5.1 Detalhes do Álbum (Otimizado com Cache Rápido) ───
     async def get_album_details(self, album_id: str, title: Optional[str] = None, artist: Optional[str] = None) -> Dict[str, Any]:
-        """Obtém os detalhes completos de um álbum, suas músicas, data de lançamento e recomendações."""
+        """Obtém os detalhes completos de um álbum e suas faixas com resposta ultra-rápida e cache."""
+        cache_key = f"album_{album_id}_{title}_{artist}"
+        cached = album_cache.get(cache_key)
+        if cached:
+            return cached
+
         loop = asyncio.get_running_loop()
 
         def _fetch_album():
@@ -384,7 +407,7 @@ class LuciMusicService:
             artist_thumb = ""
 
             # 1. Tenta buscar direto pelo browseId no YouTube Music
-            if album_id and album_id.startswith("MPRE") or album_id.startswith("OLAK"):
+            if album_id and (album_id.startswith("MPRE") or album_id.startswith("OLAK")):
                 try:
                     album_data = self.ytm.get_album(album_id)
                     album_title = album_data.get("title") or album_title
@@ -400,63 +423,32 @@ class LuciMusicService:
                 except Exception as e:
                     print(f"[LuciMusic] get_album direto falhou: {e}")
 
-            # 2. Se não encontrou faixas pelo ID, busca as músicas pelo nome do álbum + artista
+            # 2. Se não encontrou faixas pelo ID ou o ID era genérico, busca as músicas pelo nome
             if not tracks:
-                clean_title = (album_title or "").replace("&", " ").replace("•", " ").strip()
-                clean_artist = (artist_name or "").replace("&", " ").replace("•", " ").strip()
-                search_query = f"{clean_title} {clean_artist}".strip()
-                try:
-                    res = self.ytm.search(search_query, filter="songs", limit=16)
-                    for t in res:
-                        if t.get("videoId"):
-                            tracks.append(self._format_track(t))
-                except Exception as ex:
-                    print(f"[LuciMusic] Busca de faixas do álbum falhou: {ex}")
+                search_query = f"{album_title} {artist_name}".strip()
+                res = self._safe_search(search_query, filter_type="songs", limit=16)
+                for t in res:
+                    if t.get("videoId"):
+                        tracks.append(self._format_track(t))
 
-            # Foto do artista
-            try:
-                if artist_name:
-                    art_search = self.ytm.search(artist_name, filter="artists", limit=1)
-                    if art_search:
-                        artist_thumb = (art_search[0].get("thumbnails") or [{}])[-1].get("url", "")
-            except Exception:
-                pass
-
-            if not artist_thumb and tracks:
+            if tracks:
+                if not thumb:
+                    thumb = tracks[0].get("thumbnail", "")
                 artist_thumb = tracks[0].get("thumbnail", "")
 
-            # 3. Mais do mesmo Artista (outros álbuns ou faixas)
+            # 3. Mais do mesmo Artista (Rápido e não-bloqueante)
             more_from_artist = []
-            try:
-                if artist_name:
-                    art_albums = self.ytm.search(f"{artist_name} album", filter="albums", limit=4)
-                    for alb in art_albums:
-                        if alb.get("browseId") != album_id:
-                            more_from_artist.append({
-                                "id": alb.get("browseId") or alb.get("title"),
-                                "title": alb.get("title"),
-                                "artist": artist_name,
-                                "year": alb.get("year", "2024"),
-                                "thumbnail": (alb.get("thumbnails") or [{}])[-1].get("url", "")
-                            })
-            except Exception:
-                pass
-
-            # 4. Você também pode gostar (outros álbuns populares de sertanejo/brasil)
-            you_might_like = []
-            try:
-                rec_res = self.ytm.search("Sertanejo Ao Vivo Album Hits", filter="albums", limit=4)
-                for alb in rec_res:
-                    if alb.get("title") != album_title:
-                        you_might_like.append({
+            if artist_name and len(artist_name) > 2:
+                art_albums = self._safe_search(artist_name, filter_type="albums", limit=4)
+                for alb in art_albums:
+                    if alb.get("browseId") != album_id:
+                        more_from_artist.append({
                             "id": alb.get("browseId") or alb.get("title"),
                             "title": alb.get("title"),
-                            "artist": alb.get("artist") or (alb.get("artists") or [{}])[0].get("name", "Vários"),
+                            "artist": artist_name,
                             "year": alb.get("year", "2024"),
                             "thumbnail": (alb.get("thumbnails") or [{}])[-1].get("url", "")
                         })
-            except Exception:
-                pass
 
             artist_id_resolved = ""
             if album_data and album_data.get("artists") and album_data["artists"][0].get("id"):
@@ -464,18 +456,21 @@ class LuciMusicService:
             elif tracks and tracks[0].get("artistId"):
                 artist_id_resolved = tracks[0]["artistId"]
 
-            return {
+            result = {
                 "id": album_id,
                 "title": album_title,
                 "artist": artist_name,
                 "artist_id": artist_id_resolved,
                 "artist_thumbnail": artist_thumb,
                 "year": year,
-                "thumbnail": thumb or (tracks[0]["thumbnail"] if tracks else ""),
+                "thumbnail": thumb,
                 "tracks": tracks,
                 "more_from_artist": more_from_artist,
-                "you_might_like": you_might_like
+                "you_might_like": []
             }
+
+            album_cache.set(cache_key, result)
+            return result
 
         return await loop.run_in_executor(None, _fetch_album)
 
