@@ -206,3 +206,85 @@
   white-space: nowrap;
   animation: marquee-scroll 12s linear infinite alternate;
 }
+
+/* ─── Orb States — 4 estados visuais premium ─── */
+
+@keyframes orb-idle-glow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 40px -8px rgba(99, 102, 241, 0.3), 0 0 80px -16px rgba(139, 92, 246, 0.15);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 60px -8px rgba(99, 102, 241, 0.4), 0 0 100px -16px rgba(139, 92, 246, 0.2);
+  }
+}
+
+@keyframes orb-listening-ring {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+@keyframes orb-processing-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes orb-speaking-wave {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 50px -5px rgba(99, 102, 241, 0.5), 0 0 100px -10px rgba(139, 92, 246, 0.3);
+  }
+  25% {
+    transform: scale(1.08);
+    box-shadow: 0 0 70px -5px rgba(99, 102, 241, 0.6), 0 0 120px -10px rgba(139, 92, 246, 0.35);
+  }
+  50% {
+    transform: scale(0.96);
+    box-shadow: 0 0 40px -5px rgba(99, 102, 241, 0.4), 0 0 80px -10px rgba(139, 92, 246, 0.2);
+  }
+  75% {
+    transform: scale(1.05);
+    box-shadow: 0 0 60px -5px rgba(99, 102, 241, 0.55), 0 0 110px -10px rgba(139, 92, 246, 0.3);
+  }
+}
+
+@keyframes eq-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-orb-idle {
+  animation: orb-idle-glow 4s ease-in-out infinite;
+}
+.animate-orb-listening-ring {
+  animation: orb-listening-ring 1.5s ease-out infinite;
+}
+.animate-orb-processing {
+  animation: orb-processing-spin 1.2s linear infinite;
+}
+.animate-orb-speaking {
+  animation: orb-speaking-wave 1.4s ease-in-out infinite;
+}
+.animate-slide-up {
+  animation: slide-up 0.35s ease-out both;
+}
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out both;
+}

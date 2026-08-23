@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
-import { Mic, Sparkles, Volume2, Loader2 } from "lucide-react"
+import { Plus, Mic, Keyboard, Loader2, Sparkles, ArrowUpRight, ImageIcon, FileText, Zap } from "lucide-react"
 import { luciApiFetch } from "@/lib/api"
 import { useConversation } from "@/hooks/use-conversation"
 
+// ─── AudioPlayerQueue (reprodução sequencial de chunks TTS) ───
 class AudioPlayerQueue {
   private audioContext: AudioContext | null = null
   private queue: { index: number; buffer: ArrayBuffer }[] = []
@@ -101,13 +102,41 @@ function cleanTextForSpeech(text: string): string {
     .trim()
 }
 
-export function VoiceOrbView() {
+// ─── Atalhos de exemplo (cards) ───
+const SHORTCUT_CARDS = [
+  {
+    id: "resumo",
+    title: "Resumo do meu dia",
+    description: "Veja compromissos, previsão do tempo e notícias importantes personalizadas.",
+    icon: Sparkles,
+    command: "Me dê um resumo do meu dia: compromissos, clima e notícias importantes.",
+    large: true,
+  },
+  {
+    id: "imagem",
+    title: "Gerar Imagem com IA",
+    description: "Descreva e crie",
+    icon: ImageIcon,
+    command: "Quero gerar uma imagem com IA. Me ajude a descrever.",
+    large: false,
+  },
+  {
+    id: "automacao",
+    title: "Automação Rápida",
+    description: "Controle inteligente",
+    icon: Zap,
+    command: "Quais automações de casa inteligente eu posso configurar?",
+    large: false,
+  },
+]
+
+export function VoiceOrbView({ onSwitchToChat }: { onSwitchToChat?: () => void }) {
   const [listening, setListening] = useState(false)
   const [speaking, setSpeaking] = useState(false)
   const [loading, setLoading] = useState(false)
   const [transcript, setTranscript] = useState("")
   const [response, setResponse] = useState("")
-  const [statusText, setStatusText] = useState("Diga 'Luci' ou toque no microfone")
+  const [statusText, setStatusText] = useState("Diga 'Ei, Luci' ou toque no microfone")
 
   const recognitionRef = useRef<any>(null)
   const silenceTimerRef = useRef<any>(null)
@@ -116,6 +145,7 @@ export function VoiceOrbView() {
   const isProcessingRef = useRef<boolean>(false)
   const isUserActiveSessionRef = useRef<boolean>(false)
   const isListeningRef = useRef<boolean>(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const clearSilenceTimer = () => {
     if (silenceTimerRef.current) {
@@ -172,7 +202,7 @@ export function VoiceOrbView() {
       const result = await sendVoiceMessage(text)
       setResponse(result.reply)
       setLoading(false)
-      setStatusText(result.reply ? "Luci respondeu" : "Diga 'Luci' ou toque no microfone")
+      setStatusText(result.reply ? "Luci respondeu" : "Diga 'Ei, Luci' ou toque no microfone")
 
       if (result.audioBase64) {
         const binaryString = atob(result.audioBase64)
@@ -203,7 +233,7 @@ export function VoiceOrbView() {
           recognitionRef.current?.stop()
         } catch {}
       } else {
-        setStatusText("Diga 'Luci' ou toque no microfone")
+        setStatusText("Diga 'Ei, Luci' ou toque no microfone")
         // Reinicia a escuta contínua de wake word / resposta
         setTimeout(() => {
           try {
@@ -251,7 +281,7 @@ export function VoiceOrbView() {
           isUserActiveSessionRef.current = true
           setListening(true)
           setStatusText("Ouvindo você...")
-          
+
           // Remove a palavra de ativação e captura o comando que veio junto
           const commandAfterWake = currentSpeech.replace(wakeWordRegex, "").trim()
           capturedTextRef.current = commandAfterWake
@@ -328,7 +358,7 @@ export function VoiceOrbView() {
       // Se a Luci estiver falando, o clique interrompe a fala
       audioQueueRef.current?.stopAndClear()
       setSpeaking(false)
-      setStatusText("Diga 'Luci' ou toque no microfone")
+      setStatusText("Diga 'Ei, Luci' ou toque no microfone")
       return
     }
 
@@ -338,7 +368,7 @@ export function VoiceOrbView() {
       setListening(false)
       capturedTextRef.current = ""
       setTranscript("")
-      setStatusText("Cancelado. Diga 'Luci' ou toque no microfone")
+      setStatusText("Cancelado. Diga 'Ei, Luci' ou toque no microfone")
       try {
         recognitionRef.current?.stop()
       } catch {}
@@ -356,117 +386,236 @@ export function VoiceOrbView() {
     }
   }
 
-  const [appMode, setAppMode] = useState<"assistant" | "interpreter">("assistant")
+  // ─── Envio de Atalho (Cards) ───
+  const handleShortcutClick = (command: string) => {
+    setTranscript(command)
+    sendVoiceQuery(command)
+  }
+
+  // ─── Upload de Documentos ───
+  const handleFileUpload = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setStatusText(`Arquivo selecionado: ${file.name}`)
+      // TODO: Enviar ao backend quando endpoint estiver pronto
+      sendVoiceQuery(`Analise o arquivo "${file.name}" que estou enviando.`)
+    }
+    e.target.value = ""
+  }
+
+  // Determinar estado visual do Orb
+  const orbState = loading ? "processing" : speaking ? "speaking" : listening ? "listening" : "idle"
 
   return (
-    <div className="flex h-full flex-col items-center justify-between px-6 pb-6 pt-2 animate-view-in bg-background select-none">
-      {/* ─── Mode Switcher Header ─── */}
-      <div className="flex w-full items-center justify-center gap-2 pt-2">
-        <div className="flex rounded-full bg-card/80 p-1 border border-border shadow-sm">
-          <button
-            type="button"
-            onClick={() => setAppMode("assistant")}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-              appMode === "assistant"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Sparkles className="size-3.5" />
-            Assistente
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setAppMode("interpreter")}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-              appMode === "interpreter"
-                ? "bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white shadow-[0_0_15px_rgba(0,242,254,0.4)]"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Volume2 className="size-3.5" />
-            Intérprete Universal
-          </button>
-        </div>
+    <div className="flex h-full flex-col bg-[#F8FAFC] animate-view-in select-none">
+      {/* ─── Header ─── */}
+      <div className="flex items-center justify-center px-6 pt-6 pb-2">
+        <h1 className="text-lg font-extrabold tracking-tight text-zinc-900">LUCI</h1>
       </div>
 
-      {/* Orbe Central Interativo */}
-      <div className="relative flex flex-1 items-center justify-center">
-        <div className="relative flex items-center justify-center">
-          {/* Anéis pulsantes */}
-          <span
-            className={`absolute size-56 rounded-full bg-primary/20 transition-all duration-700 ${
-              listening || speaking ? "scale-125 opacity-70 animate-ping" : "scale-90 opacity-20"
-            }`}
-            aria-hidden="true"
-          />
-          <span
-            className={`absolute size-56 rounded-full bg-primary/15 transition-all duration-1000 ${
-              speaking ? "scale-150 opacity-50" : "scale-100 opacity-10"
-            }`}
-            aria-hidden="true"
-          />
+      {/* ─── Scrollable Content ─── */}
+      <div className="flex-1 flex flex-col items-center overflow-y-auto no-scrollbar px-6 pb-4">
+
+        {/* ─── Orb Central Premium ─── */}
+        <div className="relative flex items-center justify-center py-8 mt-2">
+          {/* Anel externo animado (listening / speaking) */}
+          {(orbState === "listening" || orbState === "speaking") && (
+            <>
+              <span
+                className="absolute size-52 rounded-full border-2 border-indigo-400/40 animate-orb-listening-ring"
+                aria-hidden="true"
+              />
+              <span
+                className="absolute size-52 rounded-full border border-violet-400/30 animate-orb-listening-ring"
+                style={{ animationDelay: "0.4s" }}
+                aria-hidden="true"
+              />
+            </>
+          )}
+
           {/* Orbe Core */}
-          <div className="relative size-52 animate-orb-pulse">
-            <div className="absolute inset-0 animate-orb-rotate rounded-full bg-[conic-gradient(from_0deg,var(--chart-4),var(--primary),var(--chart-2),var(--chart-3),var(--chart-4))] opacity-90 blur-[1px]" />
-            <div className="absolute inset-3 rounded-full bg-[radial-gradient(circle_at_30%_30%,var(--chart-3),var(--primary)_55%,var(--chart-4))]" />
-            <div className="absolute inset-0 rounded-full shadow-[0_0_60px_-5px_var(--primary)]" />
-            {/* Equalizador de barras */}
-            <div className="absolute inset-0 flex items-center justify-center gap-1.5">
-              {[0.5, 0.9, 0.4, 1, 0.65, 0.85, 0.45].map((h, idx) => (
-                <span
-                  key={idx}
-                  className="w-1.5 rounded-full bg-primary-foreground/90 transition-all"
-                  style={{
-                    height: `${(listening || speaking ? h : 0.25) * 48}px`,
-                    animation: (listening || speaking) ? `eq-bar ${0.7 + idx * 0.12}s ease-in-out infinite` : "none",
-                    animationDelay: `${idx * 0.09}s`,
-                    transformOrigin: "center",
-                  }}
-                  aria-hidden="true"
-                />
-              ))}
+          <div
+            className={`relative size-44 rounded-full ${
+              orbState === "idle" ? "animate-orb-idle" :
+              orbState === "listening" ? "animate-orb-idle" :
+              orbState === "processing" ? "" :
+              "animate-orb-speaking"
+            }`}
+          >
+            {/* Gradiente rotativo externo */}
+            <div
+              className={`absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,#6366F1,#8B5CF6,#06B6D4,#A78BFA,#6366F1)] opacity-90 blur-[1px] ${
+                orbState === "processing" ? "animate-orb-processing" : "animate-orb-rotate"
+              }`}
+              style={{ animationDuration: orbState === "processing" ? "0.8s" : "14s" }}
+            />
+            {/* Gradiente radial interno */}
+            <div className="absolute inset-3 rounded-full bg-[radial-gradient(circle_at_35%_35%,#C4B5FD,#6366F1_55%,#4F46E5)]" />
+            {/* Glow shadow */}
+            <div className="absolute inset-0 rounded-full shadow-[0_0_60px_-5px_rgba(99,102,241,0.5)]" />
+
+            {/* Conteúdo interno do Orb */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              {orbState === "processing" ? (
+                <Loader2 className="size-10 text-white/90 animate-spin" />
+              ) : (
+                /* Equalizer bars */
+                <div className="flex items-center justify-center gap-1.5">
+                  {[0.5, 0.9, 0.4, 1, 0.65, 0.85, 0.45].map((h, idx) => (
+                    <span
+                      key={idx}
+                      className="w-1.5 rounded-full bg-white/90 transition-all"
+                      style={{
+                        height: `${(orbState === "listening" || orbState === "speaking" ? h : 0.25) * 44}px`,
+                        animation: (orbState === "listening" || orbState === "speaking") ? `eq-bar ${0.6 + idx * 0.1}s ease-in-out infinite` : "none",
+                        animationDelay: `${idx * 0.08}s`,
+                        transformOrigin: "center",
+                      }}
+                      aria-hidden="true"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Status da Luci */}
-      <p className="text-sm font-medium text-primary text-center px-4">
-        {statusText}
-      </p>
+        {/* ─── Greeting / Status ─── */}
+        <div className="text-center mb-5">
+          {!response && !transcript && !loading && (
+            <>
+              <h2 className="text-xl font-extrabold text-zinc-900 mb-0.5">Olá, eu sou a Luci</h2>
+              <p className="text-sm text-zinc-500">Sua assistente digital inteligente</p>
+            </>
+          )}
+          <p className={`text-sm font-semibold mt-2 ${
+            orbState === "listening" ? "text-indigo-600" :
+            orbState === "processing" ? "text-amber-600" :
+            orbState === "speaking" ? "text-emerald-600" :
+            "text-zinc-500"
+          }`}>
+            {statusText}
+          </p>
+        </div>
 
-      {/* Transcrição ou Resposta */}
-      <div className="mt-4 min-h-16 max-w-xs text-balance text-center text-base font-semibold leading-relaxed text-foreground px-2 overflow-y-auto max-h-32">
-        {loading && (
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin text-primary" />
-            <span>Processando resposta...</span>
+        {/* ─── Transcrição / Resposta ─── */}
+        {(transcript || response || loading) && (
+          <div className="w-full max-w-sm text-center mb-5 px-2">
+            {transcript && !loading && (
+              <p className="text-xs text-zinc-400 italic mb-1.5">"{transcript}"</p>
+            )}
+            {response && (
+              <div className="bg-white rounded-2xl border border-zinc-200/80 shadow-sm px-4 py-3">
+                <p className="text-sm font-medium text-zinc-800 leading-relaxed whitespace-pre-wrap">{response}</p>
+              </div>
+            )}
           </div>
         )}
-        {transcript && !loading && <p className="text-xs text-muted-foreground mb-1">"{transcript}"</p>}
-        {response && <p className="text-sm font-medium text-foreground">{response}</p>}
+
+        {/* ─── Cards de Atalho (apenas no idle, sem resposta) ─── */}
+        {orbState === "idle" && !response && (
+          <div className="w-full space-y-3 mt-auto mb-2">
+            {/* Card grande */}
+            {SHORTCUT_CARDS.filter(c => c.large).map((card) => (
+              <button
+                key={card.id}
+                type="button"
+                onClick={() => handleShortcutClick(card.command)}
+                className="w-full text-left p-4 rounded-2xl bg-white border border-zinc-200/70 shadow-sm hover:shadow-md hover:border-zinc-300 transition-all active:scale-[0.98] group"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-zinc-900 mb-1">{card.title}</h3>
+                    <p className="text-xs text-zinc-500 leading-relaxed">{card.description}</p>
+                  </div>
+                  <div className="size-9 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 shrink-0 ml-3 group-hover:bg-indigo-100 transition-colors">
+                    <ArrowUpRight className="size-4.5" />
+                  </div>
+                </div>
+              </button>
+            ))}
+
+            {/* 2 Cards menores */}
+            <div className="grid grid-cols-2 gap-3">
+              {SHORTCUT_CARDS.filter(c => !c.large).map((card) => {
+                const Icon = card.icon
+                return (
+                  <button
+                    key={card.id}
+                    type="button"
+                    onClick={() => handleShortcutClick(card.command)}
+                    className="text-left p-4 rounded-2xl bg-white border border-zinc-200/70 shadow-sm hover:shadow-md hover:border-zinc-300 transition-all active:scale-[0.98] group"
+                  >
+                    <div className="size-9 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-600 mb-3 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
+                      <Icon className="size-4.5" />
+                    </div>
+                    <h3 className="text-xs font-bold text-zinc-900 mb-0.5">{card.title}</h3>
+                    <p className="text-[10px] text-zinc-500">{card.description}</p>
+                    <div className="flex justify-end mt-2">
+                      <ArrowUpRight className="size-3.5 text-zinc-400 group-hover:text-indigo-500 transition-colors" />
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* ─── Botão Central Único de Microfone (Ativar / Cancelar) ─── */}
-      <div className="mt-4 flex w-full items-center justify-center pb-2">
+      {/* ─── Botões Inferiores (3 botões) ─── */}
+      <div className="flex items-center justify-center gap-6 px-6 pb-5 pt-2 bg-[#F8FAFC]">
+        {/* + Upload Documento */}
+        <button
+          type="button"
+          onClick={handleFileUpload}
+          aria-label="Enviar documento"
+          className="flex size-12 items-center justify-center rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 active:scale-95 transition-all"
+        >
+          <Plus className="size-5 stroke-[2.5]" />
+        </button>
+
+        {/* Mic Central (Botão Grande) */}
         <button
           type="button"
           onClick={handleCentralMicClick}
           aria-label={listening ? "Cancelar microfone" : "Ativar microfone"}
-          className={`relative flex size-18 items-center justify-center rounded-full transition-all active:scale-95 shadow-xl ${
+          className={`relative flex size-16 items-center justify-center rounded-full transition-all active:scale-95 shadow-xl ${
             listening
-              ? "bg-rose-500 text-white shadow-rose-500/40 ring-4 ring-rose-500/30"
-              : "bg-primary text-primary-foreground shadow-[0_10px_40px_-8px_var(--primary)] hover:scale-105"
+              ? "bg-rose-500 text-white shadow-rose-500/30 ring-4 ring-rose-400/30"
+              : speaking
+                ? "bg-emerald-500 text-white shadow-emerald-500/30"
+                : "bg-[#4F46E5] text-white shadow-[0_8px_30px_-6px_rgba(79,70,229,0.5)] hover:scale-105"
           }`}
         >
           {listening && (
-            <span className="absolute inset-0 animate-ping rounded-full bg-rose-500/40" aria-hidden="true" />
+            <span className="absolute inset-0 animate-ping rounded-full bg-rose-500/30" aria-hidden="true" />
           )}
-          <Mic className="relative size-8" aria-hidden="true" />
+          <Mic className="relative size-7" aria-hidden="true" />
+        </button>
+
+        {/* Teclado → Chat */}
+        <button
+          type="button"
+          onClick={onSwitchToChat}
+          aria-label="Abrir chat por texto"
+          className="flex size-12 items-center justify-center rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 active:scale-95 transition-all"
+        >
+          <Keyboard className="size-5" />
         </button>
       </div>
+
+      {/* Input file oculto para upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,.pdf,.txt,.csv,.xlsx,.xls,.doc,.docx"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
     </div>
   )
 }
