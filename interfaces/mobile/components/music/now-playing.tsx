@@ -44,10 +44,88 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     formatTime,
     playTrack,
     removeFromQueue,
+    setVolume,
   } = useMusicPlayer()
 
   const { pop, goToLyrics } = useMusicNavigation()
   const [showQueue, setShowQueue] = useState(false)
+  const [isLuciListening, setIsLuciListening] = useState(false)
+  const [luciSpeechText, setLuciSpeechText] = useState("")
+  const [luciStatusText, setLuciStatusText] = useState("")
+
+  // Handler para falar com a Luci na tela de música com Volume Ducking (15%)
+  const handleTriggerLuciVoice = useCallback(() => {
+    if (isLuciListening) {
+      setIsLuciListening(false)
+      setVolume(1.0)
+      setLuciStatusText("")
+      return
+    }
+
+    setIsLuciListening(true)
+    setLuciStatusText("Ouvindo você...")
+    setLuciSpeechText("")
+
+    // Faz o fade do volume da música para 15%
+    setVolume(0.15)
+
+    // Reconhecimento de fala via Web Speech API do navegador
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition()
+      recognition.lang = "pt-BR"
+      recognition.interimResults = true
+      recognition.maxAlternatives = 1
+
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((res: any) => res[0].transcript)
+          .join("")
+        setLuciSpeechText(transcript)
+      }
+
+      recognition.onend = () => {
+        setLuciStatusText("Luci pensando...")
+        // Simula a resposta da Luci com áudio/texto mantendo a música a 15% e depois restaurando
+        setTimeout(() => {
+          setLuciStatusText("Luci: 'Com certeza! Analisando estilo e criando recomendações...'")
+          setTimeout(() => {
+            setIsLuciListening(false)
+            setVolume(1.0)
+            setLuciStatusText("")
+            setLuciSpeechText("")
+          }, 3500)
+        }, 1200)
+      }
+
+      recognition.onerror = () => {
+        setLuciStatusText("Não consegui ouvir claramente.")
+        setTimeout(() => {
+          setIsLuciListening(false)
+          setVolume(1.0)
+        }, 2000)
+      }
+
+      try {
+        recognition.start()
+      } catch {
+        // Fallback se microfone não estiver disponível imediatamente
+        setTimeout(() => {
+          setLuciStatusText("Luci: Modo de voz ativado!")
+          setTimeout(() => {
+            setIsLuciListening(false)
+            setVolume(1.0)
+          }, 2500)
+        }, 1000)
+      }
+    } else {
+      setLuciStatusText("Luci: Atenta aos seus comandos!")
+      setTimeout(() => {
+        setIsLuciListening(false)
+        setVolume(1.0)
+      }, 2500)
+    }
+  }, [isLuciListening, setVolume])
 
   const progressBarRef = useRef<HTMLDivElement>(null)
 
@@ -82,18 +160,17 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
         </button>
 
         <h2 className="text-base font-extrabold tracking-tight text-zinc-900 font-sans">
-          Now playing
+          Tocando Agora
         </h2>
 
         {/* Botão MoreVertical que abre opções / fila de reprodução */}
         <button
           type="button"
           onClick={() => setShowQueue(!showQueue)}
-          className={`size-11 flex items-center justify-center rounded-full transition-all active:scale-95 ${
-            showQueue
+          className={`size-11 flex items-center justify-center rounded-full transition-all active:scale-95 ${showQueue
               ? "bg-[#22C55E] text-white shadow-md shadow-[#22C55E]/30"
               : "bg-zinc-100/90 shadow-[inset_0_1px_1px_rgba(255,255,255,1),0_2px_4px_rgba(0,0,0,0.06)] border border-zinc-200/80 text-zinc-700 hover:text-zinc-900"
-          }`}
+            }`}
           aria-label="Opções e Fila"
           title="Fila de Reprodução"
         >
@@ -123,11 +200,10 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
                 <div
                   key={`${track.id}-${i}`}
                   onClick={() => playTrack(track, queue)}
-                  className={`flex items-center gap-3 p-2.5 rounded-2xl transition-all cursor-pointer ${
-                    isCurrent
+                  className={`flex items-center gap-3 p-2.5 rounded-2xl transition-all cursor-pointer ${isCurrent
                       ? "bg-green-50 border border-green-200 text-[#16A34A] shadow-sm"
                       : "bg-white border border-zinc-200/80 hover:border-zinc-300 shadow-sm text-zinc-900"
-                  }`}
+                    }`}
                 >
                   <TrackImage
                     src={track.thumbnail}
@@ -190,13 +266,12 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
               {/* Botão Microfone Integrado Diretamente com a Luci IA */}
               <button
                 type="button"
-                onClick={() => {
-                  if (onSwitchToLuci) {
-                    onSwitchToLuci()
-                  }
-                }}
-                className="size-11 flex items-center justify-center rounded-full bg-gradient-to-tr from-[#6366F1] to-[#818CF8] text-white shadow-md shadow-indigo-500/25 active:scale-90 hover:scale-105 transition-all"
-                title="Falar com a Luci IA por Voz"
+                onClick={handleTriggerLuciVoice}
+                className={`size-11 flex items-center justify-center rounded-full transition-all active:scale-90 ${isLuciListening
+                    ? "bg-[#6366F1] text-white shadow-lg shadow-indigo-500/50 animate-pulse ring-4 ring-indigo-300"
+                    : "bg-[#6366F1] text-white shadow-md shadow-indigo-500/25 hover:scale-105"
+                  }`}
+                title="Falar com a Luci sobre esta música (Volume 15%)"
                 aria-label="Luci Assistente de Voz"
               >
                 <Mic className="size-5 stroke-[2.4]" />
@@ -210,13 +285,24 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
                 aria-label="Curtir música"
               >
                 <Heart
-                  className={`size-5 transition-colors ${
-                    liked ? "fill-[#EC4899] text-[#EC4899]" : "text-zinc-600"
-                  }`}
+                  className={`size-5 transition-colors ${liked ? "fill-[#EC4899] text-[#EC4899]" : "text-zinc-600"
+                    }`}
                 />
               </button>
             </div>
           </div>
+
+          {/* Banner Interativo da Luci quando ativada pelo microfone */}
+          {isLuciListening && (
+            <div className="mx-1 px-4 py-2.5 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-semibold shadow-sm animate-fade-in flex items-center gap-2.5">
+              <div className="size-2 rounded-full bg-[#6366F1] animate-ping" />
+              <div className="flex-1 truncate">
+                <p className="font-extrabold text-[#4F46E5]">{luciStatusText || "Luci ouvindo você..."}</p>
+                {luciSpeechText && <p className="text-zinc-700 font-normal italic truncate">"{luciSpeechText}"</p>}
+              </div>
+              <span className="text-[10px] uppercase font-bold text-indigo-400">15% Vol</span>
+            </div>
+          )}
 
           {/* ─── 4. Barra de Progresso Oficial do Figma (Linha Cinza Fina + Thumb Redondo) ─── */}
           <div className="space-y-2 pt-2">
@@ -250,9 +336,8 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
             <button
               type="button"
               onClick={toggleRepeat}
-              className={`p-2.5 rounded-full transition-all active:scale-90 ${
-                repeat !== "off" ? "text-[#22C55E]" : "text-zinc-500 hover:text-zinc-800"
-              }`}
+              className={`p-2.5 rounded-full transition-all active:scale-90 ${repeat !== "off" ? "text-[#22C55E]" : "text-zinc-500 hover:text-zinc-800"
+                }`}
               aria-label="Repetir"
             >
               {repeat === "one" ? <Repeat1 className="size-5.5" /> : <Repeat className="size-5.5" />}
@@ -299,9 +384,8 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
             <button
               type="button"
               onClick={toggleShuffle}
-              className={`p-2.5 rounded-full transition-all active:scale-90 ${
-                shuffle ? "text-[#22C55E]" : "text-zinc-500 hover:text-zinc-800"
-              }`}
+              className={`p-2.5 rounded-full transition-all active:scale-90 ${shuffle ? "text-[#22C55E]" : "text-zinc-500 hover:text-zinc-800"
+                }`}
               aria-label="Aleatório"
             >
               <Shuffle className="size-5.5" />
