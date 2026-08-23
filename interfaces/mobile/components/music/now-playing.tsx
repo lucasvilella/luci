@@ -69,12 +69,12 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
 
   const progressBarRef = useRef<HTMLDivElement>(null)
 
-  // Lista os artistas separados por vírgula, &, feat., ft., com
+  // Lista os artistas de forma inteligente preservando duplas sertanejas (ex: Ícaro e Gilmar, Humberto & Ronaldo)
   const artistList = currentTrack?.artist
     ? currentTrack.artist
-        .split(/[,&/]|feat\.|ft\.| e /i)
+        .split(/[,/]| feat\. | ft\. | Feat\. | Ft\. | with | part\. | Part\. /)
         .map((a) => a.trim())
-        .filter((a) => a.length > 0)
+        .filter((a) => a.length > 0 && !/^(records|gravadora|som livre|sony music|universal music)/i.test(a))
     : []
 
   // Carrega playlists do usuário quando abre o pop-up (+)
@@ -625,8 +625,13 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
                       className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-zinc-200/70 hover:border-zinc-300 hover:bg-zinc-100 transition-all cursor-pointer group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-full bg-gradient-to-tr from-[#6366F1] to-[#818CF8] flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                          {artistName.charAt(0).toUpperCase()}
+                        <div className="size-11 rounded-full overflow-hidden border border-zinc-200 shadow-sm shrink-0 bg-zinc-100">
+                          <TrackImage
+                            src={currentTrack.thumbnail}
+                            trackId={`${currentTrack.id}-${artistName}`}
+                            alt={artistName}
+                            className="size-full object-cover"
+                          />
                         </div>
                         <div>
                           <p className="text-sm font-bold text-zinc-900 group-hover:text-[#4F46E5] transition-colors">
