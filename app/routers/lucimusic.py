@@ -38,6 +38,12 @@ async def get_daily_mixes(request: Request):
     mixes = await lucimusic_service.generate_daily_mixes(user_id)
     return {"mixes": mixes}
 
+@router.get("/genres")
+async def get_genres():
+    """Retorna a grade de gêneros dinâmicos com a foto do principal artista do momento."""
+    genres = await lucimusic_service.get_dynamic_genres()
+    return {"genres": genres}
+
 # ─── 2. Busca Global ───
 @router.get("/search")
 async def search_music(
@@ -135,11 +141,17 @@ async def get_radio(track_id: str, limit: int = Query(20, le=50)):
     tracks = await lucimusic_service.get_radio_tracks(track_id, limit=limit)
     return {"tracks": tracks}
 
-# ─── 6. Página do Artista ───
+# ─── 6. Página do Artista e Álbum ───
 @router.get("/artist/{artist_id}")
 async def get_artist(artist_id: str):
     """Retorna top faixas, álbuns e informações do artista."""
     data = await lucimusic_service.get_artist_page(artist_id)
+    return data
+
+@router.get("/album/{album_id}")
+async def get_album(album_id: str, title: Optional[str] = Query(None), artist: Optional[str] = Query(None)):
+    """Retorna detalhes de um álbum com todas as suas faixas, ano e artista."""
+    data = await lucimusic_service.get_album_details(album_id=album_id, title=title, artist=artist)
     return data
 
 # ─── 7. Histórico de Reprodução ───
@@ -213,3 +225,40 @@ async def add_track_to_playlist(playlist_id: str, track: TrackPayload):
     """Adiciona uma música à playlist."""
     MusicDatabase.add_track_to_playlist(playlist_id, track.model_dump())
     return {"status": "ok"}
+
+# ─── 10. Sessão de Reprodução Global (Headless Brain Playback State) ───
+class PlaybackStatePayload(BaseModel):
+    is_playing: bool
+    progress_seconds: Optional[int] = 0
+
+class PlayTrackRequest(BaseModel):
+    track: Dict[str, Any]
+    queue: Optional[List[Dict[str, Any]]] = None
+
+@router.get("/playback/session")
+async def get_playback_session(request: Request):
+    """Retorna o estado global de reprodução sincronizado do usuário."""
+    from app.services.playback_manager import playback_manager
+    user_id = _get_current_user(request)
+    return playback_manager.get_session(user_id)
+
+@router.post("/playback/play")
+async def start_playback(payload: PlayTrackRequest, request: Request):
+    """Define uma música para tocar e propaga o evento via WebSocket para todos os aparelhos."""
+    from app.services.playback_manager import playback_manager
+    from app.services.ws_manager import ws_hub
+    user_id = _get_current_user(request)
+    session = playback_manager.set_current_track(user_id, payload.track, payload.queue)
+    await ws_hub.emit_to_user(user_id, "START_PLAYBACK", session)
+    return session
+
+@router.post("/playback/state")
+async def update_playback_state(payload: PlaybackStatePayload, request: Request):
+    """Atualiza se está tocando e o progresso da música."""
+    from app.services.playback_manager import playback_manager
+    from app.services.ws_manager import ws_hub
+    user_id = _get_current_user(request)
+    session = playback_manager.update_playback_state(user_id, payload.is_playing, payload.progress_seconds or 0)
+    await ws_hub.emit_to_user(user_id, "PLAYBACK_STATE_CHANGED", session)
+    return session
+

@@ -93,6 +93,61 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const isPlayerReadyRef = useRef<boolean>(false)
   const progressIntervalRef = useRef<any>(null)
 
+  // Refs mutáveis para evitar closures desatualizadas nos eventos do player
+  const queueRef = useRef<LuciTrack[]>([])
+  const queueIndexRef = useRef<number>(-1)
+  const repeatRef = useRef<RepeatMode>("off")
+  const playTrackRef = useRef<(track: LuciTrack, contextQueue?: LuciTrack[]) => Promise<void>>(() => Promise.resolve())
+  const hasEndedHandledRef = useRef<boolean>(false)
+
+  useEffect(() => {
+    queueRef.current = queue
+  }, [queue])
+
+  useEffect(() => {
+    queueIndexRef.current = queueIndex
+  }, [queueIndex])
+
+  useEffect(() => {
+    repeatRef.current = repeat
+  }, [repeat])
+
+  // ─── Disparo garantido de fim de faixa ───
+  const triggerTrackEnded = useCallback(() => {
+    if (hasEndedHandledRef.current) return
+    hasEndedHandledRef.current = true
+
+    const currentRepeat = repeatRef.current
+    const currentQ = queueRef.current
+    const currentIdx = queueIndexRef.current
+
+    if (currentRepeat === "one") {
+      if (ytPlayerRef.current?.seekTo) {
+        ytPlayerRef.current.seekTo(0, true)
+        ytPlayerRef.current.playVideo()
+      }
+      setTimeout(() => {
+        hasEndedHandledRef.current = false
+      }, 1000)
+      return
+    }
+
+    if (currentIdx < currentQ.length - 1) {
+      const nextIdx = currentIdx + 1
+      setQueueIndex(nextIdx)
+      playTrackRef.current(currentQ[nextIdx], currentQ)
+    } else if (currentRepeat === "all" && currentQ.length > 0) {
+      setQueueIndex(0)
+      playTrackRef.current(currentQ[0], currentQ)
+    } else {
+      setIsPlaying(false)
+    }
+
+    setTimeout(() => {
+      hasEndedHandledRef.current = false
+    }, 1500)
+  }, [])
+
   // ─── 1. Inicializar YouTube IFrame Player (SimpMusic Engine Oficial) ───
   useEffect(() => {
     if (!document.getElementById("yt-iframe-api")) {
@@ -126,6 +181,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
               if (event.data === 1) {
                 setIsPlaying(true)
                 setIsLoading(false)
+                hasEndedHandledRef.current = false
                 if (ytPlayerRef.current?.getDuration) {
                   const d = ytPlayerRef.current.getDuration()
                   if (d > 0) setDuration(d)
@@ -135,7 +191,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
               } else if (event.data === 3) {
                 setIsLoading(true)
               } else if (event.data === 0) {
-                handleTrackEnded()
+                triggerTrackEnded()
               }
             },
             onError: (err: any) => {
@@ -154,21 +210,28 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       window.onYouTubeIframeAPIReady = initPlayer
     }
 
-    // Intervalo suave de atualização do progresso (a cada 250ms)
+    // Intervalo suave de atualização do progresso com verificação de fim de faixa
     progressIntervalRef.current = setInterval(() => {
       if (ytPlayerRef.current && isPlayerReadyRef.current) {
         try {
+          let cur = 0
+          let dur = 0
           if (typeof ytPlayerRef.current.getCurrentTime === "function") {
-            const cur = ytPlayerRef.current.getCurrentTime()
+            cur = ytPlayerRef.current.getCurrentTime()
             if (typeof cur === "number" && !isNaN(cur)) {
               setProgress(cur)
             }
           }
           if (typeof ytPlayerRef.current.getDuration === "function") {
-            const dur = ytPlayerRef.current.getDuration()
+            dur = ytPlayerRef.current.getDuration()
             if (typeof dur === "number" && dur > 0) {
               setDuration(dur)
             }
+          }
+
+          // Fallback seguro: se a faixa atingiu o final (dur > 5 e cur >= dur - 0.5) e o estado não disparou
+          if (dur > 5 && cur > 0 && cur >= dur - 0.8 && !hasEndedHandledRef.current) {
+            triggerTrackEnded()
           }
         } catch {}
       }
@@ -272,27 +335,14 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    playTrackRef.current = playTrack
+  }, [playTrack])
+
   // ─── 4. Próxima / Fim de Faixa ───
   const handleTrackEnded = useCallback(() => {
-    if (repeat === "one") {
-      if (ytPlayerRef.current?.seekTo) {
-        ytPlayerRef.current.seekTo(0, true)
-        ytPlayerRef.current.playVideo()
-      }
-      return
-    }
-
-    if (queueIndex < queue.length - 1) {
-      const nextIdx = queueIndex + 1
-      setQueueIndex(nextIdx)
-      playTrack(queue[nextIdx], queue)
-    } else if (repeat === "all" && queue.length > 0) {
-      setQueueIndex(0)
-      playTrack(queue[0], queue)
-    } else {
-      setIsPlaying(false)
-    }
-  }, [queueIndex, queue, repeat, playTrack])
+    triggerTrackEnded()
+  }, [triggerTrackEnded])
 
   const next = useCallback(() => {
     if (queue.length === 0) return

@@ -11,6 +11,8 @@ export type MusicScreen =
   | { type: "lyrics" }
   | { type: "search" }
   | { type: "playlists" }
+  | { type: "playlist-detail"; playlistId?: string | number; title?: string; thumbnail?: string; initialTracks?: any[] }
+  | { type: "album-detail"; albumId?: string | number; title?: string; artist?: string; thumbnail?: string; initialTracks?: any[] }
   | { type: "library" }
   | { type: "profile" }
   | { type: "settings" }
@@ -26,6 +28,8 @@ type MusicNavigationContextValue = {
   goToLyrics: () => void
   goToSearch: () => void
   goToPlaylists: () => void
+  goToPlaylistDetail: (params: { playlistId?: string | number; title?: string; thumbnail?: string; initialTracks?: any[] }) => void
+  goToAlbumDetail: (params: { albumId?: string | number; title?: string; artist?: string; thumbnail?: string; initialTracks?: any[] }) => void
   goToLibrary: () => void
   goToProfile: () => void
   goToSettings: () => void
@@ -80,6 +84,27 @@ export function MusicNavigationProvider({ children }: { children: ReactNode }) {
     [push]
   )
 
+  const goToPlaylistDetail = useCallback(
+    (params: {
+      playlistId?: string | number
+      title?: string
+      thumbnail?: string
+      initialTracks?: any[]
+    }) => push({ type: "playlist-detail", ...params }),
+    [push]
+  )
+
+  const goToAlbumDetail = useCallback(
+    (params: {
+      albumId?: string | number
+      title?: string
+      artist?: string
+      thumbnail?: string
+      initialTracks?: any[]
+    }) => push({ type: "album-detail", ...params }),
+    [push]
+  )
+
   const goToLibrary = useCallback(
     () => push({ type: "library" }),
     [push]
@@ -107,6 +132,8 @@ export function MusicNavigationProvider({ children }: { children: ReactNode }) {
       goToLyrics,
       goToSearch,
       goToPlaylists,
+      goToPlaylistDetail,
+      goToAlbumDetail,
       goToLibrary,
       goToProfile,
       goToSettings,
@@ -122,6 +149,8 @@ export function MusicNavigationProvider({ children }: { children: ReactNode }) {
       goToLyrics,
       goToSearch,
       goToPlaylists,
+      goToPlaylistDetail,
+      goToAlbumDetail,
       goToLibrary,
       goToProfile,
       goToSettings,

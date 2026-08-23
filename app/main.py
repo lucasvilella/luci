@@ -20,22 +20,26 @@ from pydantic import BaseModel
 
 from app.core.config import settings
 from app.tools.registry import tool_registry
+import app.tools.music_tools  # Registra as 3 tools de IA: play_music, search_semantic_history, manage_playlist
 from app.tools.music_recognizer import recognize_ambient_music
 from app.services.interpreter_service import UniversalInterpreterSession
 from app.routers.lucimusic import router as lucimusic_router
 from app.routers.chat import router as chat_router
+from app.routers.ws_hub import router as ws_hub_router
 from app.services.brain_service import brain_service
 
 # Caminho dos arquivos estáticos da interface mobile
 STATIC_DIR = Path(__file__).parent / "static"
 
 # ─── Middleware de Autenticação Segura (Bearer Token / X-API-Key) ───
-async def verify_api_secret(request: Request):
+async def verify_api_secret(request: Request = None):
     """Verifica se a requisição possui a chave secreta da Luci."""
-    # Permite acesso público a endpoints de health, docs, música, chat e interface estática
-    path = request.url.path
+    if request is None:
+        return True
+
+    path = getattr(request.url, "path", "")
     public_paths = ["/health", "/docs", "/openapi.json", "/favicon.ico"]
-    if path in public_paths or path == "/" or path.startswith("/_next") or path.startswith("/static") or path.startswith("/api/v1/music") or path.startswith("/api/v1/lucimusic") or path.startswith("/api/v1/chat"):
+    if path in public_paths or path == "/" or path.startswith("/_next") or path.startswith("/static") or path.startswith("/api/v1/music") or path.startswith("/api/v1/lucimusic") or path.startswith("/api/v1/chat") or path.startswith("/ws"):
         return True
 
     auth_header = request.headers.get("Authorization", "")
@@ -90,6 +94,7 @@ app.add_middleware(
 # ─── Routers ───
 app.include_router(lucimusic_router)
 app.include_router(chat_router)
+app.include_router(ws_hub_router)
 
 # ─── 1. Health Endpoint ───
 @app.get("/health")

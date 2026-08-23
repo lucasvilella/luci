@@ -11,6 +11,7 @@ import {
   Music,
   Trash2,
   FolderPlus,
+  Sparkles,
 } from "lucide-react"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useMusicPlayer } from "@/hooks/use-music-player"
@@ -62,159 +63,178 @@ export function LibraryScreen() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#0b0c10] text-white animate-view-in select-none">
-      {/* ─── Header SimpMusic Library ─── */}
-      <header className="px-5 pt-4 pb-2 bg-[#0b0c10] space-y-4">
+    <div className="flex h-full flex-col bg-[#F8FAFC] text-zinc-900 animate-view-in select-none">
+      {/* ─── Header Biblioteca (Light Mode) ─── */}
+      <header className="px-6 pt-5 pb-3 bg-white border-b border-zinc-200/60 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={pop}
-              className="p-1 text-zinc-300 hover:text-white transition-colors"
+              className="size-10 flex items-center justify-center rounded-full bg-zinc-100 text-zinc-700 active:scale-95 transition-transform"
               aria-label="Voltar"
             >
-              <ChevronLeft className="size-6" />
+              <ChevronLeft className="size-5" />
             </button>
-            <h1 className="text-2xl font-bold text-white tracking-tight">
-              Library
+            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight font-sans">
+              Central de Memória
             </h1>
           </div>
 
           <button
             type="button"
             onClick={() => setShowModal(true)}
-            className="flex size-9 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-all active:scale-95"
-            aria-label="New Playlist"
+            className="size-10 flex items-center justify-center rounded-full bg-[#22C55E] text-white shadow-md active:scale-95 transition-transform"
+            aria-label="Nova Playlist"
           >
             <Plus className="size-5" />
           </button>
         </div>
 
-        {/* ─── Chips Material You SimpMusic ─── */}
-        <div className="flex items-center gap-2">
-          {[
-            { id: "songs", label: "Songs" },
-            { id: "playlists", label: "Playlists" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-                activeTab === tab.id
-                  ? "bg-white text-black shadow-sm"
-                  : "bg-white/10 text-zinc-300 hover:bg-white/15"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Abas Superiores */}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab("songs")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === "songs"
+                ? "bg-zinc-900 text-white shadow-sm"
+                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+            }`}
+          >
+            Músicas Curtidas ({likedSongs.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("playlists")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === "playlists"
+                ? "bg-zinc-900 text-white shadow-sm"
+                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+            }`}
+          >
+            Playlists ({playlists.length})
+          </button>
         </div>
       </header>
 
-      {/* ─── Conteúdo ─── */}
-      <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4 pb-28 no-scrollbar">
+      {/* ─── Conteúdo da Biblioteca ─── */}
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 pb-28 no-scrollbar">
         {activeTab === "songs" ? (
-          <>
-            {/* Card de Músicas Curtidas Especial (SimpMusic Favorite Gradient Card) */}
-            <div
-              onClick={() => likedSongs.length > 0 && playTrack(likedSongs[0], likedSongs)}
-              className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-[#4b2f8a] via-[#311f63] to-[#1e1342] border border-white/10 shadow-xl cursor-pointer active:scale-98 transition-transform group"
-            >
-              <div className="flex justify-between items-start">
-                <div className="size-12 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center">
-                  <Heart className="size-6 fill-white text-white" />
-                </div>
-                <div className="size-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                  <Play className="size-5 fill-black ml-0.5" />
-                </div>
-              </div>
-              <div className="mt-6">
-                <h3 className="text-xl font-bold text-white tracking-tight">Favorite Songs</h3>
-                <p className="text-xs text-white/70 mt-1 font-medium">
-                  {likedSongs.length} songs
-                </p>
-              </div>
+          /* Lista de Músicas Curtidas */
+          likedSongs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-zinc-400 gap-3">
+              <Heart className="size-12 stroke-[1.5]" />
+              <p className="text-sm font-medium">Nenhuma música curtida ainda.</p>
+              <p className="text-xs text-zinc-400 text-center max-w-xs">
+                Toque no coração de qualquer faixa para salvar na sua biblioteca.
+              </p>
             </div>
-
-            {/* Lista de Faixas */}
-            <div className="space-y-1.5 pt-2">
-              {likedSongs.map((track) => (
-                <div
-                  key={track.id}
-                  onClick={() => playTrack(track, likedSongs)}
-                  className="flex items-center gap-3.5 p-1.5 rounded-xl hover:bg-white/[0.06] transition-all cursor-pointer group"
-                >
-                  <TrackImage
-                    src={track.thumbnail}
-                    trackId={track.id}
-                    alt={track.title}
-                    className="size-12 rounded-xl object-cover bg-zinc-800 shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-bold truncate ${
-                      currentTrack?.id === track.id ? "text-indigo-400" : "text-white"
-                    }`}>
-                      {track.title}
-                    </p>
-                    <p className="text-xs text-zinc-400 truncate mt-0.5">{track.artist}</p>
+          ) : (
+            <div className="space-y-2">
+              {likedSongs.map((track) => {
+                const isThisPlaying = currentTrack?.id === track.id && isPlaying
+                return (
+                  <div
+                    key={track.id}
+                    onClick={() => playTrack(track, likedSongs)}
+                    className="flex items-center gap-3.5 p-2 bg-white rounded-2xl border border-zinc-200/60 shadow-sm hover:border-zinc-300 transition-all cursor-pointer group"
+                  >
+                    <TrackImage
+                      src={track.thumbnail}
+                      trackId={track.id}
+                      alt={track.title}
+                      className="size-13 rounded-xl object-cover bg-zinc-100 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0 pr-2">
+                      <p className={`text-sm font-bold truncate ${isThisPlaying ? "text-[#22C55E]" : "text-zinc-900"}`}>
+                        {track.title}
+                      </p>
+                      <p className="text-xs text-zinc-500 truncate mt-0.5">
+                        {track.artist}
+                      </p>
+                    </div>
+                    <div className="size-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-700 group-hover:bg-[#22C55E] group-hover:text-white transition-colors">
+                      <Play className="size-3.5 fill-current ml-0.5" />
+                    </div>
                   </div>
-                  <span className="text-xs text-zinc-400 font-mono pr-2">{track.durationFormatted}</span>
+                )
+              })}
+            </div>
+          )
+        ) : (
+          /* Lista de Playlists */
+          playlists.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-zinc-400 gap-3">
+              <FolderPlus className="size-12 stroke-[1.5]" />
+              <p className="text-sm font-medium">Nenhuma playlist criada.</p>
+              <button
+                type="button"
+                onClick={() => setShowModal(true)}
+                className="px-4 py-2 rounded-xl bg-[#22C55E] text-white text-xs font-bold shadow-md"
+              >
+                Criar Primeira Playlist
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {playlists.map((pl) => (
+                <div
+                  key={pl.id}
+                  className="p-4 rounded-2xl bg-white border border-zinc-200/60 shadow-sm flex flex-col justify-between h-36 cursor-pointer hover:border-zinc-300 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="p-2 rounded-xl bg-zinc-100 text-zinc-700">
+                      <ListMusic className="size-5" />
+                    </span>
+                    {pl.is_ai_generated ? (
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-[#22C55E] bg-[#22C55E]/10 px-2 py-0.5 rounded-full">
+                        <Sparkles className="size-3" /> IA
+                      </span>
+                    ) : null}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-zinc-900 truncate">
+                      {pl.title}
+                    </p>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      {pl.track_count || 0} faixas
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
-          </>
-        ) : (
-          /* Playlists */
-          <div className="space-y-2">
-            {playlists.map((pl) => (
-              <div
-                key={pl.id}
-                className="flex items-center gap-3.5 p-2 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] transition-all cursor-pointer"
-              >
-                <div className="size-13 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0 overflow-hidden">
-                  {pl.thumbnail ? (
-                    <TrackImage src={pl.thumbnail} alt={pl.title} className="size-full object-cover" />
-                  ) : (
-                    <ListMusic className="size-6 text-zinc-400" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white truncate">{pl.title}</p>
-                  <p className="text-xs text-zinc-400 mt-0.5">{pl.tracks?.length || 0} songs</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          )
         )}
       </div>
 
       {/* Modal Criar Playlist */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-5 animate-view-in">
-          <div className="w-full max-w-xs rounded-3xl bg-[#181820] border border-white/10 p-5 space-y-4 shadow-2xl">
-            <h3 className="text-base font-bold text-white">New Playlist</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-5 animate-fade-in">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-zinc-200 space-y-4">
+            <h3 className="text-lg font-bold text-zinc-900">Nova Playlist</h3>
             <input
               type="text"
+              placeholder="Nome da Playlist (ex: Foco, Churrasco)"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="Playlist title"
-              className="w-full h-11 px-4 rounded-xl bg-white/10 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-white"
+              className="w-full px-4 py-3 bg-zinc-100 rounded-2xl text-sm outline-none text-zinc-900 border border-zinc-200 focus:border-[#22C55E]"
               autoFocus
             />
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-xs font-bold text-zinc-400 hover:text-white"
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-600 bg-zinc-100"
               >
-                Cancel
+                Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleCreatePlaylist}
-                className="px-5 py-2 rounded-full bg-white text-black text-xs font-bold shadow-md active:scale-95"
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#22C55E] shadow-md active:scale-95"
               >
-                Create
+                Criar
               </button>
             </div>
           </div>

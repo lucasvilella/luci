@@ -26,11 +26,42 @@ export interface DailyMix {
   tracks: LuciTrack[]
 }
 
+export interface CreatedByLuciPlaylist {
+  id: string
+  title: string
+  subtitle: string
+  gradient: string
+  thumbnail?: string
+  tracks_count?: number
+  is_ai_generated?: boolean | number
+}
+
+export interface AlbumItem {
+  id: string
+  title: string
+  artist: string
+  year?: string
+  thumbnail: string
+}
+
+export interface SimilarityPlaylist {
+  id: string
+  title: string
+  subtitle: string
+  gradient: string
+  thumbnail?: string
+  tracks: LuciTrack[]
+}
+
 export interface MusicHomeFeed {
+  created_by_luci?: CreatedByLuciPlaylist[]
   daily_mixes: DailyMix[]
   recently_played: LuciTrack[]
   liked_preview: LuciTrack[]
   trending_brasil: LuciTrack[]
+  new_releases?: LuciTrack[]
+  based_on_listened?: SimilarityPlaylist[]
+  favorite_albums?: AlbumItem[]
 }
 
 export interface LyricsLine {
@@ -167,6 +198,17 @@ export async function fetchPlaylists(): Promise<UserPlaylist[]> {
   return data.playlists || []
 }
 
+export async function fetchDynamicGenres(): Promise<Array<{ name: string; color: string; artist_name: string; image: string }>> {
+  try {
+    const res = await luciApiFetch("/api/v1/music/genres")
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.genres || []
+  } catch {
+    return []
+  }
+}
+
 export async function createPlaylist(title: string, description = ""): Promise<UserPlaylist> {
   const res = await luciApiFetch("/api/v1/music/playlists", {
     method: "POST",
@@ -176,9 +218,40 @@ export async function createPlaylist(title: string, description = ""): Promise<U
   return res.json()
 }
 
-export async function addTrackToPlaylist(playlistId: string, track: LuciTrack): Promise<void> {
-  await luciApiFetch(`/api/v1/music/playlists/${playlistId}/tracks`, {
-    method: "POST",
-    body: JSON.stringify(track)
-  })
+export interface AlbumDetails {
+  id: string
+  title: string
+  artist: string
+  artist_thumbnail?: string
+  year?: string
+  thumbnail: string
+  tracks: LuciTrack[]
+  more_from_artist?: Array<{
+    id: string
+    title: string
+    artist: string
+    year: string
+    thumbnail: string
+  }>
+  you_might_like?: Array<{
+    id: string
+    title: string
+    artist: string
+    year: string
+    thumbnail: string
+  }>
 }
+
+export async function fetchAlbumDetails(
+  albumId: string,
+  title?: string,
+  artist?: string
+): Promise<AlbumDetails> {
+  const params = new URLSearchParams()
+  if (title) params.append("title", title)
+  if (artist) params.append("artist", artist)
+  const res = await luciApiFetch(`/api/v1/music/album/${encodeURIComponent(albumId)}?${params.toString()}`)
+  if (!res.ok) throw new Error("Falha ao buscar detalhes do álbum")
+  return res.json()
+}
+

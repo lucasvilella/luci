@@ -4,7 +4,7 @@ import { ConversationProvider } from '@/hooks/use-conversation'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Luci — Central Inteligente',
+  title: 'LUCI',
   description: 'Painel mobile com assistente de voz, chat, player de música e casa inteligente.',
 }
 

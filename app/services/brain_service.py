@@ -51,6 +51,30 @@ class BrainService:
             if holiday_data and holiday_data.get("sucesso"):
                 tool_result_snippet += f"\n[Próximos Feriados]: {json.dumps(holiday_data.get('feriados', [])[:3], ensure_ascii=False)}\n"
 
+        elif any(w in lower_msg for w in ["toca", "toque", "coloque a música", "tocar a musica", "ouvir"]):
+            # Comando de áudio proativo via Cérebro Centralizado
+            from app.services.lucimusic_service import lucimusic_service
+            from app.services.playback_manager import playback_manager
+            from app.services.ws_manager import ws_hub
+
+            # Extrai busca simples
+            music_query = current_message
+            for prefix in ["toca uma musica de", "toca uma música de", "toca a musica", "toca a música", "toca", "toque", "ouvir"]:
+                if prefix in music_query.lower():
+                    idx = music_query.lower().find(prefix) + len(prefix)
+                    music_query = music_query[idx:].strip()
+                    break
+
+            if music_query:
+                search_res = await lucimusic_service.search(music_query)
+                songs = search_res.get("songs", [])
+                if songs:
+                    selected_track = songs[0]
+                    updated_session = playback_manager.set_current_track(user_id, selected_track, songs)
+                    # Emite evento push proativo para todos os clientes conectados (Web, PWA, APK)
+                    asyncio.create_task(ws_hub.emit_to_user(user_id, "START_PLAYBACK", updated_session))
+                    tool_result_snippet += f"\n[Ação Executada]: Iniciando reprodução da faixa '{selected_track['title']}' de '{selected_track['artist']}' nos dispositivos conectados.\n"
+
         # Monta prompt estruturado
         history_lines = []
         for turn in context[:-1]:

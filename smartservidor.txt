@@ -1,0 +1,9 @@
+TERMUX
+
+powershell admin
+ssh u0_a226@192.168.15.90 -p 8022
+luci-start
+
+whoami: u0_a226
+senha: Dexter_161121@
+IP: 192.168.15.90

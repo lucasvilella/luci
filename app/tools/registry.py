@@ -128,6 +128,18 @@ class ToolRegistry:
     def __init__(self):
         self._tools = {tool["name"]: tool for tool in TOOL_DEFINITIONS}
 
+    def register(self, name: str, description: str, parameters: Dict[str, Any]):
+        """Decorator para registrar dinamicamente uma nova ferramenta no registry."""
+        def decorator(handler: Callable):
+            self._tools[name] = {
+                "name": name,
+                "description": description,
+                "parameters": parameters,
+                "handler": handler
+            }
+            return handler
+        return decorator
+
     def get_declarations_for_llm(self) -> List[Dict[str, Any]]:
         """Exporta a lista de esquemas compatível com Function Calling."""
         return [
@@ -147,7 +159,7 @@ class ToolRegistry:
         
         handler = tool["handler"]
         try:
-            return await handler(**arguments)
+            return await handler(arguments) if "arguments" in handler.__code__.co_varnames else await handler(**arguments)
         except Exception as e:
             return {"sucesso": False, "mensagem": f"Erro na execução da ferramenta: {str(e)}"}
 
