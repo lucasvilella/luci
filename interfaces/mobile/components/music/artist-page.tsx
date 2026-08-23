@@ -8,7 +8,7 @@ import { useMusicPlayer } from "@/hooks/use-music-player"
 import { TrackImage } from "./track-image"
 
 export function ArtistPage({ artistId }: { artistId: string | number }) {
-  const { pop } = useMusicNavigation()
+  const { pop, goToAlbumDetail } = useMusicNavigation()
   const { playTrack, currentTrack, isPlaying } = useMusicPlayer()
   const [artist, setArtist] = useState<ArtistDetails | null>(null)
   const [loading, setLoading] = useState(true)
@@ -16,7 +16,9 @@ export function ArtistPage({ artistId }: { artistId: string | number }) {
   useEffect(() => {
     setLoading(true)
     fetchArtist(String(artistId))
-      .then((data) => setArtist(data))
+      .then((data) => {
+        if (data) setArtist(data)
+      })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [artistId])
@@ -29,7 +31,7 @@ export function ArtistPage({ artistId }: { artistId: string | number }) {
           type="button"
           onClick={pop}
           aria-label="Voltar"
-          className="flex size-10 items-center justify-center rounded-full bg-white/80 backdrop-blur-md text-zinc-700 shadow-md border border-zinc-200/60 active:scale-95 transition-transform"
+          className="flex size-10 items-center justify-center rounded-full bg-white/90 backdrop-blur-md text-zinc-700 shadow-md border border-zinc-200/60 active:scale-95 transition-transform"
         >
           <ChevronLeft className="size-5" />
         </button>
@@ -38,7 +40,7 @@ export function ArtistPage({ artistId }: { artistId: string | number }) {
       <div className="flex-1 overflow-y-auto pb-28 no-scrollbar">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32 gap-3 text-zinc-400">
-            <Loader2 className="size-8 animate-spin text-[#22C55E]" />
+            <Loader2 className="size-8 animate-spin text-[#6366F1]" />
             <p className="text-xs">Carregando perfil do artista...</p>
           </div>
         ) : artist ? (
@@ -50,10 +52,10 @@ export function ArtistPage({ artistId }: { artistId: string | number }) {
                 alt={artist.name}
                 className="size-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#F8FAFC] via-[#F8FAFC]/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#F8FAFC] via-[#F8FAFC]/40 to-transparent" />
               <div className="absolute bottom-4 left-6 right-6 flex justify-between items-end">
                 <div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-[#22C55E]">
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-[#6366F1]">
                     Artista Verificado
                   </span>
                   <h1 className="text-2xl font-bold text-zinc-900 leading-tight mt-0.5 font-sans">
@@ -63,7 +65,7 @@ export function ArtistPage({ artistId }: { artistId: string | number }) {
                 {artist.top_tracks.length > 0 && (
                   <button
                     onClick={() => playTrack(artist.top_tracks[0], artist.top_tracks)}
-                    className="size-13 rounded-full bg-[#22C55E] text-white flex items-center justify-center shadow-xl shadow-[#22C55E]/30 active:scale-95 transition-transform"
+                    className="size-13 rounded-full bg-gradient-to-tr from-[#4F46E5] to-[#6366F1] text-white flex items-center justify-center shadow-xl shadow-[#6366F1]/30 active:scale-95 transition-transform"
                     aria-label="Tocar Artista"
                   >
                     <Play className="size-6 fill-white ml-0.5" />
@@ -77,7 +79,7 @@ export function ArtistPage({ artistId }: { artistId: string | number }) {
               {artist.top_tracks.length > 0 && (
                 <section className="space-y-3">
                   <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
-                    <Music className="size-3.5 text-[#22C55E]" /> Populares
+                    <Music className="size-3.5 text-[#6366F1]" /> Populares
                   </h2>
 
                   <div className="space-y-2">
@@ -87,7 +89,7 @@ export function ArtistPage({ artistId }: { artistId: string | number }) {
                         <div
                           key={track.id}
                           onClick={() => playTrack(track, artist.top_tracks)}
-                          className="flex items-center gap-3.5 p-2 bg-white rounded-2xl border border-zinc-200/60 shadow-sm hover:border-zinc-300 transition-all cursor-pointer group"
+                          className="flex items-center gap-3.5 p-2 bg-white rounded-2xl border border-zinc-200/60 shadow-sm hover:border-zinc-300 transition-all cursor-pointer group active:scale-[0.99]"
                         >
                           <span className="w-4 text-center text-xs font-bold text-zinc-400">
                             {i + 1}
@@ -99,7 +101,7 @@ export function ArtistPage({ artistId }: { artistId: string | number }) {
                             className="size-12 rounded-xl object-cover bg-zinc-100 shrink-0"
                           />
                           <div className="flex-1 min-w-0 pr-2">
-                            <p className={`text-sm font-bold truncate ${isThisPlaying ? "text-[#22C55E]" : "text-zinc-900"}`}>
+                            <p className={`text-sm font-bold truncate ${isThisPlaying ? "text-[#6366F1]" : "text-zinc-900"}`}>
                               {track.title}
                             </p>
                             <p className="text-xs text-zinc-500 truncate mt-0.5">
@@ -107,7 +109,7 @@ export function ArtistPage({ artistId }: { artistId: string | number }) {
                             </p>
                           </div>
                           <span className="text-xs text-zinc-400 pr-2">
-                            {track.durationFormatted || "0:00"}
+                            {track.durationFormatted || "3:30"}
                           </span>
                         </div>
                       )
@@ -120,19 +122,27 @@ export function ArtistPage({ artistId }: { artistId: string | number }) {
               {artist.albums && artist.albums.length > 0 && (
                 <section className="space-y-3">
                   <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
-                    <Disc className="size-3.5 text-[#22C55E]" /> Discografia & Álbuns
+                    <Disc className="size-3.5 text-[#6366F1]" /> Discografia & Álbuns
                   </h2>
 
                   <div className="grid grid-cols-2 gap-3">
                     {artist.albums.map((album) => (
                       <div
                         key={album.id}
-                        className="p-3 rounded-2xl bg-white border border-zinc-200/60 shadow-sm flex items-center gap-3 cursor-pointer hover:border-zinc-300 transition-all"
+                        onClick={() =>
+                          goToAlbumDetail({
+                            albumId: album.id,
+                            title: album.title,
+                            artist: artist.name,
+                            thumbnail: album.thumbnail,
+                          })
+                        }
+                        className="p-3 rounded-2xl bg-white border border-zinc-200/60 shadow-sm flex items-center gap-3 cursor-pointer hover:border-zinc-300 transition-all active:scale-[0.98] group"
                       >
                         <TrackImage
                           src={album.thumbnail}
                           alt={album.title}
-                          className="size-12 rounded-xl object-cover bg-zinc-100 shrink-0"
+                          className="size-12 rounded-xl object-cover bg-zinc-100 shrink-0 group-hover:scale-105 transition-transform"
                         />
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-bold text-zinc-900 truncate">

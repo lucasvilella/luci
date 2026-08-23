@@ -294,48 +294,64 @@ class LuciMusicService:
 
     # ─── 5. Detalhes do Artista ───
     async def get_artist_page(self, artist_id: str) -> Dict[str, Any]:
-        """Obtém top músicas e álbuns do artista com fallback inteligente."""
+        """Obtém top músicas e álbuns do artista com fallback inteligente e cache rápido."""
         if not self.ytm:
             return {"name": "", "top_tracks": [], "albums": []}
 
         loop = asyncio.get_running_loop()
 
         def _fetch_artist():
+            target_id = artist_id
             artist_data = {}
+
+            # 1. Se o ID não parece um Channel ID (UC...), busca pelo nome para obter o browseId oficial
+            if not target_id.startswith("UC") and not target_id.startswith("MPLA"):
+                try:
+                    search_res = self.ytm.search(target_id, filter="artists", limit=1)
+                    if search_res and search_res[0].get("browseId"):
+                        target_id = search_res[0]["browseId"]
+                except Exception as ex:
+                    print(f"[LuciMusic] Busca de browseId por nome falhou ({target_id}): {ex}")
+
+            # 2. Tenta obter o perfil oficial do artista pelo browseId
             try:
-                artist_data = self.ytm.get_artist(artist_id)
+                artist_data = self.ytm.get_artist(target_id)
             except Exception as e:
-                print(f"[LuciMusic] get_artist direto falhou para {artist_id}: {e}")
+                print(f"[LuciMusic] get_artist direto falhou para {target_id}: {e}")
 
             top_tracks = [self._format_track(t) for t in (artist_data.get("songs", {}).get("results") or [])]
             albums = [
                 {
-                    "id": a.get("browseId"),
+                    "id": a.get("browseId") or a.get("audioPlaylistId"),
                     "title": a.get("title"),
-                    "year": a.get("year"),
+                    "year": a.get("year") or "Álbum",
                     "thumbnail": (a.get("thumbnails") or [{}])[-1].get("url", "")
                 }
                 for a in (artist_data.get("albums", {}).get("results") or [])
             ]
 
-            # Se não conseguiu faixas pelo browseId direto, faz busca oficial pelo nome ou ID
+            # Se ainda faltam faixas ou álbuns, faz buscas complementares
             if not top_tracks:
                 try:
-                    search_res = self.ytm.search(artist_id, filter="artists", limit=1)
-                    if search_res:
-                        real_id = search_res[0].get("browseId")
-                        real_name = search_res[0].get("artist")
-                        if real_id and real_id != artist_id:
-                            real_artist_data = self.ytm.get_artist(real_id)
-                            top_tracks = [self._format_track(t) for t in (real_artist_data.get("songs", {}).get("results") or [])]
-                            if top_tracks:
-                                artist_data = real_artist_data
-
-                    if not top_tracks:
-                        song_res = self.ytm.search(artist_id, filter="songs", limit=15)
-                        top_tracks = [self._format_track(t) for t in song_res if t.get("videoId")]
+                    song_res = self.ytm.search(artist_id, filter="songs", limit=15)
+                    top_tracks = [self._format_track(t) for t in song_res if t.get("videoId")]
                 except Exception as ex:
-                    print(f"[LuciMusic] Fallback de busca de artista falhou: {ex}")
+                    print(f"[LuciMusic] Fallback de músicas falhou: {ex}")
+
+            if not albums:
+                try:
+                    alb_res = self.ytm.search(artist_id, filter="albums", limit=10)
+                    albums = [
+                        {
+                            "id": a.get("browseId") or a.get("audioPlaylistId"),
+                            "title": a.get("title"),
+                            "year": a.get("year") or "Álbum",
+                            "thumbnail": (a.get("thumbnails") or [{}])[-1].get("url", "")
+                        }
+                        for a in alb_res if a.get("browseId")
+                    ]
+                except Exception as ex:
+                    print(f"[LuciMusic] Fallback de álbuns falhou: {ex}")
 
             name = artist_data.get("name") or artist_id
             thumb = (artist_data.get("thumbnails") or [{}])[-1].get("url", "")
@@ -343,7 +359,7 @@ class LuciMusicService:
                 thumb = top_tracks[0].get("thumbnail", "")
 
             return {
-                "id": artist_id,
+                "id": target_id,
                 "name": name,
                 "description": artist_data.get("description", ""),
                 "thumbnail": thumb,
