@@ -185,3 +185,24 @@
 .animate-view-in {
   animation: view-in 0.4s ease-out both;
 }
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  15% {
+    transform: translateX(0%);
+  }
+  85% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-text {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: marquee-scroll 12s linear infinite alternate;
+}

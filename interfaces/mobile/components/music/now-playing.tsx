@@ -48,7 +48,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     setVolume,
   } = useMusicPlayer()
 
-  const { pop, goToLyrics } = useMusicNavigation()
+  const { pop, goToLyrics, goToArtist, goToAlbumDetail } = useMusicNavigation()
 
   // 1. Estado da gaveta de Fila de Reprodução (Sequência de músicas tocando a partir da atual)
   const [showQueueModal, setShowQueueModal] = useState(false)
@@ -59,12 +59,23 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
   const [loadingPlaylists, setLoadingPlaylists] = useState(false)
   const [addedPlaylistId, setAddedPlaylistId] = useState<string | null>(null)
 
-  // 3. Estado da Luci IA com Volume Ducking (15%)
+  // 3. Estado do pop-up inferior de Artistas e Álbum da Música
+  const [showArtistAlbumModal, setShowArtistAlbumModal] = useState(false)
+
+  // 4. Estado da Luci IA com Volume Ducking (15%)
   const [isLuciListening, setIsLuciListening] = useState(false)
   const [luciSpeechText, setLuciSpeechText] = useState("")
   const [luciStatusText, setLuciStatusText] = useState("")
 
   const progressBarRef = useRef<HTMLDivElement>(null)
+
+  // Lista os artistas separados por vírgula, &, feat., ft., com
+  const artistList = currentTrack?.artist
+    ? currentTrack.artist
+        .split(/[,&/]|feat\.|ft\.| e /i)
+        .map((a) => a.trim())
+        .filter((a) => a.length > 0)
+    : []
 
   // Carrega playlists do usuário quando abre o pop-up (+)
   const handleOpenAddToPlaylist = async () => {
@@ -200,7 +211,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
         </button>
 
         <h2 className="text-base font-extrabold tracking-tight text-zinc-900 font-sans">
-          Now playing
+          Tocando agora
         </h2>
 
         {/* Espaçador invisível para manter o título perfeitamente centralizado */}
@@ -208,9 +219,9 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
       </header>
 
       {/* ─── 2. Corpo Principal do Player (Figma Style) ─── */}
-      <div className="flex-1 flex flex-col justify-between px-6 pt-2 pb-5 max-w-sm mx-auto w-full relative z-10">
+      <div className="flex-1 flex flex-col justify-between px-6 pt-1 pb-4 max-w-sm mx-auto w-full relative z-10">
         {/* Capa Principal com Bordas Arredondadas Figma (32px) */}
-        <div className="relative aspect-square w-full rounded-[32px] overflow-hidden shadow-2xl shadow-zinc-900/10 border border-zinc-200/80 bg-zinc-100 mt-1">
+        <div className="relative aspect-square w-full rounded-[32px] overflow-hidden shadow-2xl shadow-zinc-900/10 border border-zinc-200/80 bg-zinc-100 mt-0.5">
           <TrackImage
             src={currentTrack.thumbnail}
             trackId={currentTrack.id}
@@ -219,8 +230,8 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
           />
         </div>
 
-        {/* ─── Informações e Ações em Duas Linhas ─── */}
-        <div className="pt-3 pb-1 space-y-3">
+        {/* ─── Informações e Ações em Duas Linhas com Espaçamento Perfeito ─── */}
+        <div className="pt-4 pb-0.5 space-y-3.5">
           {/* Linha 1: 4 Botões de Ação Padronizados Centralizados [Coração, (+), Playlist, Luci] */}
           <div className="flex items-center justify-center gap-3">
             {/* 1. Botão Coração (Curtir) */}
@@ -280,14 +291,47 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
             </button>
           </div>
 
-          {/* Linha 2: Título da Música e Artista Alinhados à Esquerda */}
-          <div className="text-left px-1">
-            <h1 className="text-2xl font-black tracking-tight text-zinc-900 leading-tight font-sans truncate">
-              {currentTrack.title}
-            </h1>
-            <p className="text-base font-medium text-zinc-500 truncate mt-0.5">
-              {currentTrack.artist}
-            </p>
+          {/* Linha 2: Título da Música e Artista com Rolagem Horizontal Suave (Marquee) se for longo */}
+          <div className="text-left px-1 overflow-hidden">
+            {/* Título com Marquee se for longo */}
+            <div className="overflow-hidden whitespace-nowrap">
+              {currentTrack.title.length > 25 ? (
+                <div className="animate-marquee-text gap-8">
+                  <h1 className="text-2xl font-black tracking-tight text-zinc-900 leading-tight font-sans shrink-0">
+                    {currentTrack.title}
+                  </h1>
+                  <h1 className="text-2xl font-black tracking-tight text-zinc-900 leading-tight font-sans shrink-0">
+                    {currentTrack.title}
+                  </h1>
+                </div>
+              ) : (
+                <h1 className="text-2xl font-black tracking-tight text-zinc-900 leading-tight font-sans truncate">
+                  {currentTrack.title}
+                </h1>
+              )}
+            </div>
+
+            {/* Artista Clicável com Marquee que abre Pop-up de Artistas e Álbum */}
+            <div
+              onClick={() => setShowArtistAlbumModal(true)}
+              className="overflow-hidden whitespace-nowrap mt-1 cursor-pointer group active:opacity-75 transition-opacity"
+              title="Ver Artistas e Álbum"
+            >
+              {currentTrack.artist.length > 30 ? (
+                <div className="animate-marquee-text gap-8">
+                  <p className="text-base font-medium text-zinc-500 group-hover:text-zinc-900 group-hover:underline transition-colors shrink-0">
+                    {currentTrack.artist}
+                  </p>
+                  <p className="text-base font-medium text-zinc-500 group-hover:text-zinc-900 group-hover:underline transition-colors shrink-0">
+                    {currentTrack.artist}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-base font-medium text-zinc-500 group-hover:text-zinc-900 group-hover:underline transition-colors truncate">
+                  {currentTrack.artist}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -536,6 +580,101 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
                   </div>
                 )
               })}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ─── MODAL 3: Pop-up Inferior de Artistas e Álbum da Música ─── */}
+      {showArtistAlbumModal && (
+        <div
+          onClick={() => setShowArtistAlbumModal(false)}
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex flex-col justify-end animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-t-[32px] px-6 pt-5 pb-8 max-h-[75vh] flex flex-col space-y-4 shadow-2xl animate-slide-up"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+              <div>
+                <h3 className="text-base font-extrabold text-zinc-900">Créditos e Álbum</h3>
+                <p className="text-xs text-zinc-500 truncate max-w-[260px]">{currentTrack.title}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowArtistAlbumModal(false)}
+                className="size-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 hover:text-zinc-900"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-4 no-scrollbar py-1">
+              {/* Seção 1: Artistas Participantes */}
+              <div className="space-y-2">
+                <p className="text-xs font-black uppercase tracking-wider text-zinc-400">
+                  Artistas ({artistList.length})
+                </p>
+                <div className="space-y-1.5">
+                  {artistList.map((artistName, idx) => (
+                    <div
+                      key={`${artistName}-${idx}`}
+                      onClick={() => {
+                        setShowArtistAlbumModal(false)
+                        goToArtist(artistName)
+                      }}
+                      className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-zinc-200/70 hover:border-zinc-300 hover:bg-zinc-100 transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="size-10 rounded-full bg-gradient-to-tr from-[#6366F1] to-[#818CF8] flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                          {artistName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-zinc-900 group-hover:text-[#4F46E5] transition-colors">
+                            {artistName}
+                          </p>
+                          <p className="text-[11px] text-zinc-500">Ver perfil completo</p>
+                        </div>
+                      </div>
+                      <ChevronLeft className="size-4 text-zinc-400 rotate-180 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Seção 2: Álbum da Música */}
+              <div className="space-y-2 pt-1 border-t border-zinc-100">
+                <p className="text-xs font-black uppercase tracking-wider text-zinc-400">
+                  Álbum
+                </p>
+                <div
+                  onClick={() => {
+                    setShowArtistAlbumModal(false)
+                    goToAlbumDetail({
+                      albumId: currentTrack.album || currentTrack.title,
+                      title: currentTrack.album || currentTrack.title,
+                      artist: currentTrack.artist,
+                      thumbnail: currentTrack.thumbnail,
+                    })
+                  }}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-zinc-200/70 hover:border-zinc-300 hover:bg-zinc-100 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <TrackImage
+                      src={currentTrack.thumbnail}
+                      trackId={currentTrack.id}
+                      alt={currentTrack.title}
+                      className="size-11 rounded-xl object-cover shadow-sm shrink-0"
+                    />
+                    <div>
+                      <p className="text-sm font-bold text-zinc-900 group-hover:text-[#4F46E5] transition-colors">
+                        {currentTrack.album || currentTrack.title}
+                      </p>
+                      <p className="text-[11px] text-zinc-500">{currentTrack.artist}</p>
+                    </div>
+                  </div>
+                  <ChevronLeft className="size-4 text-zinc-400 rotate-180 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
