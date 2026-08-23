@@ -219,30 +219,20 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
           />
         </div>
 
-        {/* Informações da Música e os 4 Botões de Ação */}
-        <div className="flex items-center justify-between pt-4 gap-2">
-          {/* Título e Artista */}
-          <div className="flex-1 min-w-0 pr-1">
-            <h1 className="text-2xl font-black tracking-tight text-zinc-900 leading-tight font-sans truncate">
-              {currentTrack.title}
-            </h1>
-            <p className="text-base font-medium text-zinc-500 truncate mt-0.5">
-              {currentTrack.artist}
-            </p>
-          </div>
-
-          {/* 4 Botões de Ação Padronizados: [Coração, (+), Playlist, Luci] */}
-          <div className="flex items-center gap-1.5 shrink-0">
+        {/* ─── Informações e Ações em Duas Linhas ─── */}
+        <div className="pt-3 pb-1 space-y-3">
+          {/* Linha 1: 4 Botões de Ação Padronizados Centralizados [Coração, (+), Playlist, Luci] */}
+          <div className="flex items-center justify-center gap-3">
             {/* 1. Botão Coração (Curtir) */}
             <button
               type="button"
               onClick={() => toggleLike(currentTrack)}
-              className="size-10 flex items-center justify-center rounded-full bg-zinc-100/90 shadow-[inset_0_1px_1px_rgba(255,255,255,1),0_2px_4px_rgba(0,0,0,0.06)] border border-zinc-200/80 text-zinc-700 active:scale-90 transition-all hover:text-black"
+              className="size-11 flex items-center justify-center rounded-full bg-zinc-100/90 shadow-[inset_0_1px_1px_rgba(255,255,255,1),0_2px_4px_rgba(0,0,0,0.06)] border border-zinc-200/80 text-zinc-700 active:scale-90 transition-all hover:text-black"
               aria-label="Curtir música"
               title="Curtir"
             >
               <Heart
-                className={`size-4.5 transition-colors ${
+                className={`size-5 transition-colors ${
                   liked ? "fill-[#EC4899] text-[#EC4899]" : "text-zinc-600"
                 }`}
               />
@@ -252,18 +242,18 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
             <button
               type="button"
               onClick={handleOpenAddToPlaylist}
-              className="size-10 flex items-center justify-center rounded-full bg-zinc-100/90 shadow-[inset_0_1px_1px_rgba(255,255,255,1),0_2px_4px_rgba(0,0,0,0.06)] border border-zinc-200/80 text-zinc-700 active:scale-90 transition-all hover:text-black"
+              className="size-11 flex items-center justify-center rounded-full bg-zinc-100/90 shadow-[inset_0_1px_1px_rgba(255,255,255,1),0_2px_4px_rgba(0,0,0,0.06)] border border-zinc-200/80 text-zinc-700 active:scale-90 transition-all hover:text-black"
               aria-label="Adicionar à Playlist"
               title="Adicionar à Playlist"
             >
-              <Plus className="size-5 stroke-[2.2]" />
+              <Plus className="size-5.5 stroke-[2.2]" />
             </button>
 
             {/* 3. Botão Playlist (Fila de Músicas a Seguir) */}
             <button
               type="button"
               onClick={() => setShowQueueModal(true)}
-              className={`size-10 flex items-center justify-center rounded-full transition-all active:scale-90 ${
+              className={`size-11 flex items-center justify-center rounded-full transition-all active:scale-90 ${
                 showQueueModal
                   ? "bg-[#22C55E] text-white shadow-md shadow-[#22C55E]/30"
                   : "bg-zinc-100/90 shadow-[inset_0_1px_1px_rgba(255,255,255,1),0_2px_4px_rgba(0,0,0,0.06)] border border-zinc-200/80 text-zinc-700 hover:text-black"
@@ -271,14 +261,14 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
               aria-label="Fila de Reprodução"
               title="Fila de Reprodução"
             >
-              <ListMusic className="size-4.5 stroke-[2.2]" />
+              <ListMusic className="size-5 stroke-[2.2]" />
             </button>
 
             {/* 4. Botão da Luci IA (Microfone com Fade 15%) */}
             <button
               type="button"
               onClick={handleTriggerLuciVoice}
-              className={`size-10 flex items-center justify-center rounded-full transition-all active:scale-90 ${
+              className={`size-11 flex items-center justify-center rounded-full transition-all active:scale-90 ${
                 isLuciListening
                   ? "bg-[#6366F1] text-white shadow-lg shadow-indigo-500/50 animate-pulse ring-4 ring-indigo-300"
                   : "bg-[#6366F1] text-white shadow-md shadow-indigo-500/25 hover:scale-105"
@@ -286,8 +276,18 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
               title="Falar com a Luci (Volume 15%)"
               aria-label="Luci Assistente de Voz"
             >
-              <Mic className="size-4.5 stroke-[2.4]" />
+              <Mic className="size-5 stroke-[2.4]" />
             </button>
+          </div>
+
+          {/* Linha 2: Título da Música e Artista Alinhados à Esquerda */}
+          <div className="text-left px-1">
+            <h1 className="text-2xl font-black tracking-tight text-zinc-900 leading-tight font-sans truncate">
+              {currentTrack.title}
+            </h1>
+            <p className="text-base font-medium text-zinc-500 truncate mt-0.5">
+              {currentTrack.artist}
+            </p>
           </div>
         </div>
 
