@@ -222,6 +222,7 @@ export interface AlbumDetails {
   id: string
   title: string
   artist: string
+  artist_id?: string
   artist_thumbnail?: string
   year?: string
   thumbnail: string

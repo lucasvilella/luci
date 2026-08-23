@@ -235,7 +235,7 @@ export function AlbumDetailView({
 
             {/* Foto pequena do Cantor + Nome Clicável para Página do Artista */}
             <div
-              onClick={() => goToArtist(effectiveArtist)}
+              onClick={() => goToArtist(albumData?.artist_id || effectiveArtist)}
               className="flex items-center gap-2 cursor-pointer group active:opacity-75 transition-opacity"
               title="Ver página do artista"
             >

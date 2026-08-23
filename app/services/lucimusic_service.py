@@ -458,10 +458,17 @@ class LuciMusicService:
             except Exception:
                 pass
 
+            artist_id_resolved = ""
+            if album_data and album_data.get("artists") and album_data["artists"][0].get("id"):
+                artist_id_resolved = album_data["artists"][0]["id"]
+            elif tracks and tracks[0].get("artistId"):
+                artist_id_resolved = tracks[0]["artistId"]
+
             return {
                 "id": album_id,
                 "title": album_title,
                 "artist": artist_name,
+                "artist_id": artist_id_resolved,
                 "artist_thumbnail": artist_thumb,
                 "year": year,
                 "thumbnail": thumb or (tracks[0]["thumbnail"] if tracks else ""),
