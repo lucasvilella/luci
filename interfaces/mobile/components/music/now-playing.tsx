@@ -22,7 +22,7 @@ import {
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { TrackImage } from "./track-image"
-import { fetchPlaylists, addTrackToPlaylist, type UserPlaylist } from "@/lib/lucimusic"
+import { fetchPlaylists, addTrackToPlaylist, createPlaylist, type UserPlaylist } from "@/lib/lucimusic"
 
 export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) {
   const {
@@ -58,9 +58,13 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
   const [userPlaylists, setUserPlaylists] = useState<UserPlaylist[]>([])
   const [loadingPlaylists, setLoadingPlaylists] = useState(false)
   const [addedPlaylistId, setAddedPlaylistId] = useState<string | null>(null)
+  const [showNewPlaylistInput, setShowNewPlaylistInput] = useState(false)
+  const [newPlaylistTitle, setNewPlaylistTitle] = useState("")
+  const [creatingPlaylist, setCreatingPlaylist] = useState(false)
 
   // 3. Estado do pop-up inferior de Artistas e Álbum da Música
   const [showArtistAlbumModal, setShowArtistAlbumModal] = useState(false)
+  const [artistThumbnails, setArtistThumbnails] = useState<Record<string, string>>({})
 
   // 4. Estado da Luci IA com Volume Ducking (15%)
   const [isLuciListening, setIsLuciListening] = useState(false)
@@ -76,6 +80,23 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
         .map((a) => a.trim())
         .filter((a) => a.length > 0 && !/^(records|gravadora|som livre|sony music|universal music)/i.test(a))
     : []
+
+  // Quando abre o modal de créditos, busca as fotos oficiais de cada artista de fundo
+  useEffect(() => {
+    if (showArtistAlbumModal && artistList.length > 0) {
+      artistList.forEach((artistName) => {
+        if (!artistThumbnails[artistName]) {
+          fetchArtist(artistName)
+            .then((data) => {
+              if (data?.thumbnail) {
+                setArtistThumbnails((prev) => ({ ...prev, [artistName]: data.thumbnail }))
+              }
+            })
+            .catch(() => {})
+        }
+      })
+    }
+  }, [showArtistAlbumModal, artistList, artistThumbnails])
 
   // Carrega playlists do usuário quando abre o pop-up (+)
   const handleOpenAddToPlaylist = async () => {
@@ -105,29 +126,60 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     }
   }
 
-  // Handler para falar com a Luci na tela de música com Volume Ducking (15%)
+  const recognitionRef = useRef<any>(null)
+
+  // Função para criar nova playlist e adicionar a música atual automaticamente
+  const handleCreateNewPlaylist = async () => {
+    if (!newPlaylistTitle.trim() || !currentTrack) return
+    setCreatingPlaylist(true)
+    try {
+      const created = await createPlaylist(newPlaylistTitle.trim())
+      if (created && created.id) {
+        await addTrackToPlaylist(created.id, currentTrack)
+        setAddedPlaylistId(created.id)
+        setUserPlaylists((prev) => [created, ...prev])
+        setNewPlaylistTitle("")
+        setShowNewPlaylistInput(false)
+        setTimeout(() => {
+          setAddedPlaylistId(null)
+          setShowAddToPlaylistModal(false)
+        }, 1200)
+      }
+    } catch (err) {
+      console.error("Erro ao criar playlist:", err)
+    } finally {
+      setCreatingPlaylist(false)
+    }
+  }
+
+  // Handler para falar com a Luci na tela de música com Volume Ducking (15%) e controle manual
   const handleTriggerLuciVoice = useCallback(() => {
+    // Se já estiver gravando, o usuário clica novamente para parar e processar
     if (isLuciListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop()
+        } catch {}
+      }
       setIsLuciListening(false)
       setVolume(1.0)
-      setLuciStatusText("")
       return
     }
 
     setIsLuciListening(true)
-    setLuciStatusText("Ouvindo você...")
+    setLuciStatusText("Ouvindo... Fale agora e toque no Mic para enviar.")
     setLuciSpeechText("")
 
-    // Faz o fade do volume da música para 15%
+    // Reduz o volume da música para 15%
     setVolume(0.15)
 
-    // Reconhecimento de fala via Web Speech API do navegador
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition()
       recognition.lang = "pt-BR"
+      recognition.continuous = true
       recognition.interimResults = true
-      recognition.maxAlternatives = 1
+      recognitionRef.current = recognition
 
       recognition.onresult = (event: any) => {
         const transcript = Array.from(event.results)
@@ -136,46 +188,39 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
         setLuciSpeechText(transcript)
       }
 
-      recognition.onend = () => {
-        setLuciStatusText("Luci pensando...")
-        setTimeout(() => {
-          setLuciStatusText("Luci: 'Com certeza! Analisando estilo e criando recomendações...'")
-          setTimeout(() => {
-            setIsLuciListening(false)
-            setVolume(1.0)
-            setLuciStatusText("")
-            setLuciSpeechText("")
-          }, 3500)
-        }, 1200)
+      recognition.onerror = (e: any) => {
+        console.warn("Speech error:", e)
       }
 
-      recognition.onerror = () => {
-        setLuciStatusText("Não consegui ouvir claramente.")
-        setTimeout(() => {
+      recognition.onend = () => {
+        // Quando encerra, se houver texto, processa
+        if (luciSpeechText.trim()) {
+          setLuciStatusText("Luci processando...")
+          setTimeout(() => {
+            setLuciStatusText("Luci: 'Entendido! Executando com base nesta música.'")
+            setTimeout(() => {
+              setIsLuciListening(false)
+              setVolume(1.0)
+              setLuciStatusText("")
+              setLuciSpeechText("")
+            }, 3000)
+          }, 800)
+        } else {
           setIsLuciListening(false)
           setVolume(1.0)
-        }, 2000)
+          setLuciStatusText("")
+        }
       }
 
       try {
         recognition.start()
-      } catch {
-        setTimeout(() => {
-          setLuciStatusText("Luci: Modo de voz ativado!")
-          setTimeout(() => {
-            setIsLuciListening(false)
-            setVolume(1.0)
-          }, 2500)
-        }, 1000)
+      } catch (err) {
+        console.warn("Recognition start failed:", err)
       }
     } else {
-      setLuciStatusText("Luci: Atenta aos seus comandos!")
-      setTimeout(() => {
-        setIsLuciListening(false)
-        setVolume(1.0)
-      }, 2500)
+      setLuciStatusText("Microfone ativado. Fale o comando.")
     }
-  }, [isLuciListening, setVolume])
+  }, [isLuciListening, luciSpeechText, setVolume])
 
   const handleSeek = useCallback(
     (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
@@ -468,15 +513,58 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-2 no-scrollbar py-1">
+            <div className="flex-1 overflow-y-auto space-y-3 no-scrollbar py-1">
+              {/* Botão de Criar Nova Playlist */}
+              {showNewPlaylistInput ? (
+                <div className="p-3 rounded-2xl bg-zinc-50 border border-indigo-300 shadow-sm space-y-2">
+                  <p className="text-xs font-bold text-zinc-700">Nome da nova playlist:</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      autoFocus
+                      placeholder="Ex: Minhas Favoritas, Treino..."
+                      value={newPlaylistTitle}
+                      onChange={(e) => setNewPlaylistTitle(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleCreateNewPlaylist()}
+                      className="flex-1 px-3 py-2 text-sm bg-white rounded-xl border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreateNewPlaylist}
+                      disabled={creatingPlaylist || !newPlaylistTitle.trim()}
+                      className="px-4 py-2 bg-[#22C55E] text-white text-xs font-bold rounded-xl active:scale-95 disabled:opacity-50 flex items-center gap-1 shadow-sm"
+                    >
+                      {creatingPlaylist ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                      Salvar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPlaylistInput(false)}
+                      className="p-2 text-zinc-400 hover:text-zinc-700 rounded-xl"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowNewPlaylistInput(true)}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-zinc-300 text-zinc-700 font-bold text-xs hover:border-[#22C55E] hover:text-[#16A34A] hover:bg-green-50/50 transition-all active:scale-98"
+                >
+                  <Plus className="size-4.5 stroke-[2.5]" />
+                  Criar Nova Playlist
+                </button>
+              )}
+
               {loadingPlaylists ? (
                 <div className="py-8 flex flex-col items-center justify-center gap-2 text-zinc-400">
                   <Loader2 className="size-6 animate-spin text-[#22C55E]" />
                   <p className="text-xs">Carregando playlists...</p>
                 </div>
-              ) : userPlaylists.length === 0 ? (
-                <div className="py-8 text-center text-xs text-zinc-400">
-                  Nenhuma playlist encontrada.
+              ) : userPlaylists.length === 0 && !showNewPlaylistInput ? (
+                <div className="py-6 text-center text-xs text-zinc-400">
+                  Nenhuma playlist existente. Crie a primeira acima!
                 </div>
               ) : (
                 userPlaylists.map((pl) => {
@@ -627,8 +715,8 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
                       <div className="flex items-center gap-3">
                         <div className="size-11 rounded-full overflow-hidden border border-zinc-200 shadow-sm shrink-0 bg-zinc-100">
                           <TrackImage
-                            src={currentTrack.thumbnail}
-                            trackId={`${currentTrack.id}-${artistName}`}
+                            src={artistThumbnails[artistName] || currentTrack.thumbnail}
+                            trackId={`artist-thumb-${artistName}`}
                             alt={artistName}
                             className="size-full object-cover"
                           />
