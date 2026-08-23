@@ -1,10 +1,9 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import {
   ChevronLeft,
   Heart,
-  MoreVertical,
   Play,
   Pause,
   SkipBack,
@@ -81,18 +80,18 @@ export function LyricsView() {
 
   return (
     <div className="fixed inset-0 z-50 flex h-full flex-col select-none overflow-hidden bg-black text-white animate-view-in">
-      {/* ─── Fundo com Capa em Alta Resolução Escurecida com Efeito Vignette Verde/Escuro do Figma ─── */}
+      {/* ─── Fundo com Capa em Alta Resolução levemente borrada (~7% = blur-[3px]) com Vignette Escuro ─── */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <img
           src={currentTrack.thumbnail}
           alt={currentTrack.title}
           referrerPolicy="no-referrer"
-          className="size-full object-cover opacity-35 filter brightness-75 scale-105 transition-all duration-700"
+          className="size-full object-cover opacity-35 filter brightness-75 blur-[3px] scale-105 transition-all duration-700"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/90" />
       </div>
 
-      {/* ─── 1. Header Oficial do Figma: Voltar (ChevronLeft Circular), Título da Música Centralizado, MoreVertical ─── */}
+      {/* ─── 1. Header Oficial do Figma: Voltar (ChevronLeft Circular), Título da Música Centralizado (Sem botão de 3 pontinhos) ─── */}
       <header className="relative z-10 flex items-center justify-between px-6 pt-5 pb-2 shrink-0">
         <button
           type="button"
@@ -103,17 +102,12 @@ export function LyricsView() {
           <ChevronLeft className="size-5.5 stroke-[2.2]" />
         </button>
 
-        <h2 className="text-base font-extrabold tracking-tight text-white font-sans truncate max-w-[200px] text-center">
+        <h2 className="text-base font-extrabold tracking-tight text-white font-sans truncate max-w-[240px] text-center">
           {currentTrack.title}
         </h2>
 
-        <button
-          type="button"
-          className="size-11 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md border border-white/15 text-white active:scale-95 transition-all"
-          aria-label="Opções"
-        >
-          <MoreVertical className="size-5" />
-        </button>
+        {/* Espaçador invisível para manter o título perfeitamente centralizado */}
+        <div className="size-11" />
       </header>
 
       {/* ─── 2. Corpo Central das Letras Sincronizadas (Figma Style com Destaque e Play Icon na Linha Ativa) ─── */}

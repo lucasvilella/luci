@@ -218,6 +218,13 @@ export async function createPlaylist(title: string, description = ""): Promise<U
   return res.json()
 }
 
+export async function addTrackToPlaylist(playlistId: string, track: LuciTrack): Promise<void> {
+  await luciApiFetch(`/api/v1/music/playlists/${encodeURIComponent(playlistId)}/tracks`, {
+    method: "POST",
+    body: JSON.stringify(track)
+  })
+}
+
 export interface AlbumDetails {
   id: string
   title: string
