@@ -143,34 +143,36 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#F8FAFC] text-zinc-900 animate-view-in select-none">
-      {/* ─── Header Minimalista com Botão de 3 Tracinhos (Neumórfico) e Ações ─── */}
-      <header className="flex items-center justify-between px-6 pt-5 pb-3 bg-white border-b border-zinc-200/60">
+    <div className="flex h-full flex-col bg-background text-foreground animate-view-in select-none">
+      {/* ─── Header Minimalista com Botão de 3 Tracinhos na Esquerda e Ações na Direita ─── */}
+      <header className="flex items-center justify-between px-5 pt-4 pb-3 bg-card/80 backdrop-blur-md border-b border-border/80 z-10">
         <button
           type="button"
           onClick={onOpenMenu}
-          className="size-11 flex items-center justify-center rounded-full bg-zinc-100/90 shadow-[inset_0_1px_1px_rgba(255,255,255,1),0_2px_4px_rgba(0,0,0,0.06)] border border-zinc-200/80 text-zinc-700 active:scale-95 transition-all"
           aria-label="Abrir Menu"
+          className="size-10 flex items-center justify-center rounded-full bg-secondary text-foreground hover:bg-secondary/80 active:scale-95 transition-all shadow-sm"
         >
-          <Menu className="size-5 stroke-[2.2]" />
+          <Menu className="size-5" />
         </button>
+
+        <h1 className="text-sm font-extrabold tracking-tight text-foreground uppercase">Música</h1>
 
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={goToSearch}
-            className="size-11 flex items-center justify-center rounded-full bg-zinc-100 shadow-sm border border-zinc-200/80 text-zinc-700 hover:text-black active:scale-95 transition-transform"
+            className="size-10 flex items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
             aria-label="Buscar"
           >
-            <Search className="size-5" />
+            <Search className="size-4.5" />
           </button>
           <button
             type="button"
             onClick={goToLibrary}
-            className="size-11 flex items-center justify-center rounded-full bg-zinc-100 shadow-sm border border-zinc-200/80 text-zinc-700 hover:text-black active:scale-95 transition-transform"
+            className="size-10 flex items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
             aria-label="Biblioteca"
           >
-            <LibraryIcon className="size-5" />
+            <LibraryIcon className="size-4.5" />
           </button>
         </div>
       </header>

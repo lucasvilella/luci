@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
-import { Plus, Mic, Keyboard, Loader2, Sparkles, ArrowUpRight, ImageIcon, FileText, Zap } from "lucide-react"
+import { Plus, Mic, Keyboard, Loader2, Sparkles, ArrowUpRight, ImageIcon, FileText, Zap, Menu } from "lucide-react"
 import { luciApiFetch } from "@/lib/api"
 import { useConversation } from "@/hooks/use-conversation"
 
@@ -130,7 +130,13 @@ const SHORTCUT_CARDS = [
   },
 ]
 
-export function VoiceOrbView({ onSwitchToChat }: { onSwitchToChat?: () => void }) {
+export function VoiceOrbView({
+  onSwitchToChat,
+  onOpenMenu,
+}: {
+  onSwitchToChat?: () => void
+  onOpenMenu?: () => void
+}) {
   const [listening, setListening] = useState(false)
   const [speaking, setSpeaking] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -411,10 +417,21 @@ export function VoiceOrbView({ onSwitchToChat }: { onSwitchToChat?: () => void }
   const orbState = loading ? "processing" : speaking ? "speaking" : listening ? "listening" : "idle"
 
   return (
-    <div className="flex h-full flex-col bg-[#F8FAFC] animate-view-in select-none">
-      {/* ─── Header ─── */}
-      <div className="flex items-center justify-center px-6 pt-6 pb-2">
-        <h1 className="text-lg font-extrabold tracking-tight text-zinc-900">LUCI</h1>
+    <div className="flex h-full flex-col bg-background animate-view-in select-none">
+      {/* ─── Header Principal ─── */}
+      <div className="flex items-center justify-between px-5 pt-4 pb-2 z-10">
+        <button
+          type="button"
+          onClick={onOpenMenu}
+          aria-label="Abrir Menu de Módulos"
+          className="size-10 flex items-center justify-center rounded-full bg-card border border-border shadow-sm text-foreground hover:bg-secondary active:scale-95 transition-all"
+        >
+          <Menu className="size-5" />
+        </button>
+
+        <h1 className="text-base font-extrabold tracking-wider text-foreground">LUCI</h1>
+
+        <div className="size-10" />
       </div>
 
       {/* ─── Scrollable Content ─── */}
@@ -426,11 +443,11 @@ export function VoiceOrbView({ onSwitchToChat }: { onSwitchToChat?: () => void }
           {(orbState === "listening" || orbState === "speaking") && (
             <>
               <span
-                className="absolute size-52 rounded-full border-2 border-indigo-400/40 animate-orb-listening-ring"
+                className="absolute size-52 rounded-full border-2 border-primary/40 animate-orb-listening-ring"
                 aria-hidden="true"
               />
               <span
-                className="absolute size-52 rounded-full border border-violet-400/30 animate-orb-listening-ring"
+                className="absolute size-52 rounded-full border border-primary/30 animate-orb-listening-ring"
                 style={{ animationDelay: "0.4s" }}
                 aria-hidden="true"
               />
@@ -448,15 +465,15 @@ export function VoiceOrbView({ onSwitchToChat }: { onSwitchToChat?: () => void }
           >
             {/* Gradiente rotativo externo */}
             <div
-              className={`absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,#6366F1,#8B5CF6,#06B6D4,#A78BFA,#6366F1)] opacity-90 blur-[1px] ${
+              className={`absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,#023D8A,#409775,#023D8A)] opacity-90 blur-[1px] ${
                 orbState === "processing" ? "animate-orb-processing" : "animate-orb-rotate"
               }`}
               style={{ animationDuration: orbState === "processing" ? "0.8s" : "14s" }}
             />
             {/* Gradiente radial interno */}
-            <div className="absolute inset-3 rounded-full bg-[radial-gradient(circle_at_35%_35%,#C4B5FD,#6366F1_55%,#4F46E5)]" />
+            <div className="absolute inset-3 rounded-full bg-[radial-gradient(circle_at_35%_35%,#409775,#023D8A_60%,#023D8A)]" />
             {/* Glow shadow */}
-            <div className="absolute inset-0 rounded-full shadow-[0_0_60px_-5px_rgba(99,102,241,0.5)]" />
+            <div className="absolute inset-0 rounded-full shadow-[0_0_60px_-5px_rgba(2,61,138,0.5)]" />
 
             {/* Conteúdo interno do Orb */}
             <div className="absolute inset-0 flex items-center justify-center">
@@ -488,15 +505,15 @@ export function VoiceOrbView({ onSwitchToChat }: { onSwitchToChat?: () => void }
         <div className="text-center mb-5">
           {!response && !transcript && !loading && (
             <>
-              <h2 className="text-xl font-extrabold text-zinc-900 mb-0.5">Olá, eu sou a Luci</h2>
-              <p className="text-sm text-zinc-500">Sua assistente digital inteligente</p>
+              <h2 className="text-xl font-extrabold text-foreground mb-0.5">Olá, eu sou a Luci</h2>
+              <p className="text-sm text-muted-foreground">Sua assistente digital inteligente</p>
             </>
           )}
           <p className={`text-sm font-semibold mt-2 ${
-            orbState === "listening" ? "text-indigo-600" :
+            orbState === "listening" ? "text-primary" :
             orbState === "processing" ? "text-amber-600" :
-            orbState === "speaking" ? "text-emerald-600" :
-            "text-zinc-500"
+            orbState === "speaking" ? "text-accent" :
+            "text-muted-foreground"
           }`}>
             {statusText}
           </p>
@@ -506,11 +523,11 @@ export function VoiceOrbView({ onSwitchToChat }: { onSwitchToChat?: () => void }
         {(transcript || response || loading) && (
           <div className="w-full max-w-sm text-center mb-5 px-2">
             {transcript && !loading && (
-              <p className="text-xs text-zinc-400 italic mb-1.5">"{transcript}"</p>
+              <p className="text-xs text-muted-foreground italic mb-1.5">"{transcript}"</p>
             )}
             {response && (
-              <div className="bg-white rounded-2xl border border-zinc-200/80 shadow-sm px-4 py-3">
-                <p className="text-sm font-medium text-zinc-800 leading-relaxed whitespace-pre-wrap">{response}</p>
+              <div className="bg-card rounded-2xl border border-border shadow-sm px-4 py-3">
+                <p className="text-sm font-medium text-foreground leading-relaxed whitespace-pre-wrap">{response}</p>
               </div>
             )}
           </div>
@@ -525,14 +542,14 @@ export function VoiceOrbView({ onSwitchToChat }: { onSwitchToChat?: () => void }
                 key={card.id}
                 type="button"
                 onClick={() => handleShortcutClick(card.command)}
-                className="w-full text-left p-4 rounded-2xl bg-white border border-zinc-200/70 shadow-sm hover:shadow-md hover:border-zinc-300 transition-all active:scale-[0.98] group"
+                className="w-full text-left p-4 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] group"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-sm font-bold text-zinc-900 mb-1">{card.title}</h3>
-                    <p className="text-xs text-zinc-500 leading-relaxed">{card.description}</p>
+                    <h3 className="text-sm font-bold text-foreground mb-1">{card.title}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{card.description}</p>
                   </div>
-                  <div className="size-9 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 shrink-0 ml-3 group-hover:bg-indigo-100 transition-colors">
+                  <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 ml-3 group-hover:bg-primary/20 transition-colors">
                     <ArrowUpRight className="size-4.5" />
                   </div>
                 </div>
@@ -548,15 +565,15 @@ export function VoiceOrbView({ onSwitchToChat }: { onSwitchToChat?: () => void }
                     key={card.id}
                     type="button"
                     onClick={() => handleShortcutClick(card.command)}
-                    className="text-left p-4 rounded-2xl bg-white border border-zinc-200/70 shadow-sm hover:shadow-md hover:border-zinc-300 transition-all active:scale-[0.98] group"
+                    className="text-left p-4 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] group"
                   >
-                    <div className="size-9 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-600 mb-3 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
+                    <div className="size-9 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground mb-3 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                       <Icon className="size-4.5" />
                     </div>
-                    <h3 className="text-xs font-bold text-zinc-900 mb-0.5">{card.title}</h3>
-                    <p className="text-[10px] text-zinc-500">{card.description}</p>
+                    <h3 className="text-xs font-bold text-foreground mb-0.5">{card.title}</h3>
+                    <p className="text-[10px] text-muted-foreground">{card.description}</p>
                     <div className="flex justify-end mt-2">
-                      <ArrowUpRight className="size-3.5 text-zinc-400 group-hover:text-indigo-500 transition-colors" />
+                      <ArrowUpRight className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
                   </button>
                 )
@@ -567,13 +584,13 @@ export function VoiceOrbView({ onSwitchToChat }: { onSwitchToChat?: () => void }
       </div>
 
       {/* ─── Botões Inferiores (3 botões) ─── */}
-      <div className="flex items-center justify-center gap-6 px-6 pb-5 pt-2 bg-[#F8FAFC]">
+      <div className="flex items-center justify-center gap-6 px-6 pb-5 pt-2 bg-background">
         {/* + Upload Documento */}
         <button
           type="button"
           onClick={handleFileUpload}
           aria-label="Enviar documento"
-          className="flex size-12 items-center justify-center rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 active:scale-95 transition-all"
+          className="flex size-12 items-center justify-center rounded-full bg-card border border-border shadow-sm text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/10 active:scale-95 transition-all"
         >
           <Plus className="size-5 stroke-[2.5]" />
         </button>
@@ -585,14 +602,14 @@ export function VoiceOrbView({ onSwitchToChat }: { onSwitchToChat?: () => void }
           aria-label={listening ? "Cancelar microfone" : "Ativar microfone"}
           className={`relative flex size-16 items-center justify-center rounded-full transition-all active:scale-95 shadow-xl ${
             listening
-              ? "bg-rose-500 text-white shadow-rose-500/30 ring-4 ring-rose-400/30"
+              ? "bg-destructive text-destructive-foreground shadow-destructive/30 ring-4 ring-destructive/30"
               : speaking
-                ? "bg-emerald-500 text-white shadow-emerald-500/30"
-                : "bg-[#4F46E5] text-white shadow-[0_8px_30px_-6px_rgba(79,70,229,0.5)] hover:scale-105"
+                ? "bg-accent text-accent-foreground shadow-accent/30"
+                : "bg-primary text-primary-foreground shadow-[0_8px_30px_-6px_rgba(2,61,138,0.5)] hover:scale-105"
           }`}
         >
           {listening && (
-            <span className="absolute inset-0 animate-ping rounded-full bg-rose-500/30" aria-hidden="true" />
+            <span className="absolute inset-0 animate-ping rounded-full bg-destructive/30" aria-hidden="true" />
           )}
           <Mic className="relative size-7" aria-hidden="true" />
         </button>

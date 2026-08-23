@@ -1,7 +1,8 @@
 "use client"
 
 import { useAuth } from "@/hooks/use-auth"
-import { AtSign, Mail, LogOut, Bell, Shield, ChevronRight, Sparkles } from "lucide-react"
+import { useTheme } from "@/hooks/use-theme"
+import { AtSign, Mail, LogOut, Bell, Shield, ChevronRight, Sparkles, Menu, Moon, Sun } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 function initials(name: string) {
@@ -13,48 +14,84 @@ function initials(name: string) {
     .toUpperCase()
 }
 
-export function ProfileView() {
+export function ProfileView({ onOpenMenu }: { onOpenMenu?: () => void }) {
   const { user, logout } = useAuth()
+  const { theme, toggleTheme, mounted } = useTheme()
   if (!user) return null
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto px-5 pb-6 pt-2 animate-view-in">
-      <div className="flex items-center pb-4 pt-2">
-        <h1 className="text-lg font-semibold text-foreground">Perfil</h1>
+    <div className="flex h-full flex-col overflow-y-auto px-5 pb-6 pt-4 animate-view-in bg-background text-foreground no-scrollbar select-none">
+      <div className="flex items-center justify-between pb-4">
+        <button
+          type="button"
+          onClick={onOpenMenu}
+          aria-label="Abrir Menu"
+          className="size-10 flex items-center justify-center rounded-full bg-secondary border border-border shadow-sm text-foreground active:scale-95 transition-all"
+        >
+          <Menu className="size-5" />
+        </button>
+        <h1 className="text-base font-extrabold tracking-tight text-foreground uppercase">Configurações</h1>
+        <div className="size-10" />
       </div>
 
       {/* avatar card */}
-      <div className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card p-6 text-center">
-        <span className="flex size-20 items-center justify-center rounded-full bg-primary text-2xl font-semibold text-primary-foreground shadow-[0_12px_40px_-12px_var(--primary)]">
+      <div className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card p-6 text-center shadow-sm">
+        <span className="flex size-20 items-center justify-center rounded-full bg-primary text-2xl font-extrabold text-primary-foreground shadow-lg shadow-primary/20">
           {initials(user.name)}
         </span>
         <div>
-          <h2 className="text-xl font-semibold text-foreground">{user.name}</h2>
-          <p className="text-sm text-muted-foreground">@{user.username}</p>
+          <h2 className="text-lg font-bold text-foreground">{user.name}</h2>
+          <p className="text-xs text-muted-foreground">@{user.username}</p>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent">
           <Sparkles className="size-3.5" aria-hidden="true" />
-          Plano Pro
+          Luci Pro
         </span>
       </div>
 
       {/* account info */}
-      <p className="px-1 pb-2 pt-6 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <p className="px-1 pb-2 pt-6 text-xs font-bold uppercase tracking-wider text-muted-foreground">
         Informações da conta
       </p>
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <InfoRow icon={AtSign} label="Username" value={user.username} />
-        <div className="mx-4 h-px bg-border" />
+        <div className="mx-4 h-px bg-border/60" />
         <InfoRow icon={Mail} label="E-mail" value={user.email} />
       </div>
 
       {/* settings */}
-      <p className="px-1 pb-2 pt-6 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Preferências
+      <p className="px-1 pb-2 pt-6 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        Aparência e Preferências
       </p>
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        {/* Toggle Theme Row */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="flex w-full items-center justify-between px-4 py-3.5 text-left transition-colors hover:bg-secondary active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3">
+            <span className="flex size-9 items-center justify-center rounded-full bg-secondary text-foreground">
+              {mounted && theme === "dark" ? (
+                <Moon className="size-4 text-indigo-400" />
+              ) : (
+                <Sun className="size-4 text-amber-500" />
+              )}
+            </span>
+            <div>
+              <p className="text-xs text-muted-foreground">Tema do Sistema</p>
+              <p className="text-sm font-bold text-foreground capitalize">
+                {mounted ? (theme === "dark" ? "Modo Escuro" : "Modo Claro") : "Claro"}
+              </p>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-primary px-3 py-1 rounded-full bg-secondary">
+            Alternar
+          </span>
+        </button>
+        <div className="mx-4 h-px bg-border/60" />
         <SettingRow icon={Bell} label="Notificações" />
-        <div className="mx-4 h-px bg-border" />
+        <div className="mx-4 h-px bg-border/60" />
         <SettingRow icon={Shield} label="Privacidade e segurança" />
       </div>
 

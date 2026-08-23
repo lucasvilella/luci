@@ -476,6 +476,30 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 
   const formatTime = useCallback((s: number) => formatSeconds(s), [])
 
+  // ─── Media Session API (PWA / Tela de Bloqueio) ───
+  useEffect(() => {
+    if ("mediaSession" in navigator && currentTrack) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentTrack.title,
+        artist: currentTrack.artist,
+        album: "Luci Music",
+        artwork: [
+          { src: currentTrack.thumbnail, sizes: "96x96", type: "image/jpeg" },
+          { src: currentTrack.thumbnail, sizes: "128x128", type: "image/jpeg" },
+          { src: currentTrack.thumbnail, sizes: "192x192", type: "image/jpeg" },
+          { src: currentTrack.thumbnail, sizes: "256x256", type: "image/jpeg" },
+          { src: currentTrack.thumbnail, sizes: "384x384", type: "image/jpeg" },
+          { src: currentTrack.thumbnail, sizes: "512x512", type: "image/jpeg" },
+        ],
+      })
+
+      navigator.mediaSession.setActionHandler("play", () => togglePlay())
+      navigator.mediaSession.setActionHandler("pause", () => togglePlay())
+      navigator.mediaSession.setActionHandler("previoustrack", () => prev())
+      navigator.mediaSession.setActionHandler("nexttrack", () => next())
+    }
+  }, [currentTrack, togglePlay, prev, next])
+
   const value = useMemo<MusicPlayerContextValue>(
     () => ({
       currentTrack,

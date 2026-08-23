@@ -5,26 +5,27 @@ import { UnifiedLuciView } from "@/components/unified-luci-view"
 import { MusicPlayerView } from "@/components/music-player-view"
 import { ProfileView } from "@/components/profile-view"
 import { AuthView } from "@/components/auth-view"
-import { DrawerMenu } from "@/components/drawer-menu"
+import { DropdownMenu } from "@/components/dropdown-menu"
 import { useAuth } from "@/hooks/use-auth"
+import { Menu } from "lucide-react"
 
 export default function Page() {
   const { user, mounted } = useAuth()
-  const [currentModule, setCurrentModule] = useState<"luci" | "music" | "settings">("music")
+  const [currentModule, setCurrentModule] = useState<"luci" | "music" | "settings" | "films" | "home-assistant">("luci")
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <main className="flex h-dvh w-full justify-center bg-[#F8FAFC] dark:bg-background p-0 select-none">
+    <main className="flex h-dvh w-full justify-center bg-background p-0 select-none">
       {/* Container Principal do App */}
-      <div className="relative flex h-full w-full max-w-[480px] flex-col overflow-hidden bg-[#F8FAFC] dark:bg-background shadow-2xl">
+      <div className="relative flex h-full w-full max-w-[480px] flex-col overflow-hidden bg-background shadow-2xl">
         {!mounted ? null : !user ? (
           <div className="min-h-0 flex-1 overflow-hidden">
             <AuthView />
           </div>
         ) : (
           <>
-            {/* Drawer Lateral de Navegação */}
-            <DrawerMenu
+            {/* Menu Dropdown Cascata */}
+            <DropdownMenu
               isOpen={isMenuOpen}
               onClose={() => setIsMenuOpen(false)}
               currentModule={currentModule}
@@ -32,8 +33,8 @@ export default function Page() {
               user={{ name: user.name, email: user.email }}
             />
 
-            {/* Módulo Ativo Sem Barras Fixas Poluídas */}
-            <div className="min-h-0 flex-1 overflow-hidden">
+            {/* Módulo Ativo */}
+            <div className="min-h-0 flex-1 overflow-hidden relative">
               {currentModule === "luci" && (
                 <UnifiedLuciView onOpenMenu={() => setIsMenuOpen(true)} />
               )}
@@ -43,7 +44,27 @@ export default function Page() {
                   onSwitchToLuci={() => setCurrentModule("luci")}
                 />
               )}
-              {currentModule === "settings" && <ProfileView />}
+              {currentModule === "settings" && <ProfileView onOpenMenu={() => setIsMenuOpen(true)} />}
+              {(currentModule === "films" || currentModule === "home-assistant") && (
+                <div className="flex flex-col items-center justify-center h-full gap-4 pt-14 px-6 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setIsMenuOpen(true)}
+                    className="absolute top-4 left-4 size-10 flex items-center justify-center rounded-full bg-card border border-border shadow-sm text-foreground active:scale-95 transition-all"
+                  >
+                    <Menu className="size-5" />
+                  </button>
+                  <div className="size-16 rounded-3xl bg-secondary flex items-center justify-center text-muted-foreground shadow-inner">
+                    <span className="text-xs font-bold uppercase tracking-wider">Breve</span>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-foreground">Módulo em Desenvolvimento</h2>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                      Este recurso será disponibilizado nas próximas atualizações da plataforma Luci.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}

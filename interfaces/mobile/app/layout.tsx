@@ -6,17 +6,24 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'LUCI',
   description: 'Painel mobile com assistente de voz, chat, player de música e casa inteligente.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'LUCI',
+  },
 }
 
 export const viewport: Viewport = {
   colorScheme: 'light dark',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f7f8fc' },
-    { media: '(prefers-color-scheme: dark)', color: '#0b0e1a' },
+    { media: '(prefers-color-scheme: light)', color: '#023D8A' },
+    { media: '(prefers-color-scheme: dark)', color: '#0F1A2E' },
   ],
   userScalable: false,
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
 }
 
 const themeInitScript = `

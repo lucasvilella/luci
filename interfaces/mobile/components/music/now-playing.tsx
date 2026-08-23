@@ -243,19 +243,19 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
   const upcomingQueue = queue.slice(queueIndex)
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#F8FAFC] text-zinc-900 select-none animate-view-in overflow-hidden">
-      {/* ─── 1. Header Oficial do Figma: Voltar (ChevronLeft Circular), "Now playing" Centralizado (Sem botões extras no topo) ─── */}
+    <div className="fixed inset-0 z-50 flex flex-col bg-background text-foreground select-none animate-view-in overflow-hidden">
+      {/* ─── 1. Header Oficial do Figma: Voltar (ChevronLeft Circular), "Tocando agora" Centralizado ─── */}
       <header className="flex items-center justify-between px-6 pt-5 pb-2 shrink-0 relative z-20">
         <button
           type="button"
           onClick={pop}
-          className="size-11 flex items-center justify-center rounded-full bg-zinc-100/90 shadow-[inset_0_1px_1px_rgba(255,255,255,1),0_2px_4px_rgba(0,0,0,0.06)] border border-zinc-200/80 text-zinc-700 active:scale-95 transition-all"
+          className="size-11 flex items-center justify-center rounded-full bg-secondary border border-border/80 text-foreground active:scale-95 transition-all shadow-sm"
           aria-label="Voltar"
         >
           <ChevronLeft className="size-5.5 stroke-[2.2]" />
         </button>
 
-        <h2 className="text-base font-extrabold tracking-tight text-zinc-900 font-sans">
+        <h2 className="text-sm font-extrabold tracking-tight text-foreground uppercase font-sans">
           Tocando agora
         </h2>
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { Send, Sparkles, Copy, Mic, Loader2, Trash2, ChevronLeft, Plus, MicOff } from "lucide-react"
+import { Send, Sparkles, Copy, Mic, Loader2, Trash2, ChevronLeft, Plus, Square } from "lucide-react"
 import { useConversation } from "@/hooks/use-conversation"
 
 const SUGGESTIONS = [
@@ -11,7 +11,13 @@ const SUGGESTIONS = [
   "Toque um lofi relaxante no LuciMusic",
 ]
 
-export function ChatView({ onSwitchToVoice }: { onSwitchToVoice?: () => void }) {
+export function ChatView({
+  onSwitchToVoice,
+  onOpenMenu,
+}: {
+  onSwitchToVoice?: () => void
+  onOpenMenu?: () => void
+}) {
   const { messages, isProcessing, sendTextMessage, clearConversation } = useConversation()
   const [input, setInput] = useState("")
   const [isRecordingAudio, setIsRecordingAudio] = useState(false)
@@ -99,32 +105,34 @@ export function ChatView({ onSwitchToVoice }: { onSwitchToVoice?: () => void }) 
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#F8FAFC] animate-view-in select-none">
-      {/* ─── Header do Chat ─── */}
-      <div className="flex items-center justify-between px-5 pb-3 pt-4 border-b border-zinc-200/70 bg-white/80 backdrop-blur-md">
+    <div className="flex h-full flex-col bg-background animate-view-in select-none">
+      {/* ─── Header do Chat com Botão Voltar (<), Título Central e Ações à Direita (Menu/Limpar) ─── */}
+      <div className="flex items-center justify-between px-5 pb-3 pt-4 border-b border-border/80 bg-card/90 backdrop-blur-md z-10">
         <button
           type="button"
           onClick={onSwitchToVoice}
           aria-label="Voltar para voz"
-          className="flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 hover:bg-zinc-200 active:scale-95 transition-all"
+          className="flex size-10 items-center justify-center rounded-full bg-secondary text-foreground hover:bg-secondary/80 active:scale-95 transition-all shadow-sm"
         >
-          <ChevronLeft className="size-5" />
+          <ChevronLeft className="size-5.5 stroke-[2.2]" />
         </button>
 
         <div className="text-center">
-          <h1 className="text-sm font-extrabold text-zinc-900">Luci Chat</h1>
-          <p className="text-[10px] text-zinc-500">Cérebro Unificado</p>
+          <h1 className="text-sm font-extrabold text-foreground tracking-tight">Luci Chat</h1>
+          <p className="text-[10px] text-muted-foreground font-medium">Cérebro Unificado</p>
         </div>
 
-        <button
-          type="button"
-          onClick={clearConversation}
-          className="flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 hover:text-rose-500 hover:bg-rose-50 active:scale-95 transition-all"
-          title="Limpar Histórico"
-          aria-label="Limpar Histórico"
-        >
-          <Trash2 className="size-4" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={clearConversation}
+            className="flex size-10 items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:scale-95 transition-all"
+            title="Limpar Histórico"
+            aria-label="Limpar Histórico"
+          >
+            <Trash2 className="size-4" />
+          </button>
+        </div>
       </div>
 
       {/* ─── Lista de Mensagens ─── */}
@@ -134,17 +142,17 @@ export function ChatView({ onSwitchToVoice }: { onSwitchToVoice?: () => void }) 
             {m.role === "assistant" ? (
               /* ─── Mensagem da Luci (esquerda) ─── */
               <div className="flex items-start gap-2.5">
-                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm">
+                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-sm">
                   <Sparkles className="size-3.5" aria-hidden="true" />
                 </span>
                 <div className="max-w-[82%]">
-                  <div className="rounded-2xl rounded-tl-md bg-white border border-zinc-200/80 px-4 py-3 text-xs leading-relaxed text-zinc-800 shadow-sm">
+                  <div className="rounded-2xl rounded-tl-md bg-card border border-border px-4 py-3 text-xs leading-relaxed text-foreground shadow-sm">
                     <p className="whitespace-pre-wrap">{m.content}</p>
                   </div>
-                  <div className="mt-1 flex gap-3 pl-1 text-zinc-400 text-[10px]">
+                  <div className="mt-1 flex gap-3 pl-1 text-muted-foreground text-[10px]">
                     <button
                       onClick={() => navigator.clipboard.writeText(m.content)}
-                      className="flex items-center gap-1 hover:text-zinc-700 transition-colors"
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
                       type="button"
                     >
                       <Copy className="size-3" /> Copiar
@@ -155,7 +163,7 @@ export function ChatView({ onSwitchToVoice }: { onSwitchToVoice?: () => void }) 
             ) : (
               /* ─── Mensagem do Usuário (direita) ─── */
               <div className="flex justify-end">
-                <div className="max-w-[82%] rounded-2xl rounded-tr-md bg-[#4F46E5] px-4 py-3 text-xs leading-relaxed text-white shadow-sm">
+                <div className="max-w-[82%] rounded-2xl rounded-tr-md bg-primary px-4 py-3 text-xs leading-relaxed text-primary-foreground shadow-sm">
                   <p className="whitespace-pre-wrap">{m.content}</p>
                 </div>
               </div>
@@ -166,11 +174,11 @@ export function ChatView({ onSwitchToVoice }: { onSwitchToVoice?: () => void }) 
         {/* ─── Indicador de Processamento ─── */}
         {isProcessing && (
           <div className="flex items-start gap-2.5">
-            <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white">
+            <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground">
               <Sparkles className="size-3.5 animate-spin" />
             </span>
-            <div className="rounded-2xl rounded-tl-md bg-white border border-zinc-200/80 px-4 py-3 text-xs text-zinc-500 flex items-center gap-2 shadow-sm">
-              <Loader2 className="size-3.5 animate-spin text-indigo-500" />
+            <div className="rounded-2xl rounded-tl-md bg-card border border-border px-4 py-3 text-xs text-muted-foreground flex items-center gap-2 shadow-sm">
+              <Loader2 className="size-3.5 animate-spin text-primary" />
               <span>Luci está pensando...</span>
             </div>
           </div>
@@ -179,14 +187,14 @@ export function ChatView({ onSwitchToVoice }: { onSwitchToVoice?: () => void }) 
         {/* ─── Sugestões Rápidas ─── */}
         {messages.length <= 2 && (
           <div className="pt-3 space-y-2">
-            <p className="text-[11px] font-semibold text-zinc-400">Sugestões rápidas:</p>
+            <p className="text-[11px] font-semibold text-muted-foreground">Sugestões rápidas:</p>
             <div className="flex flex-wrap gap-1.5">
               {SUGGESTIONS.map((sug) => (
                 <button
                   key={sug}
                   type="button"
                   onClick={() => handleSend(sug)}
-                  className="px-3 py-1.5 rounded-xl bg-white border border-zinc-200 hover:border-indigo-300 hover:bg-indigo-50 text-xs text-zinc-700 text-left transition-all active:scale-95"
+                  className="px-3 py-1.5 rounded-xl bg-card border border-border hover:border-primary/50 hover:bg-primary/10 text-xs text-foreground text-left transition-all active:scale-95"
                 >
                   {sug}
                 </button>
@@ -200,10 +208,10 @@ export function ChatView({ onSwitchToVoice }: { onSwitchToVoice?: () => void }) 
 
       {/* ─── Recording Banner ─── */}
       {isRecordingAudio && (
-        <div className="px-5 py-2 bg-rose-50 border-t border-rose-200">
+        <div className="px-5 py-2 bg-destructive/10 border-t border-destructive/20">
           <div className="flex items-center gap-2">
-            <span className="size-2.5 rounded-full bg-rose-500 animate-pulse" />
-            <p className="text-xs text-rose-700 font-medium flex-1 truncate">
+            <span className="size-2.5 rounded-full bg-destructive animate-pulse" />
+            <p className="text-xs text-destructive font-medium flex-1 truncate">
               {recordingText || "Ouvindo... fale e toque no mic para enviar."}
             </p>
           </div>
@@ -216,27 +224,27 @@ export function ChatView({ onSwitchToVoice }: { onSwitchToVoice?: () => void }) 
           e.preventDefault()
           handleSend(input)
         }}
-        className="flex items-center gap-2.5 px-4 py-3 border-t border-zinc-200/70 bg-white/90 backdrop-blur-md"
+        className="flex items-center gap-2.5 px-4 py-3 border-t border-border bg-card/90 backdrop-blur-md"
       >
         {/* + Upload */}
         <button
           type="button"
           onClick={handleFileUpload}
           aria-label="Enviar documento"
-          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-600 hover:text-indigo-600 hover:bg-indigo-50 active:scale-95 transition-all"
+          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-primary hover:bg-primary/10 active:scale-95 transition-all"
         >
           <Plus className="size-5 stroke-[2.5]" />
         </button>
 
         {/* Input de Texto */}
-        <div className="flex flex-1 items-center rounded-full bg-zinc-100 border border-zinc-200 px-4 focus-within:border-indigo-400 focus-within:bg-white transition-all">
+        <div className="flex flex-1 items-center rounded-full bg-secondary border border-border px-4 focus-within:border-primary/50 focus-within:bg-card transition-all">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Digite sua mensagem..."
             aria-label="Mensagem"
             disabled={isProcessing || isRecordingAudio}
-            className="w-full bg-transparent py-2.5 text-xs text-zinc-900 outline-none placeholder:text-zinc-400"
+            className="w-full bg-transparent py-2.5 text-xs text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
 
@@ -246,7 +254,7 @@ export function ChatView({ onSwitchToVoice }: { onSwitchToVoice?: () => void }) 
             type="submit"
             disabled={isProcessing}
             aria-label="Enviar mensagem"
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#4F46E5] text-white transition-all active:scale-95 disabled:opacity-50 shadow-md shadow-indigo-500/20"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all active:scale-95 disabled:opacity-50 shadow-md shadow-primary/20"
           >
             <Send className="size-4" aria-hidden="true" />
           </button>
@@ -257,14 +265,14 @@ export function ChatView({ onSwitchToVoice }: { onSwitchToVoice?: () => void }) 
             aria-label={isRecordingAudio ? "Parar gravação" : "Gravar áudio"}
             className={`flex size-10 shrink-0 items-center justify-center rounded-full transition-all active:scale-95 shadow-md ${
               isRecordingAudio
-                ? "bg-rose-500 text-white shadow-rose-500/20 ring-2 ring-rose-400/30"
-                : "bg-[#4F46E5] text-white shadow-indigo-500/20"
+                ? "bg-destructive text-destructive-foreground shadow-destructive/30"
+                : "bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
             }`}
           >
             {isRecordingAudio ? (
-              <MicOff className="size-4" aria-hidden="true" />
+              <Square className="size-4 fill-current" />
             ) : (
-              <Mic className="size-4" aria-hidden="true" />
+              <Mic className="size-4" />
             )}
           </button>
         )}

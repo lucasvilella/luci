@@ -14,6 +14,7 @@ import { LibraryScreen } from "@/components/music/library-screen"
 import { ProfileScreen } from "@/components/music/profile-screen"
 import { SettingsScreen } from "@/components/music/settings-screen"
 import { MiniPlayer } from "@/components/music/mini-player"
+import { MusicDocker } from "@/components/music/music-docker"
 
 function MusicScreenRouter({
   onOpenMenu,
@@ -56,7 +57,16 @@ function MusicScreenRouter({
         {screen.type === "profile" && <ProfileScreen />}
         {screen.type === "settings" && <SettingsScreen />}
       </div>
-      <MiniPlayer />
+      
+      {/* Mini Player */}
+      <div className="flex-none">
+        <MiniPlayer />
+      </div>
+      
+      {/* Docker Inferior de Navegação */}
+      <div className="flex-none">
+        <MusicDocker />
+      </div>
     </div>
   )
 }
