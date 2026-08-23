@@ -38,7 +38,10 @@ export default function Page() {
                 <UnifiedLuciView onOpenMenu={() => setIsMenuOpen(true)} />
               )}
               {currentModule === "music" && (
-                <MusicPlayerView onOpenMenu={() => setIsMenuOpen(true)} />
+                <MusicPlayerView
+                  onOpenMenu={() => setIsMenuOpen(true)}
+                  onSwitchToLuci={() => setCurrentModule("luci")}
+                />
               )}
               {currentModule === "settings" && <ProfileView />}
             </div>

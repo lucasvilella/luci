@@ -15,14 +15,20 @@ import { ProfileScreen } from "@/components/music/profile-screen"
 import { SettingsScreen } from "@/components/music/settings-screen"
 import { MiniPlayer } from "@/components/music/mini-player"
 
-function MusicScreenRouter({ onOpenMenu }: { onOpenMenu?: () => void }) {
+function MusicScreenRouter({
+  onOpenMenu,
+  onSwitchToLuci,
+}: {
+  onOpenMenu?: () => void
+  onSwitchToLuci?: () => void
+}) {
   const { screen } = useMusicNavigation()
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-[#F8FAFC]">
       <div className="flex-1 overflow-hidden">
         {screen.type === "home" && <MusicHome onOpenMenu={onOpenMenu} />}
-        {screen.type === "now-playing" && <NowPlaying />}
+        {screen.type === "now-playing" && <NowPlaying onSwitchToLuci={onSwitchToLuci} />}
         {screen.type === "artist" && <ArtistPage artistId={screen.artistId} />}
         {screen.type === "lyrics" && <LyricsView />}
         {screen.type === "search" && <SearchView />}
@@ -55,11 +61,17 @@ function MusicScreenRouter({ onOpenMenu }: { onOpenMenu?: () => void }) {
   )
 }
 
-export function MusicPlayerView({ onOpenMenu }: { onOpenMenu?: () => void }) {
+export function MusicPlayerView({
+  onOpenMenu,
+  onSwitchToLuci,
+}: {
+  onOpenMenu?: () => void
+  onSwitchToLuci?: () => void
+}) {
   return (
     <MusicPlayerProvider>
       <MusicNavigationProvider>
-        <MusicScreenRouter onOpenMenu={onOpenMenu} />
+        <MusicScreenRouter onOpenMenu={onOpenMenu} onSwitchToLuci={onSwitchToLuci} />
       </MusicNavigationProvider>
     </MusicPlayerProvider>
   )
