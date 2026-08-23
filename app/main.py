@@ -8,8 +8,15 @@ Integrates:
 """
 
 import os
-import asyncio
+import sys
 from pathlib import Path
+
+# Adiciona a raiz do projeto ao sys.path para garantir execução no Termux, Docker ou Local
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+import asyncio
 from contextlib import asynccontextmanager
 from typing import Optional, Dict, Any, List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, UploadFile, File, HTTPException, Request, Depends, status
