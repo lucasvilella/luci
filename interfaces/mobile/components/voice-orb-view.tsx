@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { Plus, Mic, Keyboard, Loader2, Sparkles, ArrowUpRight, ImageIcon, FileText, Zap, Menu } from "lucide-react"
 import { luciApiFetch } from "@/lib/api"
 import { useConversation } from "@/hooks/use-conversation"
+import { voiceInputManager } from "@/lib/voice-input-manager"
+import { getOrbState, type OrbState } from "@/lib/orb-state"
 
 // ─── AudioPlayerQueue (reprodução sequencial de chunks TTS) ───
 class AudioPlayerQueue {
@@ -160,7 +162,7 @@ export function VoiceOrbView({
     }
   }
 
-  const { sendVoiceMessage } = useConversation()
+  const { sendVoiceMessage, uploadFile } = useConversation()
 
   // ─── Síntese e Enfileiramento de Voz TTS ───
   const synthesizeAndEnqueueSentence = useCallback(async (sentence: string, index: number) => {
@@ -193,9 +195,7 @@ export function VoiceOrbView({
     isUserActiveSessionRef.current = false
     clearSilenceTimer()
 
-    try {
-      recognitionRef.current?.stop()
-    } catch {}
+    voiceInputManager.stopSpeechRecognition()
     setListening(false)
     isListeningRef.current = false
 
@@ -229,131 +229,90 @@ export function VoiceOrbView({
     }
   }, [sendVoiceMessage, synthesizeAndEnqueueSentence])
 
-  // ─── Inicialização do Reconhecimento de Voz & Wake Word Contínua ───
-  useEffect(() => {
-    audioQueueRef.current = new AudioPlayerQueue((isSpeaking) => {
-      setSpeaking(isSpeaking)
-      if (isSpeaking) {
-        setStatusText("Luci está falando...")
-        try {
-          recognitionRef.current?.stop()
-        } catch {}
-      } else {
-        setStatusText("Diga 'Ei, Luci' ou toque no microfone")
-        // Reinicia a escuta contínua de wake word / resposta
-        setTimeout(() => {
-          try {
-            recognitionRef.current?.start()
-          } catch {}
-        }, 400)
-      }
-    })
-
-    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (SpeechRec) {
-      const rec = new SpeechRec()
-      rec.continuous = true
-      rec.interimResults = true
-      rec.lang = "pt-BR"
-
-      rec.onstart = () => {
-        isListeningRef.current = true
-        setListening(isUserActiveSessionRef.current)
-      }
-
-      rec.onresult = (event: any) => {
-        let interimTranscript = ""
-        let finalTranscript = ""
-
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const item = event.results[i]
-          if (item.isFinal) {
-            finalTranscript += item[0].transcript
-          } else {
-            interimTranscript += item[0].transcript
-          }
-        }
-
-        const currentSpeech = (finalTranscript || interimTranscript).trim()
+  // Inicia o STT compartilhado via voiceInputManager
+  const startListeningSession = useCallback(() => {
+    voiceInputManager.startSpeechRecognition(
+      (currentSpeech: string, isFinal: boolean) => {
         if (!currentSpeech) return
-
-        // 1. Detecção de Wake Word "Luci" / "Lucy" / "Ok Luci" / "Ei Luci"
         const wakeWordRegex = /\b(luci|lucy|luzi|lusi|ok luci|ei luci|hey luci)\b/i
         const hasWakeWord = wakeWordRegex.test(currentSpeech)
 
         if (hasWakeWord && !isUserActiveSessionRef.current) {
-          // Ativação por Wake Word!
           audioQueueRef.current?.initAudioContext()
           isUserActiveSessionRef.current = true
           setListening(true)
           setStatusText("Ouvindo você...")
 
-          // Remove a palavra de ativação e captura o comando que veio junto
           const commandAfterWake = currentSpeech.replace(wakeWordRegex, "").trim()
           capturedTextRef.current = commandAfterWake
           setTranscript(commandAfterWake)
         } else if (isUserActiveSessionRef.current) {
-          // Já está em sessão ativa (ou por toque no botão ou por wake word)
           capturedTextRef.current = currentSpeech.replace(wakeWordRegex, "").trim()
           setTranscript(capturedTextRef.current)
         }
 
-        // 2. Detecção de Silêncio e Envio Rápido
         if (isUserActiveSessionRef.current && capturedTextRef.current.length >= 2) {
           clearSilenceTimer()
-
-          // Se a frase foi marcada como final pela API ou após 800ms de silêncio
-          if (finalTranscript.trim()) {
-            const queryToSend = capturedTextRef.current
-            sendVoiceQuery(queryToSend)
+          if (isFinal) {
+            sendVoiceQuery(capturedTextRef.current)
           } else {
             silenceTimerRef.current = setTimeout(() => {
-              const queryToSend = capturedTextRef.current
-              if (queryToSend.length >= 2) {
-                sendVoiceQuery(queryToSend)
+              if (capturedTextRef.current.length >= 2) {
+                sendVoiceQuery(capturedTextRef.current)
               }
-            }, 800)
+            }, 850)
           }
         }
-      }
-
-      rec.onerror = (event: any) => {
-        if (event.error !== "no-speech") {
-          console.warn("[VoiceOrb] Speech error:", event.error)
-        }
-      }
-
-      rec.onend = () => {
+      },
+      () => {
         isListeningRef.current = false
-        // Se não estiver falando nem processando, reinicia automaticamente para manter a escuta contínua de wake word
         if (!isProcessingRef.current && audioQueueRef.current && !speaking) {
           setTimeout(() => {
-            try {
-              rec.start()
-            } catch {}
+            startListeningSession()
           }, 300)
         }
+      },
+      true
+    )
+  }, [sendVoiceQuery, speaking])
+
+  // ─── Inicialização do Reconhecimento de Voz & Wake Word Compartilhada ───
+  useEffect(() => {
+    voiceInputManager.init().catch(() => {})
+
+    audioQueueRef.current = new AudioPlayerQueue((isSpeaking) => {
+      setSpeaking(isSpeaking)
+      if (isSpeaking) {
+        setStatusText("Luci está falando...")
+        voiceInputManager.stopSpeechRecognition()
+      } else {
+        setStatusText("Diga 'Ei, Luci' ou toque no microfone")
+        setTimeout(() => {
+          startListeningSession()
+        }, 400)
       }
+    })
 
-      recognitionRef.current = rec
+    const unsubscribeWakeWord = voiceInputManager.onWakeWord(() => {
+      if (!isUserActiveSessionRef.current && !speaking && !loading) {
+        audioQueueRef.current?.initAudioContext()
+        isUserActiveSessionRef.current = true
+        setListening(true)
+        setStatusText("Ouvindo você...")
+      }
+    })
 
-      try {
-        rec.start()
-      } catch {}
-    }
+    startListeningSession()
 
     return () => {
       clearSilenceTimer()
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort()
-        } catch {}
-      }
+      unsubscribeWakeWord()
+      voiceInputManager.stopSpeechRecognition()
       if (audioQueueRef.current) {
         audioQueueRef.current.stopAndClear()
       }
     }
-  }, [sendVoiceQuery, speaking])
+  }, [startListeningSession, speaking, loading])
 
   // ─── Botão Central Único: Iniciar Escuta ou Cancelar ───
   const handleCentralMicClick = () => {
@@ -361,7 +320,6 @@ export function VoiceOrbView({
     clearSilenceTimer()
 
     if (speaking) {
-      // Se a Luci estiver falando, o clique interrompe a fala
       audioQueueRef.current?.stopAndClear()
       setSpeaking(false)
       setStatusText("Diga 'Ei, Luci' ou toque no microfone")
@@ -369,26 +327,20 @@ export function VoiceOrbView({
     }
 
     if (listening || isUserActiveSessionRef.current) {
-      // Cancelamento: usuário clicou enquanto estava ouvindo para cancelar sem processar
       isUserActiveSessionRef.current = false
       setListening(false)
       capturedTextRef.current = ""
       setTranscript("")
       setStatusText("Cancelado. Diga 'Ei, Luci' ou toque no microfone")
-      try {
-        recognitionRef.current?.stop()
-      } catch {}
+      voiceInputManager.stopSpeechRecognition()
     } else {
-      // Ativação manual do microfone
       isUserActiveSessionRef.current = true
       setListening(true)
       setTranscript("")
       setResponse("")
       capturedTextRef.current = ""
       setStatusText("Ouvindo você...")
-      try {
-        recognitionRef.current?.start()
-      } catch {}
+      startListeningSession()
     }
   }
 
@@ -403,18 +355,26 @@ export function VoiceOrbView({
     fileInputRef.current?.click()
   }
 
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setStatusText(`Arquivo selecionado: ${file.name}`)
-      // TODO: Enviar ao backend quando endpoint estiver pronto
-      sendVoiceQuery(`Analise o arquivo "${file.name}" que estou enviando.`)
+      setStatusText(`Enviando ${file.name}...`)
+      setLoading(true)
+      try {
+        const reply = await uploadFile(file, "Analise o arquivo anexo.")
+        setResponse(reply)
+        setStatusText(reply ? "Luci analisou o arquivo" : "Diga 'Ei, Luci' ou toque no microfone")
+      } catch (err) {
+        setStatusText("Erro ao enviar arquivo.")
+      } finally {
+        setLoading(false)
+      }
     }
     e.target.value = ""
   }
 
-  // Determinar estado visual do Orb
-  const orbState = loading ? "processing" : speaking ? "speaking" : listening ? "listening" : "idle"
+  // Determinar estado visual do Orb pela Máquina de Estados Oficial (State Machine)
+  const orbState: OrbState = getOrbState(loading, speaking, listening)
 
   return (
     <div className="flex h-full flex-col bg-background animate-view-in select-none">

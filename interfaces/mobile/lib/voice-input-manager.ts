@@ -1,13 +1,17 @@
 /**
- * VoiceInputManager — Gerenciador Unificado de Áudio, Wake Word Local (Porcupine) e Ducking Suave.
- * Implementa escuta contínua no dispositivo sem requisições de rede para transcrição de wake word.
- * Utiliza um único AudioContext compartilhado e controla volume via GainNode sem interromper playback.
+ * VoiceInputManager — Gerenciador Unificado de Áudio, STT, Wake Word Local (Porcupine) e Ducking Suave.
+ * Conforme docs/99_RULES/NON_NEGOTIABLES.md e STATE_MACHINE.md:
+ * - Compartilha um único AudioContext e GainNode com todo o sistema (Música, Orb e Chat).
+ * - Suporta escuta de Wake Word ("Hey Luci" / Porcupine local).
+ * - Fornece suporte unificado a reconhecimento de fala (STT) para evitar instâncias concorrentes.
  */
 
 import { PorcupineWorker } from "@picovoice/porcupine-web"
 import { WebVoiceProcessor } from "@picovoice/web-voice-processor"
 
 export type WakeWordCallback = () => void
+export type SpeechResultCallback = (transcript: string, isFinal: boolean) => void
+export type SpeechEndCallback = () => void
 
 class VoiceInputManager {
   private static instance: VoiceInputManager
@@ -17,6 +21,12 @@ class VoiceInputManager {
   private isInitialized = false
   private isListening = false
   private wakeWordCallbacks: Set<WakeWordCallback> = new Set()
+
+  // STT Unificado (SpeechRecognition)
+  private recognition: any = null
+  private onSpeechResultCallback: SpeechResultCallback | null = null
+  private onSpeechEndCallback: SpeechEndCallback | null = null
+  private isRecognitionActive = false
 
   private constructor() {}
 
@@ -79,7 +89,6 @@ class VoiceInputManager {
 
   /**
    * Inicializa o Porcupine Worker e o WebVoiceProcessor com chave de acesso Picovoice.
-   * Se nenhuma chave estiver configurada ou se ocorrer erro, utiliza detecção via fallback local.
    */
   public async init(accessKey?: string, customKeywordPath?: string): Promise<void> {
     if (this.isInitialized) return
@@ -88,7 +97,6 @@ class VoiceInputManager {
 
     try {
       if (key && typeof window !== "undefined") {
-        // Inicializa o Porcupine com a palavra-chave configurada (ou built-in 'porcupine' / 'hey edison' / customizada)
         const keyword = customKeywordPath
           ? { customWritePath: customKeywordPath, label: "Hey Luci" }
           : { builtin: "Porcupine", sensitivity: 0.65 }
@@ -119,9 +127,86 @@ class VoiceInputManager {
   }
 
   /**
+   * Inicia o reconhecimento de fala unificado (STT) para Orb ou Ditado no Chat.
+   */
+  public startSpeechRecognition(
+    onResult: SpeechResultCallback,
+    onEnd?: SpeechEndCallback,
+    continuous = true
+  ): boolean {
+    if (typeof window === "undefined") return false
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      console.warn("[VoiceInputManager] SpeechRecognition não suportado pelo navegador.")
+      return false
+    }
+
+    this.stopSpeechRecognition()
+
+    try {
+      this.recognition = new SpeechRecognition()
+      this.recognition.lang = "pt-BR"
+      this.recognition.continuous = continuous
+      this.recognition.interimResults = true
+
+      this.onSpeechResultCallback = onResult
+      this.onSpeechEndCallback = onEnd || null
+
+      this.recognition.onresult = (event: any) => {
+        let interimTranscript = ""
+        let finalTranscript = ""
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript
+          } else {
+            interimTranscript += event.results[i][0].transcript
+          }
+        }
+
+        const fullText = (finalTranscript || interimTranscript).trim()
+        if (this.onSpeechResultCallback) {
+          this.onSpeechResultCallback(fullText, Boolean(finalTranscript))
+        }
+      }
+
+      this.recognition.onerror = (e: any) => {
+        console.warn("[VoiceInputManager] Erro no SpeechRecognition:", e)
+      }
+
+      this.recognition.onend = () => {
+        this.isRecognitionActive = false
+        if (this.onSpeechEndCallback) {
+          this.onSpeechEndCallback()
+        }
+      }
+
+      this.recognition.start()
+      this.isRecognitionActive = true
+      return true
+    } catch (err) {
+      console.warn("[VoiceInputManager] Falha ao iniciar SpeechRecognition:", err)
+      this.isRecognitionActive = false
+      return false
+    }
+  }
+
+  /**
+   * Encerra o reconhecimento de fala ativo.
+   */
+  public stopSpeechRecognition(): void {
+    if (this.recognition && this.isRecognitionActive) {
+      try {
+        this.recognition.stop()
+      } catch {}
+    }
+    this.recognition = null
+    this.isRecognitionActive = false
+  }
+
+  /**
    * Realiza ducking de volume suave no áudio via GainNode (sem pausar a mídia).
-   * @param targetLevel Nível de volume reduzido (ex: 0.15 = 15%)
-   * @param rampMs Tempo de transição em milissegundos
    */
   public duckAudio(targetLevel = 0.15, rampMs = 150): void {
     try {
@@ -138,7 +223,6 @@ class VoiceInputManager {
 
   /**
    * Restaura o volume original do áudio suavemente.
-   * @param rampMs Tempo de transição em milissegundos
    */
   public restoreAudio(rampMs = 150): void {
     try {
@@ -154,9 +238,10 @@ class VoiceInputManager {
   }
 
   /**
-   * Pausa ou encerra a captura de microfone do WebVoiceProcessor.
+   * Pausa ou encerra a captura de microfone.
    */
   public async stop(): Promise<void> {
+    this.stopSpeechRecognition()
     if (this.porcupineWorker) {
       try {
         await WebVoiceProcessor.unsubscribe(this.porcupineWorker)

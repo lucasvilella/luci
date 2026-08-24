@@ -23,7 +23,7 @@ const WAKE_WORDS = ['hey luci', 'ei luci', 'luci', 'lucy', 'hey lucy', 'ei lucy'
 const EXIT_WORDS = ['tchau', 'obrigado', 'obrigada', 'valeu', 'cancelar', 'pode ir', 'encerra', 'desligar', 'parar'];
 
 function speakWakewordAck() {
-  // Browser WebSpeech disabled to prevent dual voice conflict with ElevenLabs
+  // Síntese de voz unificada via TTSService (Edge-TTS pt-BR-ThalitaNeural no backend)
   if ('speechSynthesis' in window) {
     try {
       window.speechSynthesis.cancel();

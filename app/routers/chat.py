@@ -2,8 +2,10 @@
 Router de Endpoints de Conversação Unificada (Texto, Voz e Memória Omnichannel).
 """
 
+import uuid
+from pathlib import Path
 from typing import Optional, Dict, Any, List
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form
 from pydantic import BaseModel
 
 from app.services.brain_service import brain_service
@@ -67,7 +69,43 @@ async def chat_voice(req: ChatVoiceRequest, request: Request):
         "assistant_message": result["assistant_message"],
     }
 
-# ─── 3. Timeline / Histórico Unificado ───
+# ─── 3. Endpoint Upload de Arquivo / Multimodal ───
+@router.post("/upload")
+async def chat_upload(
+    request: Request,
+    file: UploadFile = File(...),
+    message: Optional[str] = Form("Analise o arquivo anexo."),
+    userId: Optional[str] = Form(None)
+):
+    """Recebe um arquivo (imagem, documento, pdf), salva temporariamente e envia ao Cérebro da Luci."""
+    user_id = userId or _get_current_user(request)
+    
+    upload_dir = Path(__file__).resolve().parent.parent.parent / "storage" / "uploads"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    
+    clean_filename = f"{uuid.uuid4().hex[:8]}_{file.filename}"
+    file_path = upload_dir / clean_filename
+    
+    with open(file_path, "wb") as f:
+        content = await file.read()
+        f.write(content)
+        
+    full_message = f"{message} (Arquivo: {file.filename})"
+    result = await brain_service.process_chat(
+        user_id=user_id,
+        message=full_message,
+        input_type="text",
+        generate_audio=False,
+        attachment_path=str(file_path)
+    )
+    return {
+        "reply": result["reply"],
+        "user_message": result["user_message"],
+        "assistant_message": result["assistant_message"],
+        "filename": file.filename
+    }
+
+# ─── 4. Timeline / Histórico Unificado ───
 @router.get("/history")
 async def get_history(request: Request, limit: int = 50):
     """Retorna a timeline unificada de mensagens de Texto, Voz e Intérprete."""

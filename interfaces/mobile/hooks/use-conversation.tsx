@@ -29,6 +29,7 @@ type ConversationContextValue = {
   isProcessing: boolean
   sendTextMessage: (text: string) => Promise<string>
   sendVoiceMessage: (text: string, voice?: string) => Promise<{ reply: string; audioBase64?: string }>
+  uploadFile: (file: File, message?: string) => Promise<string>
   clearConversation: () => Promise<void>
   refreshHistory: () => Promise<void>
 }
@@ -195,6 +196,56 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     [isProcessing, userId]
   )
 
+  // ─── Enviar Arquivo / Multimodal ───
+  const uploadFile = useCallback(
+    async (file: File, message = "Analise o arquivo anexo."): Promise<string> => {
+      if (!file || isProcessing) return ""
+
+      const tempUserMsg: UnifiedMessage = {
+        id: `temp_file_${Date.now()}`,
+        role: "user",
+        inputType: "text",
+        content: `[Anexo enviado: ${file.name}] ${message}`,
+        createdAt: Date.now(),
+      }
+
+      setMessages((prev) => [...prev, tempUserMsg])
+      setIsProcessing(true)
+
+      try {
+        const formData = new FormData()
+        formData.append("file", file)
+        formData.append("message", message)
+        formData.append("userId", userId)
+
+        const res = await luciApiFetch("/api/v1/chat/upload", {
+          method: "POST",
+          body: formData,
+        })
+
+        if (!res.ok) throw new Error("Erro ao fazer upload do arquivo")
+        const data = await res.json()
+
+        const botMsg: UnifiedMessage = {
+          id: data.assistant_message?.id || `bot_file_${Date.now()}`,
+          role: "assistant",
+          inputType: "text",
+          content: data.reply || "Arquivo recebido e analisado.",
+          createdAt: Date.now(),
+        }
+
+        setMessages((prev) => [...prev, botMsg])
+        return data.reply
+      } catch (err) {
+        console.error("[ConversationBrain] Erro no upload:", err)
+        return ""
+      } finally {
+        setIsProcessing(false)
+      }
+    },
+    [isProcessing, userId]
+  )
+
   // ─── Limpar Conversa ───
   const clearConversation = useCallback(async () => {
     try {
@@ -209,10 +260,11 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       isProcessing,
       sendTextMessage,
       sendVoiceMessage,
+      uploadFile,
       clearConversation,
       refreshHistory,
     }),
-    [messages, isProcessing, sendTextMessage, sendVoiceMessage, clearConversation, refreshHistory]
+    [messages, isProcessing, sendTextMessage, sendVoiceMessage, uploadFile, clearConversation, refreshHistory]
   )
 
   return <ConversationContext.Provider value={value}>{children}</ConversationContext.Provider>

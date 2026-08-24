@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import { Send, Sparkles, Copy, Mic, Loader2, Trash2, ChevronLeft, Plus, Square } from "lucide-react"
 import { useConversation } from "@/hooks/use-conversation"
+import { voiceInputManager } from "@/lib/voice-input-manager"
 
 const SUGGESTIONS = [
   "Qual a previsão do tempo para hoje?",
@@ -18,12 +19,11 @@ export function ChatView({
   onSwitchToVoice?: () => void
   onOpenMenu?: () => void
 }) {
-  const { messages, isProcessing, sendTextMessage, clearConversation } = useConversation()
+  const { messages, isProcessing, sendTextMessage, uploadFile, clearConversation } = useConversation()
   const [input, setInput] = useState("")
   const [isRecordingAudio, setIsRecordingAudio] = useState(false)
   const [recordingText, setRecordingText] = useState("")
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
-  const recognitionRef = useRef<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const scrollToBottom = () => {
@@ -41,13 +41,10 @@ export function ChatView({
     await sendTextMessage(trimmed)
   }
 
-  // ─── Gravação de áudio → transcrição → texto ───
+  // ─── Gravação de áudio → transcrição → texto via VoiceInputManager (Modo Ditado) ───
   const handleToggleRecording = useCallback(() => {
     if (isRecordingAudio) {
-      // Parar gravação
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop() } catch {}
-      }
+      voiceInputManager.stopSpeechRecognition()
       setIsRecordingAudio(false)
       if (recordingText.trim()) {
         handleSend(recordingText.trim())
@@ -56,37 +53,20 @@ export function ChatView({
       return
     }
 
-    // Iniciar gravação
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (!SpeechRecognition) return
-
-    const recognition = new SpeechRecognition()
-    recognition.lang = "pt-BR"
-    recognition.continuous = true
-    recognition.interimResults = true
-    recognitionRef.current = recognition
-
-    recognition.onresult = (event: any) => {
-      const transcript = Array.from(event.results)
-        .map((res: any) => res[0].transcript)
-        .join("")
-      setRecordingText(transcript)
-    }
-
-    recognition.onerror = () => {
-      setIsRecordingAudio(false)
-      setRecordingText("")
-    }
-
-    recognition.onend = () => {
-      // Não faz auto-send aqui, o user decide quando parar
-    }
-
     setIsRecordingAudio(true)
     setRecordingText("")
-    try {
-      recognition.start()
-    } catch {
+
+    const started = voiceInputManager.startSpeechRecognition(
+      (transcript: string) => {
+        setRecordingText(transcript)
+      },
+      () => {
+        setIsRecordingAudio(false)
+      },
+      true
+    )
+
+    if (!started) {
       setIsRecordingAudio(false)
     }
   }, [isRecordingAudio, recordingText, isProcessing])
@@ -96,10 +76,10 @@ export function ChatView({
     fileInputRef.current?.click()
   }
 
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      handleSend(`Analise o arquivo "${file.name}" que estou enviando.`)
+      await uploadFile(file, "Analise o arquivo anexo.")
     }
     e.target.value = ""
   }
