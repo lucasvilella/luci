@@ -75,9 +75,17 @@ async def verify_api_secret(request: Request = None):
 async def lifespan(app: FastAPI):
     print(f"[Luci Core] Inicializada com sucesso na porta {settings.port}")
     print(f"[Security] Protecao por Chave Secreta de API Ativa.")
-    # Pré-aquecimento do feed do LuciMusic em background (0ms no primeiro clique)
-    from app.services.lucimusic_service import lucimusic_service
-    asyncio.create_task(lucimusic_service.get_home_feed("lucasmvilella"))
+    # Pré-aquecimento assíncrono da curadoria do LuciMusic
+    async def _warmup_music():
+        try:
+            from app.services.music_intelligence_engine import music_intelligence_engine
+            from app.services.lucimusic_service import lucimusic_service
+            curation = await music_intelligence_engine.get_home_curation("lucasmvilella")
+            await lucimusic_service.resolve_home_curation(curation, "lucasmvilella")
+        except Exception as e:
+            print(f"[Warmup] Aviso ao pre-aquecer musica: {e}")
+
+    asyncio.create_task(_warmup_music())
     yield
     print("[Luci Core] Desligamento seguro concluido.")
 
