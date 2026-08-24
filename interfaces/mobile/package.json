@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
+    "@picovoice/porcupine-web": "^4.0.1",
+    "@picovoice/web-voice-processor": "^4.0.10",
     "@vercel/analytics": "1.6.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

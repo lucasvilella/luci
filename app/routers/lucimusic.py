@@ -8,6 +8,7 @@ from fastapi import APIRouter, Query, HTTPException, Request, Body
 from pydantic import BaseModel
 
 from app.services.lucimusic_service import lucimusic_service
+from app.services.music_intelligence_engine import music_intelligence_engine
 from app.database.music_db import MusicDatabase
 
 router = APIRouter(prefix="/api/v1/music", tags=["LuciMusic"])
@@ -23,19 +24,24 @@ def _get_current_user(request: Request) -> str:
         return user_query
     return "lucas"
 
-# ─── 1. Feed Principal (Início / Daily Mixes) ───
+# ─── 1. Feed Principal (Início / Daily Mixes orquestrados pelo MusicIntelligenceEngine) ───
 @app_home := router.get("/home")
 async def get_music_home(request: Request):
-    """Retorna o feed completo da tela Início (Mix Diário 1..4, Tocadas Recentemente, Top Brasil)."""
+    """
+    Retorna o feed completo da tela Início.
+    O MusicIntelligenceEngine infere o contexto cognitivo e o LuciMusicService busca as faixas.
+    """
     user_id = _get_current_user(request)
-    feed = await lucimusic_service.get_home_feed(user_id)
+    curation = await music_intelligence_engine.get_home_curation(user_id)
+    feed = await lucimusic_service.resolve_home_curation(curation, user_id)
     return feed
 
 @router.get("/daily-mixes")
 async def get_daily_mixes(request: Request):
-    """Retorna os 4 Mixes Diários personalizados do usuário."""
+    """Retorna os Daily Mixes personalizados orquestrados pelo Engine."""
     user_id = _get_current_user(request)
-    mixes = await lucimusic_service.generate_daily_mixes(user_id)
+    curation = await music_intelligence_engine.get_home_curation(user_id)
+    mixes = await lucimusic_service.resolve_seeds_to_tracks(curation.get("daily_mix_seeds", []))
     return {"mixes": mixes}
 
 @router.get("/genres")
@@ -154,7 +160,7 @@ async def get_album(album_id: str, title: Optional[str] = Query(None), artist: O
     data = await lucimusic_service.get_album_details(album_id=album_id, title=title, artist=artist)
     return data
 
-# ─── 7. Histórico de Reprodução ───
+# ─── 7. Histórico de Reprodução e Sinais de Aprendizado ───
 class TrackPayload(BaseModel):
     id: str
     title: str
@@ -163,11 +169,37 @@ class TrackPayload(BaseModel):
     thumbnail: Optional[str] = ""
     duration: Optional[int] = 0
 
+class TasteSignalPayload(BaseModel):
+    track_id: str
+    artist: Optional[str] = ""
+    signal_type: str  # 'completed', 'skipped_early', 'liked', 'replayed', 'added_to_playlist'
+    context: Optional[str] = "app_playback"
+
 @router.post("/history")
 async def add_history(track: TrackPayload, request: Request):
-    """Registra uma faixa reproduzida no histórico do usuário."""
+    """Registra uma faixa reproduzida no histórico do usuário e emite sinal de aprendizado."""
     user_id = _get_current_user(request)
     MusicDatabase.add_to_history(user_id, track.model_dump())
+    MusicDatabase.record_taste_signal(
+        user_id=user_id,
+        track_id=track.id,
+        artist=track.artist,
+        signal_type="completed",
+        context="history_play"
+    )
+    return {"status": "ok"}
+
+@router.post("/signal")
+async def record_signal(payload: TasteSignalPayload, request: Request):
+    """Registra um sinal explícito ou implícito de preferência musical."""
+    user_id = _get_current_user(request)
+    MusicDatabase.record_taste_signal(
+        user_id=user_id,
+        track_id=payload.track_id,
+        artist=payload.artist,
+        signal_type=payload.signal_type,
+        context=payload.context
+    )
     return {"status": "ok"}
 
 @router.get("/history")
@@ -180,9 +212,17 @@ async def get_history(request: Request, limit: int = Query(50, le=100)):
 # ─── 8. Músicas Curtidas ───
 @router.post("/like")
 async def toggle_like(track: TrackPayload, request: Request):
-    """Adiciona ou remove uma faixa das Músicas Curtidas."""
+    """Adiciona ou remove uma faixa das Músicas Curtidas e grava sinal de aprendizado."""
     user_id = _get_current_user(request)
     is_liked = MusicDatabase.toggle_like(user_id, track.model_dump())
+    signal = "liked" if is_liked else "unliked"
+    MusicDatabase.record_taste_signal(
+        user_id=user_id,
+        track_id=track.id,
+        artist=track.artist,
+        signal_type=signal,
+        context="user_toggle_like"
+    )
     return {"is_liked": is_liked}
 
 @router.get("/liked")

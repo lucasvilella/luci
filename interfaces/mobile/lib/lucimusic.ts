@@ -263,3 +263,23 @@ export async function fetchAlbumDetails(
   return res.json()
 }
 
+export async function recordTasteSignal(
+  trackId: string,
+  artist: string,
+  signalType: "completed" | "skipped_early" | "liked" | "replayed" | "added_to_playlist",
+  context = "app_playback"
+): Promise<void> {
+  try {
+    await luciApiFetch("/api/v1/music/signal", {
+      method: "POST",
+      body: JSON.stringify({
+        track_id: trackId,
+        artist: artist,
+        signal_type: signalType,
+        context: context
+      })
+    })
+  } catch {}
+}
+
+

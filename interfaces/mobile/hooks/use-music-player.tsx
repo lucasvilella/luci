@@ -20,6 +20,7 @@ import {
   fetchLikedTracks,
   recordTrackPlayed,
 } from "@/lib/lucimusic"
+import { voiceInputManager } from "@/lib/voice-input-manager"
 
 // ─── Tipos ───────────────────────────────────────────────────────────
 
@@ -406,6 +407,12 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     if (ytPlayerRef.current?.setVolume) {
       ytPlayerRef.current.setVolume(clamped * 100)
     }
+    // Sincroniza suavemente no GainNode compartilhado
+    try {
+      const gainNode = voiceInputManager.getMusicGainNode()
+      const ctx = voiceInputManager.getAudioContext()
+      gainNode.gain.setValueAtTime(clamped, ctx.currentTime)
+    } catch {}
   }, [])
 
   const toggleShuffle = useCallback(() => {

@@ -22,7 +22,8 @@ import {
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { TrackImage } from "./track-image"
-import { fetchPlaylists, addTrackToPlaylist, createPlaylist, type UserPlaylist } from "@/lib/lucimusic"
+import { fetchPlaylists, addTrackToPlaylist, createPlaylist, type UserPlaylist, recordTasteSignal } from "@/lib/lucimusic"
+import { voiceInputManager } from "@/lib/voice-input-manager"
 
 export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) {
   const {
@@ -162,6 +163,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
         } catch {}
       }
       setIsLuciListening(false)
+      voiceInputManager.restoreAudio(200)
       setVolume(1.0)
       return
     }
@@ -171,6 +173,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     setLuciSpeechText("")
 
     // Reduz o volume da música para 15%
+    voiceInputManager.duckAudio(0.15, 150)
     setVolume(0.15)
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
@@ -200,6 +203,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
             setLuciStatusText("Luci: 'Entendido! Executando com base nesta música.'")
             setTimeout(() => {
               setIsLuciListening(false)
+              voiceInputManager.restoreAudio(200)
               setVolume(1.0)
               setLuciStatusText("")
               setLuciSpeechText("")
@@ -207,6 +211,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
           }, 800)
         } else {
           setIsLuciListening(false)
+          voiceInputManager.restoreAudio(200)
           setVolume(1.0)
           setLuciStatusText("")
         }
@@ -221,6 +226,22 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
       setLuciStatusText("Microfone ativado. Fale o comando.")
     }
   }, [isLuciListening, luciSpeechText, setVolume])
+
+  // ─── Escuta contínua de Wake Word local ("Hey Luci" / Porcupine) ───
+  useEffect(() => {
+    voiceInputManager.init().catch(() => {})
+
+    const unsubscribe = voiceInputManager.onWakeWord(() => {
+      console.log("[NowPlaying] Wake Word ativada automaticamente pelo microfone.")
+      if (!isLuciListening) {
+        handleTriggerLuciVoice()
+      }
+    })
+
+    return () => {
+      unsubscribe()
+    }
+  }, [handleTriggerLuciVoice, isLuciListening])
 
   const handleSeek = useCallback(
     (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {

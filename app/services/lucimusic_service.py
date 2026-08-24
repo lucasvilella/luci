@@ -464,7 +464,7 @@ class LuciMusicService:
                 "artist_thumbnail": artist_thumb,
                 "year": year,
                 "thumbnail": thumb,
-                "tracks": tracks,
+            "tracks": tracks,
                 "more_from_artist": more_from_artist,
                 "you_might_like": []
             }
@@ -474,103 +474,47 @@ class LuciMusicService:
 
         return await loop.run_in_executor(None, _fetch_album)
 
-    # ─── 6. Motor "Daily Mix" (Spotify Style — Atualização 1x ao dia às 00:01) ───
-    async def generate_daily_mixes(self, user_id: str, force_refresh: bool = False) -> List[Dict[str, Any]]:
+    # ─── 6. Resolução de Sementes de Busca para Faixas e Playlists (Provider Puro) ───
+    async def resolve_seeds_to_tracks(self, seeds: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
-        Gera 5 listas personalizadas 'Daily Mix' baseadas nas preferências reais do usuário.
-        Regra: Gerado exatamente UMA vez ao dia às 00:01 e persistido no SQLite.
-        Só gera novas atualizações após a virada para 00:01 do dia seguinte.
+        Recebe sementes geradas pelo MusicIntelligenceEngine e busca as faixas reais
+        correspondentes no YouTube Music, formatando cada item de forma padronizada.
         """
-        import datetime
-        now = datetime.datetime.now()
-        # Se for antes das 00:01, a chave pertence ao dia anterior
-        if now.hour == 0 and now.minute == 0:
-            active_date = (now - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-        else:
-            active_date = now.strftime("%Y-%m-%d")
+        if not self.ytm or not seeds:
+            return []
 
-        # 1. Checa se já temos o Daily Mix gerado para o dia de hoje no SQLite
-        if not force_refresh:
-            persisted_mixes = MusicDatabase.get_daily_mixes_cache(user_id, active_date)
-            if persisted_mixes:
-                return persisted_mixes
-
-        top_artists = MusicDatabase.get_top_artists(user_id, limit=5)
-        
-        default_mix_seeds = [
-            {
-                "title": "Daily Mix 1",
-                "genre": "Hugo & Guilherme, Clayton & Romário e George Henrique",
-                "query": "Hugo e Guilherme Clayton e Romario George Henrique e Rodrigo Henrique e Juliano ao vivo",
-                "color": "from-emerald-700 to-teal-950"
-            },
-            {
-                "title": "Daily Mix 2",
-                "genre": "Vitor e Luan, Panda, Ícaro e Gilmar e Fred Liel",
-                "query": "Vitor e Luan Panda Icaro e Gilmar Humberto e Ronaldo Lauana Prado ao vivo",
-                "color": "from-amber-700 to-orange-950"
-            },
-            {
-                "title": "Daily Mix 3",
-                "genre": "MC Kako, MC Tuto, MC Don Juan e DJ BOY",
-                "query": "MC Kako MC Tuto MC Don Juan MC Magal DJ BOY Rashid funk consciente",
-                "color": "from-purple-700 to-indigo-950"
-            },
-            {
-                "title": "Daily Mix 4",
-                "genre": "Belchior, Jorge Vercillo, Liniker e Secos & Molhados",
-                "query": "Belchior Jorge Vercillo Liniker Secos e Molhados Zé Ramalho Vanessa da Mata MPB",
-                "color": "from-rose-700 to-red-950"
-            },
-            {
-                "title": "Daily Mix 5",
-                "genre": "Felipe e Rodrigo, Murilo Huff, Diego & Victor Hugo e Thauane",
-                "query": "Felipe e Rodrigo Murilo Huff Diego e Victor Hugo Matheus e Kauan Jorge e Mateus",
-                "color": "from-blue-700 to-slate-950"
-            },
-        ]
-
-        mixes = []
         loop = asyncio.get_running_loop()
 
-        for idx, seed in enumerate(default_mix_seeds):
-            if idx < len(top_artists) and top_artists[idx].get("artist"):
-                anchor_artist = top_artists[idx]["artist"]
-                mix_title = f"Daily Mix {idx + 1}"
-                search_query = f"{anchor_artist} {seed['query']}"
-                subtitle = f"{anchor_artist} e artistas semelhantes"
-            else:
-                mix_title = seed["title"]
-                search_query = seed["query"]
-                subtitle = seed["genre"]
+        def _search_seed(seed: Dict[str, Any]) -> Dict[str, Any]:
+            query = seed.get("search_query") or seed.get("query") or seed.get("title", "")
+            limit = seed.get("limit", 15)
+            try:
+                res = self.ytm.search(query, filter="songs", limit=limit)
+                tracks = [self._format_track(t) for t in res if t.get("videoId")]
+            except Exception as e:
+                print(f"[LuciMusic Provider] Erro ao buscar semente '{query}': {e}")
+                tracks = []
 
-            def _get_mix_tracks(q=search_query):
-                try:
-                    res = self.ytm.search(q, filter="songs", limit=15)
-                    return [self._format_track(t) for t in res if t.get("videoId")]
-                except Exception:
-                    return []
-
-            tracks = await loop.run_in_executor(None, _get_mix_tracks)
-            thumb = tracks[0]["thumbnail"] if tracks else ""
-            mixes.append({
-                "id": f"daily_mix_{idx + 1}",
-                "title": mix_title,
-                "subtitle": subtitle,
-                "gradient": seed["color"],
+            thumb = tracks[0]["thumbnail"] if tracks else (seed.get("thumbnail") or "")
+            return {
+                "id": seed.get("id") or f"seed_{seed.get('title', '').lower().replace(' ', '_')}",
+                "title": seed.get("title", "Mix"),
+                "subtitle": seed.get("subtitle", ""),
+                "gradient": seed.get("gradient", "from-emerald-700 to-teal-950"),
                 "thumbnail": thumb,
+                "is_fallback": seed.get("is_fallback", False),
                 "tracks": tracks
-            })
+            }
 
-        # Salva no SQLite com a chave do dia (mantém até as 00:01 do dia seguinte)
-        if mixes:
-            MusicDatabase.save_daily_mixes_cache(user_id, active_date, mixes)
+        tasks = [loop.run_in_executor(None, _search_seed, s) for s in seeds]
+        return await asyncio.gather(*tasks)
 
-        return mixes
-
-    # ─── 7. Feed da Tela Inicial ───
-    async def get_home_feed(self, user_id: str) -> Dict[str, Any]:
-        """Feed completo da Home (Mix Diários, Tocadas Recentemente, Em Alta no Brasil) com Cache."""
+    # ─── 7. Resolução da Curadoria Completa da Home ───
+    async def resolve_home_curation(self, curation: Dict[str, Any], user_id: str) -> Dict[str, Any]:
+        """
+        Monta o feed completo da Home a partir das decisões tomadas pelo MusicIntelligenceEngine.
+        O Provider apenas busca, formata e organiza os dados sem tomar decisões de gosto.
+        """
         cache_key = f"home_feed_{user_id}"
         cached = home_feed_cache.get(cache_key)
         if cached:
@@ -578,23 +522,60 @@ class LuciMusicService:
             cached["liked_preview"] = MusicDatabase.get_liked_songs(user_id, limit=10)
             return cached
 
-        daily_mixes = await self.generate_daily_mixes(user_id)
-        history = MusicDatabase.get_history(user_id, limit=10)
-        liked_songs = MusicDatabase.get_liked_songs(user_id, limit=10)
+        # 1. Checa cache diário de mixes no SQLite para persistência diária até 00:01
+        import datetime
+        now = datetime.datetime.now()
+        active_date = (now - datetime.timedelta(days=1)).strftime("%Y-%m-%d") if (now.hour == 0 and now.minute == 0) else now.strftime("%Y-%m-%d")
+        
+        daily_mixes = MusicDatabase.get_daily_mixes_cache(user_id, active_date)
+        if not daily_mixes:
+            daily_mix_seeds = curation.get("daily_mix_seeds", [])
+            daily_mixes = await self.resolve_seeds_to_tracks(daily_mix_seeds)
+            if daily_mixes:
+                MusicDatabase.save_daily_mixes_cache(user_id, active_date, daily_mixes)
 
+        # 2. Resolução paralela das demais seções
         loop = asyncio.get_running_loop()
+
         def _get_charts():
             try:
-                res = self.ytm.search("Top Brasil 2026 Hits", filter="songs", limit=12)
+                res = self.ytm.search(curation.get("trending_query", "Top Brasil 2026 Hits"), filter="songs", limit=12)
                 return [self._format_track(t) for t in res if t.get("videoId")]
             except Exception:
                 return []
 
-        # ─── Seção Especial: Criado pela Luci (IA Contextual) ───
+        def _get_new_releases():
+            try:
+                res = self.ytm.search(curation.get("new_releases_query", "Novos Lançamentos 2026 Hits"), filter="songs", limit=12)
+                return [self._format_track(t) for t in res if t.get("videoId")]
+            except Exception:
+                return []
+
+        def _get_favorite_albums():
+            fav_seeds = curation.get("favorite_albums_seeds", [])
+            albums_list = []
+            for s in fav_seeds:
+                q = s.get("search_query", "")
+                art = s.get("artist", "")
+                try:
+                    res = self.ytm.search(q, filter="albums", limit=1)
+                    if res:
+                        item = res[0]
+                        thumb = (item.get("thumbnails") or [{}])[-1].get("url", "")
+                        albums_list.append({
+                            "id": item.get("browseId", ""),
+                            "title": item.get("title", ""),
+                            "artist": art or (item.get("artists", [{}])[0].get("name", "") if item.get("artists") else ""),
+                            "year": item.get("year", "2024"),
+                            "thumbnail": thumb
+                        })
+                except Exception:
+                    pass
+            return albums_list
+
+        # Playlists criadas pela Luci salvas no SQLite
         ai_playlists = MusicDatabase.get_user_playlists(user_id)
         created_by_luci = [p for p in ai_playlists if p.get("is_ai_generated")]
-
-        # Se não houver nenhuma salva ainda no banco, gera mixes temáticos com a assinatura da Luci
         if not created_by_luci:
             created_by_luci = [
                 {
@@ -626,65 +607,18 @@ class LuciMusicService:
                 }
             ]
 
-        # ─── 1. Novos Lançamentos em Alta ───
-        def _get_new_releases():
-            try:
-                res = self.ytm.search("Novos Lançamentos 2026 Hits", filter="songs", limit=12)
-                return [self._format_track(t) for t in res if t.get("videoId")]
-            except Exception:
-                return []
+        # Resolução paralela
+        similarity_task = self.resolve_seeds_to_tracks(curation.get("similarity_seeds", []))
+        trending_task = loop.run_in_executor(None, _get_charts)
+        new_releases_task = loop.run_in_executor(None, _get_new_releases)
+        albums_task = loop.run_in_executor(None, _get_favorite_albums)
 
-        # ─── 2. Playlists com Artistas Semelhantes (Com base no que você ouviu) ───
-        def _get_similarity_playlists():
-            seeds = [
-                {"title": "Resenha Sertaneja & Modão", "query": "Clayton e Romario Hugo e Guilherme Mayke e Rodrigo ao vivo", "color": "from-amber-600 to-yellow-900"},
-                {"title": "Trap & Funk de Rua", "query": "MC Kako MC Tuto DJ BOY Matue Cabelinho", "color": "from-purple-600 to-indigo-900"},
-                {"title": "Poesia & Brasilidades", "query": "Belchior Jorge Vercillo Liniker Secos e Molhados MPB", "color": "from-teal-600 to-emerald-950"},
-                {"title": "Sertanejo Apaixonado", "query": "Felipe e Rodrigo Murilo Huff Matheus e Kauan Jorge e Mateus", "color": "from-rose-600 to-red-950"},
-            ]
-            results = []
-            for s in seeds:
-                try:
-                    res = self.ytm.search(s["query"], filter="songs", limit=15)
-                    tracks = [self._format_track(t) for t in res if t.get("videoId")]
-                    thumb = tracks[0]["thumbnail"] if tracks else ""
-                    results.append({
-                        "id": f"similar_{s['title'].lower().replace(' ', '_')}",
-                        "title": s["title"],
-                        "subtitle": "Playlists com artistas semelhantes aos que você ouve",
-                        "gradient": s["color"],
-                        "thumbnail": thumb,
-                        "tracks": tracks
-                    })
-                except Exception:
-                    pass
-            return results
+        based_on_listened, trending, new_releases, favorite_albums = await asyncio.gather(
+            similarity_task, trending_task, new_releases_task, albums_task
+        )
 
-        # ─── 3. Álbuns Favoritos (Álbuns dos artistas que você mais adora) ───
-        def _get_favorite_albums():
-            fav_artists = ["Hugo & Guilherme", "Clayton & Romário", "Murilo Huff", "Belchior", "Jorge Vercillo", "Felipe e Rodrigo"]
-            albums_list = []
-            for art in fav_artists:
-                try:
-                    res = self.ytm.search(f"{art} album", filter="albums", limit=1)
-                    if res:
-                        item = res[0]
-                        thumb = (item.get("thumbnails") or [{}])[-1].get("url", "")
-                        albums_list.append({
-                            "id": item.get("browseId", ""),
-                            "title": item.get("title", ""),
-                            "artist": art,
-                            "year": item.get("year", "2024"),
-                            "thumbnail": thumb
-                        })
-                except Exception:
-                    pass
-            return albums_list
-
-        trending = await loop.run_in_executor(None, _get_charts)
-        new_releases = await loop.run_in_executor(None, _get_new_releases)
-        based_on_listened = await loop.run_in_executor(None, _get_similarity_playlists)
-        favorite_albums = await loop.run_in_executor(None, _get_favorite_albums)
+        history = MusicDatabase.get_history(user_id, limit=10)
+        liked_songs = MusicDatabase.get_liked_songs(user_id, limit=10)
 
         feed_data = {
             "created_by_luci": created_by_luci,
@@ -753,4 +687,3 @@ class LuciMusicService:
 
 # Instância Singleton
 lucimusic_service = LuciMusicService()
-

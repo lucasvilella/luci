@@ -87,6 +87,19 @@ def init_db():
     )
     """)
 
+    # 5. Tabela de Sinais de Aprendizado de Gosto Musical
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS music_taste_signals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        track_id TEXT NOT NULL,
+        artist TEXT,
+        signal_type TEXT NOT NULL,
+        context TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     # Migração segura para bancos existentes
     try:
         cursor.execute("ALTER TABLE playback_history ADD COLUMN context_tag TEXT DEFAULT ''")
@@ -198,6 +211,83 @@ class MusicDatabase:
         rows = cursor.fetchall()
         conn.close()
         return [dict(r) for r in rows]
+
+    @staticmethod
+    def record_taste_signal(
+        user_id: str,
+        track_id: str,
+        artist: Optional[str] = None,
+        signal_type: str = "completed",
+        context: Optional[str] = None
+    ) -> None:
+        """Registra um sinal explícito ou implícito de preferência musical."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT INTO music_taste_signals (user_id, track_id, artist, signal_type, context)
+        VALUES (?, ?, ?, ?, ?)
+        """, (user_id, track_id, artist or "", signal_type, context or ""))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def get_taste_profile(user_id: str, limit: int = 10) -> Dict[str, Any]:
+        """
+        Calcula o perfil de gosto do usuário baseado em sinais ponderados:
+        - liked: 3.0
+        - added_to_playlist: 3.0
+        - replayed: 2.5
+        - completed: 2.0
+        - playback_history: 1.0
+        - skipped_early: -1.5
+        """
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Top artistas ponderados
+        cursor.execute("""
+        SELECT artist,
+               SUM(CASE
+                   WHEN signal_type IN ('liked', 'added_to_playlist') THEN 3.0
+                   WHEN signal_type = 'replayed' THEN 2.5
+                   WHEN signal_type = 'completed' THEN 2.0
+                   WHEN signal_type = 'skipped_early' THEN -1.5
+                   ELSE 1.0
+               END) as score,
+               COUNT(*) as total_signals
+        FROM music_taste_signals
+        WHERE user_id = ? AND artist != '' AND artist IS NOT NULL
+        GROUP BY artist
+        HAVING score > 0
+        ORDER BY score DESC
+        LIMIT ?
+        """, (user_id, limit))
+        top_artists_signals = [dict(r) for r in cursor.fetchall()]
+
+        # Top faixas ponderadas
+        cursor.execute("""
+        SELECT track_id, artist,
+               SUM(CASE
+                   WHEN signal_type IN ('liked', 'added_to_playlist') THEN 3.0
+                   WHEN signal_type = 'replayed' THEN 2.5
+                   WHEN signal_type = 'completed' THEN 2.0
+                   WHEN signal_type = 'skipped_early' THEN -1.5
+                   ELSE 1.0
+               END) as score
+        FROM music_taste_signals
+        WHERE user_id = ?
+        GROUP BY track_id, artist
+        HAVING score > 0
+        ORDER BY score DESC
+        LIMIT ?
+        """, (user_id, limit))
+        top_tracks_signals = [dict(r) for r in cursor.fetchall()]
+
+        conn.close()
+        return {
+            "top_artists": top_artists_signals,
+            "top_tracks": top_tracks_signals
+        }
 
     @staticmethod
     def get_top_artists(user_id: str, limit: int = 6) -> List[Dict[str, Any]]:
