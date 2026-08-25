@@ -9,6 +9,7 @@ Responsabilidade:
 """
 
 import os
+import re
 import json
 import asyncio
 import httpx
@@ -30,10 +31,11 @@ DIRETRIZES FUNDAMENTAIS:
 5. Seja concisa, expressiva e acolhedora."""
 
 class ModelRouter:
-    """Roteador inteligente de execução e modelos de linguagem."""
+    """Roteador inteligente de execução e modelos de linguagem (Groq Ultra-Fast LPU + Gemini Fallback)."""
 
     def __init__(self):
-        self.api_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
+        self.groq_api_key = settings.groq_api_key or os.getenv("GROQ_API_KEY")
+        self.gemini_api_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
 
     async def route(
         self,
@@ -116,15 +118,62 @@ class ModelRouter:
         message: str,
         attachment_path: Optional[str] = None
     ) -> str:
-        """Invoca o provedor de LLM na nuvem (Gemini) com histórico unificado e personalidade."""
+        """
+        Invoca o melhor provedor de LLM disponível:
+        1. Primário: Groq (LPU Ultra-Fast: llama-3.3-70b-versatile ou llama-3.1-8b-instant) <300ms
+        2. Fallback: Gemini (gemini-2.5-flash / gemini-1.5-flash)
+        """
         context = ConversationDatabase.get_recent_context_for_llm(user_id, limit=12)
 
+        # Monta histórico estruturado
+        messages_payload = [{"role": "system", "content": SYSTEM_PROMPT_LUCI}]
+        for turn in context[:-1]:
+            role = "user" if turn["role"] == "user" else "assistant"
+            messages_payload.append({"role": role, "content": turn["content"]})
+        
+        user_content = message
+        if attachment_path:
+            user_content = f"[Arquivo Anexo]: {attachment_path}\n\n{message}"
+        messages_payload.append({"role": "user", "content": user_content})
+
+        # 1. Tenta Groq (Primário — Latência ultra-baixa de ~200-400ms)
+        if self.groq_api_key:
+            for groq_model in ["groq/compound-mini", "groq/compound", "qwen/qwen3.6-27b"]:
+                try:
+                    async with httpx.AsyncClient(timeout=3.5) as client:
+                        resp = await client.post(
+                            "https://api.groq.com/openai/v1/chat/completions",
+                            headers={
+                                "Authorization": f"Bearer {self.groq_api_key}",
+                                "Content-Type": "application/json"
+                            },
+                            json={
+                                "model": groq_model,
+                                "messages": messages_payload,
+                                "temperature": 0.7,
+                                "max_tokens": 600
+                            }
+                        )
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            choices = data.get("choices", [])
+                            if choices:
+                                raw_text = choices[0].get("message", {}).get("content", "").strip()
+                                # Limpa eventuais tags de pensamento (<think>...</think>)
+                                clean_text = re.sub(r"<think>.*?</think>", "", raw_text, flags=re.DOTALL).strip()
+                                if clean_text:
+                                    return clean_text
+                        else:
+                            print(f"[ModelRouter] Groq status {resp.status_code}: {resp.text[:100]}")
+                except Exception as e:
+                    print(f"[ModelRouter] Falha temporaria no Groq ({groq_model}): {e}. Tentando fallback...")
+
+        # 2. Tenta Gemini (Fallback)
         history_lines = []
         for turn in context[:-1]:
             speaker = "Lucas" if turn["role"] == "user" else "Luci"
             history_lines.append(f"{speaker}: {turn['content']}")
         formatted_history = "\n".join(history_lines)
-
         attachment_note = f"\n[Arquivo Anexo Recebido]: {attachment_path}\n" if attachment_path else ""
 
         full_prompt = (
@@ -135,14 +184,14 @@ class ModelRouter:
             f"Luci:"
         )
 
-        if self.api_key:
-            for model_name in ["gemini-3.6-flash", "gemini-1.5-flash"]:
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.api_key}"
+        if self.gemini_api_key:
+            for model_name in ["gemini-2.5-flash", "gemini-1.5-flash"]:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.gemini_api_key}"
                 payload = {
                     "contents": [{"parts": [{"text": full_prompt}]}]
                 }
                 try:
-                    async with httpx.AsyncClient(timeout=10.0) as client:
+                    async with httpx.AsyncClient(timeout=8.0) as client:
                         resp = await client.post(url, json=payload)
                         if resp.status_code == 200:
                             data = resp.json()
@@ -154,7 +203,7 @@ class ModelRouter:
                                     if text_res:
                                         return text_res
                 except Exception as e:
-                    print(f"[ModelRouter] Erro no modelo {model_name}: {e}")
+                    print(f"[ModelRouter] Erro no fallback Gemini ({model_name}): {e}")
 
         # Fallback caloroso e natural
         lower_msg = message.lower()
