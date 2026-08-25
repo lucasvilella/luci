@@ -115,105 +115,17 @@ class LuciMusicService:
             "durationFormatted": f"{int(duration)//60}:{int(duration)%60:02d}"
         }
 
-    # ─── 1. Extração e Proxy de Áudio (yt-dlp) ───
-    async def get_stream_url(self, track_id: str) -> Dict[str, Any]:
-        """Extrai o melhor stream de áudio Opus/WebM ou AAC para reprodução proxy sem bloqueios."""
-        cached = stream_url_cache.get(track_id)
-        if cached:
-            return cached
+    # ─── 1. Extração e Proxy de Áudio (Delegado ao AudioSourceProvider) ───
+    async def get_stream_url(self, track_id: str, title: Optional[str] = None, artist: Optional[str] = None) -> Dict[str, Any]:
+        """Extrai o melhor stream de áudio via provedor de áudio plugável."""
+        from app.services.music_providers import provider_registry
+        return await provider_registry.resolve_audio_stream(track_id, title=title, artist=artist)
 
-        loop = asyncio.get_running_loop()
-
-        def _extract():
-            ydl_opts = {
-                'format': 'bestaudio[ext=webm]/bestaudio[ext=m4a]/bestaudio/best',
-                'quiet': True,
-                'no_warnings': True,
-                'noplaylist': True,
-                'extract_flat': False,
-                'cachedir': False,
-            }
-            yt_url = f"https://www.youtube.com/watch?v={track_id}"
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(yt_url, download=False)
-                audio_url = info.get("url")
-                format_note = info.get("format_note", "best")
-                ext = info.get("ext", "webm")
-                mime_type = "audio/webm; codecs=\"opus\"" if ext == "webm" else "audio/mp4"
-                return {
-                    "stream_url": audio_url,
-                    "format": format_note,
-                    "ext": ext,
-                    "mime_type": mime_type,
-                    "title": info.get("title"),
-                    "artist": info.get("uploader"),
-                    "duration": info.get("duration")
-                }
-
-        data = await loop.run_in_executor(None, _extract)
-        stream_url_cache.set(track_id, data)
-        return data
-
-    # ─── 2. Busca Global ───
-    async def search(self, query: str, filter_type: Optional[str] = None) -> Dict[str, Any]:
-        """Busca estruturada por Músicas, Artistas, Álbuns e Playlists."""
-        if not self.ytm or not query.strip():
-            return {"songs": [], "artists": [], "albums": [], "playlists": []}
-
-        loop = asyncio.get_running_loop()
-        
-        def _execute_search():
-            if filter_type in ["songs", "artists", "albums", "playlists"]:
-                results = self.ytm.search(query, filter=filter_type, limit=25)
-                return {filter_type: results}
-            else:
-                # Quando busca global, traz músicas oficiais com filtro songs + artistas
-                songs_res = self.ytm.search(query, filter="songs", limit=20)
-                all_res = self.ytm.search(query, limit=20)
-                categorized = {"songs": songs_res, "artists": [], "albums": [], "playlists": []}
-                for r in all_res:
-                    category = r.get("resultType")
-                    if category == "artist":
-                        categorized["artists"].append(r)
-                    elif category == "album":
-                        categorized["albums"].append(r)
-                    elif category == "playlist":
-                        categorized["playlists"].append(r)
-                return categorized
-
-        raw_results = await loop.run_in_executor(None, _execute_search)
-
-        return {
-            "songs": [self._format_track(s) for s in raw_results.get("songs", []) if s.get("videoId")],
-            "artists": [
-                {
-                    "id": a.get("browseId", ""),
-                    "name": a.get("artist", "") or a.get("name", ""),
-                    "thumbnail": (a.get("thumbnails") or [{}])[-1].get("url", "")
-                }
-                for a in raw_results.get("artists", []) if a.get("browseId")
-            ],
-            "albums": [
-                {
-                    "id": alb.get("browseId", ""),
-                    "title": alb.get("title", ""),
-                    "artist": alb.get("artist", "") or (alb.get("artists") or [{}])[0].get("name", ""),
-                    "year": alb.get("year", ""),
-                    "thumbnail": (alb.get("thumbnails") or [{}])[-1].get("url", "")
-                }
-                for alb in raw_results.get("albums", []) if alb.get("browseId")
-            ],
-            "playlists": [
-                {
-                    "id": p.get("browseId", ""),
-                    "title": p.get("title", ""),
-                    "author": p.get("author", ""),
-                    "itemCount": p.get("itemCount", ""),
-                    "thumbnail": (p.get("thumbnails") or [{}])[-1].get("url", "")
-                }
-                for p in raw_results.get("playlists", []) if p.get("browseId")
-            ]
-        }
+    # ─── 2. Busca Global (Delegada ao MetadataProvider com Fallback) ───
+    async def search(self, query: str, filter_type: Optional[str] = None, limit: int = 20) -> Dict[str, Any]:
+        """Busca estruturada através do registry plugável (MusicBrainz primário -> YT Music fallback)."""
+        from app.services.music_providers import provider_registry
+        return await provider_registry.search(query=query, limit=limit, filter_type=filter_type)
 
     # ─── 3. Letras Sincronizadas (LRCLIB) ───
     async def get_lyrics(self, track_id: str, title: str, artist: str, duration: int = 0) -> Dict[str, Any]:
