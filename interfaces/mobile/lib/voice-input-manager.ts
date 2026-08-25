@@ -13,6 +13,8 @@ export type WakeWordCallback = () => void
 export type SpeechResultCallback = (transcript: string, isFinal: boolean) => void
 export type SpeechEndCallback = () => void
 
+export type VoiceContext = "orb" | "music" | "chat"
+
 class VoiceInputManager {
   private static instance: VoiceInputManager
   private audioContext: AudioContext | null = null
@@ -20,7 +22,10 @@ class VoiceInputManager {
   private porcupineWorker: PorcupineWorker | null = null
   private isInitialized = false
   private isListening = false
-  private wakeWordCallbacks: Set<WakeWordCallback> = new Set()
+  
+  // Arbitragem de contexto ativo
+  private activeContext: VoiceContext | null = null
+  private contextCallbacks: Map<VoiceContext, WakeWordCallback> = new Map()
 
   // STT Unificado (SpeechRecognition)
   private recognition: any = null
@@ -38,6 +43,18 @@ class VoiceInputManager {
   }
 
   /**
+   * Define qual tela ou componente está ativo no primeiro plano.
+   */
+  public setActiveContext(context: VoiceContext | null): void {
+    this.activeContext = context
+    console.log(`[VoiceInputManager] Contexto de voz ativo definido para: ${context}`)
+  }
+
+  public getActiveContext(): VoiceContext | null {
+    return this.activeContext
+  }
+
+  /**
    * Obtém ou inicializa o AudioContext compartilhado para todas as interfaces de áudio.
    */
   public getAudioContext(): AudioContext {
@@ -52,39 +69,44 @@ class VoiceInputManager {
   }
 
   /**
-   * Obtém ou cria o GainNode principal para controle de volume do player de música.
+   * Registra um callback para quando a wake word for detectada para um contexto específico.
    */
-  public getMusicGainNode(): GainNode {
-    const ctx = this.getAudioContext()
-    if (!this.musicGainNode) {
-      this.musicGainNode = ctx.createGain()
-      this.musicGainNode.gain.setValueAtTime(1.0, ctx.currentTime)
-      this.musicGainNode.connect(ctx.destination)
-    }
-    return this.musicGainNode
-  }
-
-  /**
-   * Registra um callback para quando a wake word for detectada.
-   */
-  public onWakeWord(callback: WakeWordCallback): () => void {
-    this.wakeWordCallbacks.add(callback)
+  public registerWakeWordHandler(context: VoiceContext, callback: WakeWordCallback): () => void {
+    this.contextCallbacks.set(context, callback)
     return () => {
-      this.wakeWordCallbacks.delete(callback)
+      if (this.contextCallbacks.get(context) === callback) {
+        this.contextCallbacks.delete(context)
+      }
+      if (this.activeContext === context) {
+        this.activeContext = null
+      }
     }
   }
 
   /**
-   * Dispara todos os ouvintes da wake word.
+   * Método de compatibilidade: registra para o contexto atual ou "orb".
+   */
+  public onWakeWord(callback: WakeWordCallback, context: VoiceContext = "orb"): () => void {
+    return this.registerWakeWordHandler(context, callback)
+  }
+
+  /**
+   * Dispara a wake word APENAS para o contexto ativo em primeiro plano.
    */
   private triggerWakeWord() {
-    this.wakeWordCallbacks.forEach((cb) => {
+    const targetContext = this.activeContext || "orb"
+    const handler = this.contextCallbacks.get(targetContext)
+    
+    if (handler) {
+      console.log(`[VoiceInputManager] Disparando Wake Word exclusivamente para o contexto ativo: ${targetContext}`)
       try {
-        cb()
+        handler()
       } catch (err) {
-        console.error("[VoiceInputManager] Erro no callback de wake word:", err)
+        console.error(`[VoiceInputManager] Erro no handler de wake word (${targetContext}):`, err)
       }
-    })
+    } else {
+      console.log(`[VoiceInputManager] Wake Word detectada, mas nenhum handler ativo para contexto '${targetContext}'.`)
+    }
   }
 
   /**

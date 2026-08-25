@@ -279,6 +279,7 @@ export function VoiceOrbView({
   // ─── Inicialização do Reconhecimento de Voz & Wake Word Compartilhada ───
   useEffect(() => {
     voiceInputManager.init().catch(() => {})
+    voiceInputManager.setActiveContext("orb")
 
     audioQueueRef.current = new AudioPlayerQueue((isSpeaking) => {
       setSpeaking(isSpeaking)
@@ -293,7 +294,8 @@ export function VoiceOrbView({
       }
     })
 
-    const unsubscribeWakeWord = voiceInputManager.onWakeWord(() => {
+    const unsubscribeWakeWord = voiceInputManager.registerWakeWordHandler("orb", () => {
+      console.log("[VoiceOrb] Wake Word acionada na tela do Orb.")
       if (!isUserActiveSessionRef.current && !speaking && !loading) {
         audioQueueRef.current?.initAudioContext()
         isUserActiveSessionRef.current = true

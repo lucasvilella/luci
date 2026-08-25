@@ -51,6 +51,8 @@ export type MusicPlayerActions = {
   prev: () => void
   seek: (seconds: number) => void
   setVolume: (v: number) => void
+  duckPlayerVolume: (targetLevel?: number, durationMs?: number) => void
+  restorePlayerVolume: (durationMs?: number) => void
   toggleShuffle: () => void
   toggleRepeat: () => void
   toggleLike: (track: LuciTrack) => Promise<void>
@@ -401,19 +403,74 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const preDuckVolumeRef = useRef<number>(1.0)
+  const duckIntervalRef = useRef<any>(null)
+
   const setVolume = useCallback((v: number) => {
     const clamped = Math.max(0, Math.min(1, v))
     setVolumeState(clamped)
+    preDuckVolumeRef.current = clamped
     if (ytPlayerRef.current?.setVolume) {
       ytPlayerRef.current.setVolume(clamped * 100)
     }
-    // Sincroniza suavemente no GainNode compartilhado
-    try {
-      const gainNode = voiceInputManager.getMusicGainNode()
-      const ctx = voiceInputManager.getAudioContext()
-      gainNode.gain.setValueAtTime(clamped, ctx.currentTime)
-    } catch {}
   }, [])
+
+  // Ducking suave escalonado no YouTube Iframe Player
+  const duckPlayerVolume = useCallback((targetLevel = 0.15, durationMs = 150) => {
+    if (duckIntervalRef.current) {
+      clearInterval(duckIntervalRef.current)
+      duckIntervalRef.current = null
+    }
+
+    const currentVol = volume
+    preDuckVolumeRef.current = currentVol
+    const target = Math.max(0, Math.min(1, targetLevel))
+    const steps = 10
+    const stepTime = Math.max(10, Math.floor(durationMs / steps))
+    let currentStep = 0
+
+    duckIntervalRef.current = setInterval(() => {
+      currentStep++
+      const progressRatio = currentStep / steps
+      const newVol = currentVol + (target - currentVol) * progressRatio
+      setVolumeState(newVol)
+      if (ytPlayerRef.current?.setVolume) {
+        ytPlayerRef.current.setVolume(newVol * 100)
+      }
+      if (currentStep >= steps) {
+        clearInterval(duckIntervalRef.current)
+        duckIntervalRef.current = null
+      }
+    }, stepTime)
+  }, [volume])
+
+  // Restauração suave do volume do player
+  const restorePlayerVolume = useCallback((durationMs = 200) => {
+    if (duckIntervalRef.current) {
+      clearInterval(duckIntervalRef.current)
+      duckIntervalRef.current = null
+    }
+
+    const currentVol = volume
+    const target = preDuckVolumeRef.current || 1.0
+    const steps = 10
+    const stepTime = Math.max(10, Math.floor(durationMs / steps))
+    let currentStep = 0
+
+    duckIntervalRef.current = setInterval(() => {
+      currentStep++
+      const progressRatio = currentStep / steps
+      const newVol = currentVol + (target - currentVol) * progressRatio
+      setVolumeState(newVol)
+      if (ytPlayerRef.current?.setVolume) {
+        ytPlayerRef.current.setVolume(newVol * 100)
+      }
+      if (currentStep >= steps) {
+        clearInterval(duckIntervalRef.current)
+        duckIntervalRef.current = null
+      }
+    }, stepTime)
+  }, [volume])
 
   const toggleShuffle = useCallback(() => {
     setShuffle((prev) => {
@@ -530,6 +587,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       prev,
       seek,
       setVolume,
+      duckPlayerVolume,
+      restorePlayerVolume,
       toggleShuffle,
       toggleRepeat,
       toggleLike,
@@ -561,6 +620,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       prev,
       seek,
       setVolume,
+      duckPlayerVolume,
+      restorePlayerVolume,
       toggleShuffle,
       toggleRepeat,
       toggleLike,

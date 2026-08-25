@@ -47,6 +47,8 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     formatTime,
     playTrack,
     setVolume,
+    duckPlayerVolume,
+    restorePlayerVolume,
   } = useMusicPlayer()
 
   const { pop, goToLyrics, goToArtist, goToAlbumDetail } = useMusicNavigation()
@@ -153,86 +155,49 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     }
   }
 
-  // Handler para falar com a Luci na tela de música com Volume Ducking (15%) e controle manual
+  // ─── Handler para falar com a Luci na tela de música com Volume Ducking suave escalonado ───
   const handleTriggerLuciVoice = useCallback(() => {
     // Se já estiver gravando, o usuário clica novamente para parar e processar
     if (isLuciListening) {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop()
-        } catch {}
-      }
+      voiceInputManager.stopSpeechRecognition()
       setIsLuciListening(false)
-      voiceInputManager.restoreAudio(200)
-      setVolume(1.0)
+      restorePlayerVolume(200)
       return
     }
 
     setIsLuciListening(true)
-    setLuciStatusText("Ouvindo... Fale agora e toque no Mic para enviar.")
+    setLuciStatusText("Ouvindo... Fale agora para a Luci.")
     setLuciSpeechText("")
 
-    // Reduz o volume da música para 15%
-    voiceInputManager.duckAudio(0.15, 150)
-    setVolume(0.15)
+    // Reduz suavemente o volume da música no YouTube Player sem pausar
+    duckPlayerVolume(0.15, 150)
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition()
-      recognition.lang = "pt-BR"
-      recognition.continuous = true
-      recognition.interimResults = true
-      recognitionRef.current = recognition
-
-      recognition.onresult = (event: any) => {
-        const transcript = Array.from(event.results)
-          .map((res: any) => res[0].transcript)
-          .join("")
+    const started = voiceInputManager.startSpeechRecognition(
+      (transcript: string, isFinal: boolean) => {
         setLuciSpeechText(transcript)
-      }
+      },
+      () => {
+        // Callback ao finalizar a fala
+        setIsLuciListening(false)
+        restorePlayerVolume(200)
+        setLuciStatusText("")
+      },
+      false
+    )
 
-      recognition.onerror = (e: any) => {
-        console.warn("Speech error:", e)
-      }
-
-      recognition.onend = () => {
-        // Quando encerra, se houver texto, processa
-        if (luciSpeechText.trim()) {
-          setLuciStatusText("Luci processando...")
-          setTimeout(() => {
-            setLuciStatusText("Luci: 'Entendido! Executando com base nesta música.'")
-            setTimeout(() => {
-              setIsLuciListening(false)
-              voiceInputManager.restoreAudio(200)
-              setVolume(1.0)
-              setLuciStatusText("")
-              setLuciSpeechText("")
-            }, 3000)
-          }, 800)
-        } else {
-          setIsLuciListening(false)
-          voiceInputManager.restoreAudio(200)
-          setVolume(1.0)
-          setLuciStatusText("")
-        }
-      }
-
-      try {
-        recognition.start()
-      } catch (err) {
-        console.warn("Recognition start failed:", err)
-      }
-    } else {
-      setLuciStatusText("Microfone ativado. Fale o comando.")
+    if (!started) {
+      setIsLuciListening(false)
+      restorePlayerVolume(200)
     }
-  }, [isLuciListening, luciSpeechText, setVolume])
+  }, [isLuciListening, duckPlayerVolume, restorePlayerVolume])
 
-  // ─── Escuta contínua de Wake Word local ("Hey Luci" / Porcupine) ───
+  // ─── Escuta de Wake Word com Arbitragem de Contexto Ativo ('music') ───
   useEffect(() => {
     voiceInputManager.init().catch(() => {})
+    voiceInputManager.setActiveContext("music")
 
-    const unsubscribe = voiceInputManager.onWakeWord(() => {
-      console.log("[NowPlaying] Wake Word ativada automaticamente pelo microfone.")
+    const unsubscribe = voiceInputManager.registerWakeWordHandler("music", () => {
+      console.log("[NowPlaying] Wake Word acionada na tela de música.")
       if (!isLuciListening) {
         handleTriggerLuciVoice()
       }
@@ -240,6 +205,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
 
     return () => {
       unsubscribe()
+      voiceInputManager.setActiveContext(null)
     }
   }, [handleTriggerLuciVoice, isLuciListening])
 
