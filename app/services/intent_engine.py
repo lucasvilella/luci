@@ -66,12 +66,12 @@ class IntentEngine:
 
         # ─── 1. FAST-PATH HEURISTICS (<1ms) ───
         
-        # A) Saudações e conversa geral -> REASONING
-        is_greeting_or_chat = bool(re.match(
-            r"^(oi|ol[aá]|ei|tudo bem|como vai|bom dia|boa tarde|boa noite|quem [eé] voc[eê]|ajuda|help|obrigad[oa]|valeu)[.!?\s]*$",
+        # A) Saudações e conversa geral -> REASONING (Fast-path < 1ms)
+        is_greeting_or_chat = bool(re.search(
+            r"\b(oi|ol[aá]|ei|tudo bem|como vai|como voc[eê] est[aá]|bom dia|boa tarde|boa noite|quem [eé] voc[eê]|ajuda|help|obrigad[oa]|valeu)\b",
             clean_input
         ))
-        if is_greeting_or_chat:
+        if is_greeting_or_chat and not any(w in clean_input for w in ["toca", "toque", "tocar", "pausar", "pause", "pr[oó]xima", "proxima", "pular", "acenda", "apague", "ligue", "desligue"]):
             latency = (time.perf_counter() - start_time) * 1000
             return IntentClassificationResult("REASONING", 100, action=None, latency_ms=latency)
 
@@ -94,24 +94,26 @@ class IntentEngine:
                 latency_ms=latency
             )
 
-        if any(clean_input.startswith(w) for w in ["pausar", "pause", "parar musica", "parar música", "mute"]):
+        # Pausar / Mutar música
+        if re.match(r"^(pausar|pause|parar\s*m[uú]sica|mute|mutar)\b", clean_input):
             latency = (time.perf_counter() - start_time) * 1000
             return IntentClassificationResult("COMMAND", 99, action="music.pause", latency_ms=latency)
 
-        if any(clean_input.startswith(w) for w in ["pr[oó]xima", "proxima", "pular musica", "pular música", "next"]):
+        # Próxima música / Pular
+        if re.match(r"^(pr[oó]xima(\s*m[uú]sica)?|proxima(\s*musica)?|pular(\s*m[uú]sica)?|next(\s*song|\s*track)?)\b", clean_input):
             latency = (time.perf_counter() - start_time) * 1000
             return IntentClassificationResult("COMMAND", 99, action="music.next", latency_ms=latency)
 
         # C) Comandos de Informação Rápida / Ferramentas
-        if any(w in clean_input for w in ["tempo", "clima", "temperatura", "vai chover", "previs[aã]o"]):
+        if re.search(r"\b(tempo|clima|temperatura|vai\s*chover|chuva|chover|previs[aã]o)\b", clean_input):
             latency = (time.perf_counter() - start_time) * 1000
             return IntentClassificationResult("COMMAND", 95, action="info.weather", latency_ms=latency)
 
-        if any(w in clean_input for w in ["dolar", "dólar", "euro", "bitcoin", "btc", "cota[cç][aã]o"]):
+        if re.search(r"\b(d[oó]lar|euro|bitcoin|btc|cota[cç][aã]o|moeda)\b", clean_input):
             latency = (time.perf_counter() - start_time) * 1000
             return IntentClassificationResult("COMMAND", 95, action="info.currency", latency_ms=latency)
 
-        if any(w in clean_input for w in ["feriado", "feriados", "dias [uú]teis", "dia [uú]til"]):
+        if re.search(r"\b(feriado|feriados|dias\s*[uú]teis|dia\s*[uú]til)\b", clean_input):
             latency = (time.perf_counter() - start_time) * 1000
             return IntentClassificationResult("COMMAND", 95, action="info.holidays", latency_ms=latency)
 
