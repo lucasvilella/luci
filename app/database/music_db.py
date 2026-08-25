@@ -122,11 +122,22 @@ def init_db():
     )
     """)
 
+    # 6. Tabela de Loudness Pré-calculado (Normalização de Volume ReplayGain Style)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS track_loudness (
+        track_id TEXT PRIMARY KEY,
+        lufs_integrated REAL NOT NULL,
+        gain_adjustment REAL NOT NULL,
+        analyzed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     # Índices para performance e busca rápida
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_user ON playback_history (user_id, played_at DESC)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_search ON playback_history (user_id, title, artist, context_tag)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_liked_user ON liked_songs (user_id, liked_at DESC)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_daily_mix ON daily_mix_cache (user_id, date_key)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_track_loudness ON track_loudness (track_id)")
 
     conn.commit()
     conn.close()
@@ -504,3 +515,31 @@ class MusicDatabase:
         conn.commit()
         conn.close()
         return deleted
+
+    @staticmethod
+    def get_loudness(track_id: str) -> Optional[Dict[str, Any]]:
+        """Recupera o LUFS integrado e o fator de ajuste de ganho para uma faixa."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT track_id, lufs_integrated, gain_adjustment, analyzed_at
+        FROM track_loudness
+        WHERE track_id = ?
+        """, (track_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return dict(row)
+        return None
+
+    @staticmethod
+    def save_loudness(track_id: str, lufs_integrated: float, gain_adjustment: float) -> None:
+        """Salva a medição de LUFS e o fator de ganho ReplayGain no banco SQLite."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT OR REPLACE INTO track_loudness (track_id, lufs_integrated, gain_adjustment)
+        VALUES (?, ?, ?)
+        """, (track_id, round(lufs_integrated, 2), round(gain_adjustment, 4)))
+        conn.commit()
+        conn.close()

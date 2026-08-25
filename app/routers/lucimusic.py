@@ -63,12 +63,25 @@ async def search_music(
 # ─── 3. Resolução de Stream Direto & Proxy de Áudio ───
 @router.get("/stream/{track_id}")
 async def get_audio_stream(track_id: str):
-    """Obtém a URL de áudio direta de alta fidelidade para reprodução."""
+    """Obtém a URL de áudio direta de alta fidelidade para reprodução e dispara normalização LUFS."""
+    from app.services.loudness_service import loudness_service
     try:
         data = await lucimusic_service.get_stream_url(track_id)
+        stream_url = data.get("stream_url")
+        
+        # Obtém do cache ou dispara análise de LUFS em background
+        loudness_info = await loudness_service.get_or_analyze(track_id, stream_url=stream_url)
+        data["gain_adjustment"] = loudness_info.get("gain_adjustment", 1.0)
+        data["lufs_integrated"] = loudness_info.get("lufs", -14.0)
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Falha ao resolver áudio: {str(e)}")
+
+@router.get("/loudness/{track_id}")
+async def get_track_loudness(track_id: str):
+    """Retorna o fator de correção de ganho (ReplayGain) pré-calculado para a faixa."""
+    from app.services.loudness_service import loudness_service
+    return await loudness_service.get_or_analyze(track_id)
 
 @router.get("/play/{track_id}")
 async def play_audio_proxy(track_id: str, request: Request):

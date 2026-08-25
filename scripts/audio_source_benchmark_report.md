@@ -45,19 +45,23 @@
 
 ### 1. Qualidade de Áudio (Bitrate e Codec)
 * **YouTube Music**: Entrega áudio Opus em contêiner WebM (~130 a 160 kbps) ou AAC em MP4 (~128 kbps). O codec Opus tem eficiência perceptual equivalente a MP3 de 256-320 kbps.
-* **DAB Music**: Entrega streams em AAC-LC / AAC+ em 192 kbps. Apresenta alta fidelidade em frequências agudas, mas com compressão de faixa dinâmica típica de broadcast.
+* **DAB Music**: O protocolo DAB+ especifica streams em AAC-LC / AAC+ em 192 kbps nominais para transmissões digitais de alta fidelidade.
 
 ### 2. Consistência de Volume (Loudness LUFS e Oscilação)
-* O YouTube Music apresentou um desvio padrão de **±5.62 LUFS** entre faixas mais antigas (ex: Queen em -19.2 LUFS) e produções ultracomprimidas modernas (ex: Harry Styles em -7.2 LUFS).
+* O YouTube Music apresentou um desvio padrão real de **±5.62 LUFS** entre faixas mais antigas (ex: Queen em -19.2 LUFS) e produções ultracomprimidas modernas (ex: Harry Styles em -7.2 LUFS).
 * **Diagnóstico**: A sensação de oscilação de volume percebida pelo usuário existe no YouTube Music porque diferentes canais/uploaders masterizam em volumes distintos.
-* **Solução Recomendada**: A Luci deve aplicar normalização no cliente (*Client-Side Web Audio API DynamicsCompressor* ou *Gain adjustment*) com alvo de **-14.0 LUFS**, independente da fonte de áudio.
+* **Nota sobre o Benchmark do DAB**: O desvio padrão de ±0.00 LUFS e bitrate fixo de 192 kbps reportados no cliente de teste do DAB decorrem de uma especificação padronizada de broadcast (EBU R128 estático em -16.2 LUFS), e não de medição individual de streams dinâmicos por faixa. O teste serviu para confirmar o perfil regulado de broadcast, enquanto o YouTube Music reflete medição acústica real via `ffmpeg loudnorm`.
+* **Solução Implementada (Compatível com YouTube IFrame Player)**: Como o YouTube Iframe Player roda em iframe cross-origin (impedindo roteamento via Web Audio API/AudioContext local), a solução adotada foi o cálculo prévio de **ReplayGain via `ffmpeg loudnorm` persistido no SQLite (`track_loudness`)** e aplicado multiplicando o ganho linear no `setVolume()` do player com teto de segurança.
 
 ### 3. Cobertura de Catálogo e Faixas Brasileiras
 * O YouTube Music atingiu **100% de cobertura**, encontrando todas as músicas pop, sertanejas, pagodes, funk e faixas de nicho nacional.
 * O DAB Music falhou em faixas brasileiras independentes e de nicho regional, sendo forte principalmente em transmissões comerciais internacionais.
 
-### 4. Velocidade de Início de Reprodução
-* O YT Music requer a etapa de extração do `yt-dlp` (~600-1200ms na primeira vez), mas uma vez em cache de 4 horas, o início é imediato (< 50ms).
+### 4. Velocidade de Início de Reprodução & Decomposição de Latência
+* **Média de Resolução no Benchmark (2432.9 ms)**: Durante o script de benchmark, cada resolução envolveu uma busca cega `ytsearch1:` sem cache prévio, handshake SSL completo do YouTube e extração de árvore completa de streams JSON pelo `yt-dlp` (gerando latência entre 2.0s e 3.3s por faixa).
+* **Comportamento em Produção na Luci**:
+  - Quando a faixa já possui `videoId` direto (resolvido na busca ou feed), o `yt-dlp` resolve apenas a URL em ~600-1200ms na primeira vez.
+  - Com o cache de 4 horas (`stream_url_cache`) e reprodução direta no IFrame pelo `videoId`, a reprodução inicia em **< 50ms**.
 
 ### 5. Estabilidade
 * O YouTube Music via proxy `yt-dlp` se mostrou resiliente em 100% das execuções repetidas.
@@ -67,5 +71,5 @@
 ## 4. Recomendação Técnica para Decisão Humana
 
 1. **Manter o YouTube Music como Audio Source Primário**: A cobertura de catálogo (especialmente para música brasileira, lançamentos e nicho) é insubstituível.
-2. **Implementar Normalização de Loudness no Player (Client-Side)**: Em vez de trocar de provedor em busca de volume estável, a solução definitiva e elegante é habilitar um nó compressor/normalizador suave no Web Audio API do player da Luci, nivelando qualquer faixa automaticamente para -14 LUFS.
+2. **Normalização de Loudness Pré-calculada (ReplayGain)**: Normalização já implementada no backend (`LoudnessService`) e aplicada suavemente via `setVolume()` no `use-music-player.tsx`, sem conflito com as restrições de iframe do navegador.
 3. **DAB como Fallback / Rádios Temáticas**: O DAB pode ser adicionado futuramente como uma capability de *Estações de Rádio Ao Vivo*, mas não como substituto do player sob demanda.

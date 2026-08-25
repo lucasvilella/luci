@@ -320,10 +320,25 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 
     recordTrackPlayed(track)
 
+    // Reset ganho para 1.0 (neutro) e busca normalização de loudness pré-calculada
+    currentGainAdjustmentRef.current = 1.0
+    fetch(`/api/v1/music/loudness/${track.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data.gain_adjustment === "number") {
+          currentGainAdjustmentRef.current = data.gain_adjustment
+          if (ytPlayerRef.current?.setVolume) {
+            applyNormalizedVolume(volume)
+          }
+        }
+      })
+      .catch(() => {})
+
     // Tocar no player oficial
     const startPlay = () => {
       if (ytPlayerRef.current && typeof ytPlayerRef.current.loadVideoById === "function") {
         ytPlayerRef.current.loadVideoById(track.id)
+        applyNormalizedVolume(volume)
         ytPlayerRef.current.playVideo()
         setIsPlaying(true)
       } else {
@@ -336,7 +351,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     fetchLyrics(track.id, track.title, track.artist, track.duration)
       .then((l) => setLyrics(l))
       .catch(() => {})
-  }, [])
+  }, [applyNormalizedVolume, volume])
 
   useEffect(() => {
     playTrackRef.current = playTrack
@@ -403,17 +418,22 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const preDuckVolumeRef = useRef<number>(1.0)
-  const duckIntervalRef = useRef<any>(null)
+  const currentGainAdjustmentRef = useRef<number>(1.0)
+
+  const applyNormalizedVolume = useCallback((baseVol: number) => {
+    if (!ytPlayerRef.current?.setVolume) return
+    const gain = currentGainAdjustmentRef.current || 1.0
+    // Aplica o fator de ganho ao volume base com teto de 100%
+    const normalized = Math.max(0, Math.min(100, baseVol * gain * 100))
+    ytPlayerRef.current.setVolume(normalized)
+  }, [])
 
   const setVolume = useCallback((v: number) => {
     const clamped = Math.max(0, Math.min(1, v))
     setVolumeState(clamped)
     preDuckVolumeRef.current = clamped
-    if (ytPlayerRef.current?.setVolume) {
-      ytPlayerRef.current.setVolume(clamped * 100)
-    }
-  }, [])
+    applyNormalizedVolume(clamped)
+  }, [applyNormalizedVolume])
 
   // Ducking suave escalonado no YouTube Iframe Player
   const duckPlayerVolume = useCallback((targetLevel = 0.15, durationMs = 150) => {
@@ -434,15 +454,13 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       const progressRatio = currentStep / steps
       const newVol = currentVol + (target - currentVol) * progressRatio
       setVolumeState(newVol)
-      if (ytPlayerRef.current?.setVolume) {
-        ytPlayerRef.current.setVolume(newVol * 100)
-      }
+      applyNormalizedVolume(newVol)
       if (currentStep >= steps) {
         clearInterval(duckIntervalRef.current)
         duckIntervalRef.current = null
       }
     }, stepTime)
-  }, [volume])
+  }, [volume, applyNormalizedVolume])
 
   // Restauração suave do volume do player
   const restorePlayerVolume = useCallback((durationMs = 200) => {
