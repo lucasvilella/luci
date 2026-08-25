@@ -234,7 +234,9 @@ export function VoiceOrbView({
     voiceInputManager.startSpeechRecognition(
       (currentSpeech: string, isFinal: boolean) => {
         if (!currentSpeech) return
-        const wakeWordRegex = /\b(luci|lucy|luzi|lusi|ok luci|ei luci|hey luci)\b/i
+
+        // Regex flexível para variações fonéticas comuns de "Luci" no STT Mobile
+        const wakeWordRegex = /\b(ei\s+luci|oi\s+luci|ol[aá]\s+luci|hey\s+luci|ok\s+luci|e\s+a[ií]\s+luci|luci|lucy|luzia|luzi|lusi|luz)\b/i
         const hasWakeWord = wakeWordRegex.test(currentSpeech)
 
         if (hasWakeWord && !isUserActiveSessionRef.current) {
@@ -247,25 +249,38 @@ export function VoiceOrbView({
           capturedTextRef.current = commandAfterWake
           setTranscript(commandAfterWake)
         } else if (isUserActiveSessionRef.current) {
-          capturedTextRef.current = currentSpeech.replace(wakeWordRegex, "").trim()
+          // Se já está em sessão ativa (seja por wake word ou por clique no mic)
+          const cleanText = currentSpeech.replace(wakeWordRegex, "").trim()
+          capturedTextRef.current = cleanText || currentSpeech.trim()
           setTranscript(capturedTextRef.current)
         }
 
+        // Se está em sessão de escuta ativa e possui texto
         if (isUserActiveSessionRef.current && capturedTextRef.current.length >= 2) {
           clearSilenceTimer()
           if (isFinal) {
             sendVoiceQuery(capturedTextRef.current)
           } else {
+            // Voice Activity / Silence Timeout resiliente (1.2s após última palavra falada)
             silenceTimerRef.current = setTimeout(() => {
-              if (capturedTextRef.current.length >= 2) {
+              if (capturedTextRef.current.length >= 2 && !isProcessingRef.current) {
                 sendVoiceQuery(capturedTextRef.current)
               }
-            }, 850)
+            }, 1200)
           }
         }
       },
       () => {
         isListeningRef.current = false
+        clearSilenceTimer()
+
+        // Se o microfone encerrou (onend do browser) e havia texto capturado pendente, processa imediatamente
+        if (isUserActiveSessionRef.current && capturedTextRef.current.trim().length >= 2 && !isProcessingRef.current) {
+          sendVoiceQuery(capturedTextRef.current.trim())
+          return
+        }
+
+        // Se não estava processando e a Luci não está falando, reabre para escuta contínua de wake word
         if (!isProcessingRef.current && audioQueueRef.current && !speaking) {
           setTimeout(() => {
             startListeningSession()

@@ -155,18 +155,19 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     }
   }
 
-  // ─── Handler para falar com a Luci na tela de música com Volume Ducking suave escalonado ───
+  // ─── Handler Push-to-Talk sob demanda na tela de música (sem manter mic 100% aberto) ───
   const handleTriggerLuciVoice = useCallback(() => {
     // Se já estiver gravando, o usuário clica novamente para parar e processar
     if (isLuciListening) {
       voiceInputManager.stopSpeechRecognition()
       setIsLuciListening(false)
       restorePlayerVolume(200)
+      setLuciStatusText("")
       return
     }
 
     setIsLuciListening(true)
-    setLuciStatusText("Ouvindo... Fale agora para a Luci.")
+    setLuciStatusText("Ouvindo comando...")
     setLuciSpeechText("")
 
     // Reduz suavemente o volume da música no YouTube Player sem pausar
@@ -177,7 +178,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
         setLuciSpeechText(transcript)
       },
       () => {
-        // Callback ao finalizar a fala
+        // Callback ao finalizar a fala pelo navegador (silêncio)
         setIsLuciListening(false)
         restorePlayerVolume(200)
         setLuciStatusText("")
@@ -188,26 +189,19 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     if (!started) {
       setIsLuciListening(false)
       restorePlayerVolume(200)
+      setLuciStatusText("")
     }
   }, [isLuciListening, duckPlayerVolume, restorePlayerVolume])
 
-  // ─── Escuta de Wake Word com Arbitragem de Contexto Ativo ('music') ───
+  // Desativa qualquer escuta contínua de fundo enquanto o player de música estiver montado
   useEffect(() => {
-    voiceInputManager.init().catch(() => {})
-    voiceInputManager.setActiveContext("music")
-
-    const unsubscribe = voiceInputManager.registerWakeWordHandler("music", () => {
-      console.log("[NowPlaying] Wake Word acionada na tela de música.")
-      if (!isLuciListening) {
-        handleTriggerLuciVoice()
-      }
-    })
-
     return () => {
-      unsubscribe()
-      voiceInputManager.setActiveContext(null)
+      if (isLuciListening) {
+        voiceInputManager.stopSpeechRecognition()
+        restorePlayerVolume(100)
+      }
     }
-  }, [handleTriggerLuciVoice, isLuciListening])
+  }, [isLuciListening, restorePlayerVolume])
 
   const handleSeek = useCallback(
     (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
