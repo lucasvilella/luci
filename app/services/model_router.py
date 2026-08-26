@@ -31,7 +31,7 @@ DIRETRIZES FUNDAMENTAIS DE COMPORTAMENTO:
 5. Se Lucas pedir para tocar música, alterar o volume ou trocar de faixa, responda de forma leve e rápida."""
 
 class ModelRouter:
-  """Roteador inteligente de execução e modelos de linguagem (Groq Ultra-Fast LPU + Gemini Fallback)."""
+    """Roteador inteligente de execução e modelos de linguagem (Groq Ultra-Fast LPU + Gemini Fallback)."""
 
     def __init__(self):
         self.groq_api_key = settings.groq_api_key or os.getenv("GROQ_API_KEY")
