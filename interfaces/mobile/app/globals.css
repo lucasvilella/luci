@@ -283,3 +283,80 @@
 .animate-fade-in {
   animation: fade-in 0.25s ease-out both;
 }
+
+/* ─── Apple Music Fluid Dynamic Mesh Gradient Keyframes ─── */
+
+@keyframes mesh-blob-1 {
+  0% {
+    transform: translate3d(0%, 0%, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate3d(25%, 30%, 0) scale(1.25) rotate(120deg);
+  }
+  66% {
+    transform: translate3d(-20%, 15%, 0) scale(0.9) rotate(240deg);
+  }
+  100% {
+    transform: translate3d(0%, 0%, 0) scale(1) rotate(360deg);
+  }
+}
+
+@keyframes mesh-blob-2 {
+  0% {
+    transform: translate3d(0%, 0%, 0) scale(1.1) rotate(0deg);
+  }
+  33% {
+    transform: translate3d(-30%, -20%, 0) scale(0.85) rotate(-110deg);
+  }
+  66% {
+    transform: translate3d(15%, -35%, 0) scale(1.2) rotate(-230deg);
+  }
+  100% {
+    transform: translate3d(0%, 0%, 0) scale(1.1) rotate(-360deg);
+  }
+}
+
+@keyframes mesh-blob-3 {
+  0% {
+    transform: translate3d(0%, 0%, 0) scale(0.95);
+  }
+  50% {
+    transform: translate3d(35%, -25%, 0) scale(1.3);
+  }
+  100% {
+    transform: translate3d(0%, 0%, 0) scale(0.95);
+  }
+}
+
+@keyframes mesh-blob-4 {
+  0% {
+    transform: translate3d(0%, 0%, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(-25%, 25%, 0) scale(1.15) rotate(180deg);
+  }
+  100% {
+    transform: translate3d(0%, 0%, 0) scale(1) rotate(360deg);
+  }
+}
+
+.animate-mesh-1 {
+  animation: mesh-blob-1 16s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  will-change: transform;
+}
+
+.animate-mesh-2 {
+  animation: mesh-blob-2 18s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  will-change: transform;
+}
+
+.animate-mesh-3 {
+  animation: mesh-blob-3 14s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  will-change: transform;
+}
+
+.animate-mesh-4 {
+  animation: mesh-blob-4 20s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  will-change: transform;
+}
+

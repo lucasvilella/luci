@@ -17,6 +17,7 @@ import {
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { TrackImage } from "./track-image"
+import { DynamicBackground } from "./dynamic-background"
 
 export function LyricsView() {
   const { pop } = useMusicNavigation()
@@ -79,42 +80,32 @@ export function LyricsView() {
   const progressPct = duration > 0 ? Math.min(100, Math.max(0, (progress / duration) * 100)) : 0
 
   return (
-    <div className="fixed inset-0 z-50 flex h-full flex-col select-none overflow-hidden bg-black text-white animate-view-in">
-      {/* ─── Fundo com Capa em Alta Resolução levemente borrada (~7% = blur-[3px]) com Vignette Escuro ─── */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <img
-          src={currentTrack.thumbnail}
-          alt={currentTrack.title}
-          referrerPolicy="no-referrer"
-          className="size-full object-cover opacity-35 filter brightness-75 blur-[3px] scale-105 transition-all duration-700"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/90" />
-      </div>
+    <div className="fixed inset-0 z-50 flex h-full flex-col select-none overflow-hidden text-white animate-view-in">
+      <DynamicBackground imageUrl={currentTrack.thumbnail} intensity="vibrant" overlayOpacity={0.45}>
+        {/* ─── 1. Header Oficial do Figma: Voltar (ChevronLeft Circular), Título da Música Centralizado ─── */}
+        <header className="relative z-10 flex items-center justify-between px-6 pt-5 pb-2 shrink-0">
+          <button
+            type="button"
+            onClick={pop}
+            className="size-11 flex items-center justify-center rounded-full bg-white/15 backdrop-blur-xl border border-white/20 text-white active:scale-95 transition-all shadow-sm hover:bg-white/25"
+            aria-label="Voltar para o Player"
+          >
+            <ChevronLeft className="size-5.5 stroke-[2.2]" />
+          </button>
 
-      {/* ─── 1. Header Oficial do Figma: Voltar (ChevronLeft Circular), Título da Música Centralizado (Sem botão de 3 pontinhos) ─── */}
-      <header className="relative z-10 flex items-center justify-between px-6 pt-5 pb-2 shrink-0">
-        <button
-          type="button"
-          onClick={pop}
-          className="size-11 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md border border-white/15 text-white active:scale-95 transition-all"
-          aria-label="Voltar para o Player"
+          <h2 className="text-base font-extrabold tracking-tight text-white font-sans truncate max-w-[240px] text-center drop-shadow-sm">
+            {currentTrack.title}
+          </h2>
+
+          {/* Espaçador invisível para manter o título perfeitamente centralizado */}
+          <div className="size-11" />
+        </header>
+
+        {/* ─── 2. Corpo Central das Letras Sincronizadas (Figma Style com Destaque e Play Icon na Linha Ativa) ─── */}
+        <div
+          ref={containerRef}
+          className="relative z-10 flex-1 overflow-y-auto px-7 py-6 space-y-5 text-left no-scrollbar scroll-smooth"
         >
-          <ChevronLeft className="size-5.5 stroke-[2.2]" />
-        </button>
-
-        <h2 className="text-base font-extrabold tracking-tight text-white font-sans truncate max-w-[240px] text-center">
-          {currentTrack.title}
-        </h2>
-
-        {/* Espaçador invisível para manter o título perfeitamente centralizado */}
-        <div className="size-11" />
-      </header>
-
-      {/* ─── 2. Corpo Central das Letras Sincronizadas (Figma Style com Destaque e Play Icon na Linha Ativa) ─── */}
-      <div
-        ref={containerRef}
-        className="relative z-10 flex-1 overflow-y-auto px-7 py-6 space-y-5 text-left no-scrollbar scroll-smooth"
-      >
         {loadingLyrics ? (
           <div className="flex flex-col items-center justify-center py-36 gap-3 text-zinc-400">
             <Loader2 className="size-8 animate-spin text-[#22C55E]" />
@@ -233,50 +224,51 @@ export function LyricsView() {
           <button
             type="button"
             onClick={prev}
-            className="p-2 text-zinc-800 hover:text-black active:scale-90 transition-transform"
+            className="p-2 text-white hover:text-white/80 active:scale-90 transition-transform"
             aria-label="Anterior"
           >
-            <SkipBack className="size-5.5 fill-zinc-800" />
+            <SkipBack className="size-5.5 fill-white" />
           </button>
 
-          {/* Botão Central Play/Pause Verde Redondo do Figma (#22C55E) */}
-          <button
-            type="button"
-            onClick={togglePlay}
-            disabled={isLoading}
-            className="size-14 flex items-center justify-center rounded-full bg-[#22C55E] text-white shadow-lg shadow-green-500/30 active:scale-95 hover:scale-105 transition-transform"
-            aria-label={isPlaying ? "Pausar" : "Tocar"}
-          >
-            {isLoading ? (
-              <Loader2 className="size-6 animate-spin text-white" />
-            ) : isPlaying ? (
-              <Pause className="size-6 fill-white stroke-[0]" />
-            ) : (
-              <Play className="size-6 fill-white stroke-[0] ml-0.5" />
-            )}
-          </button>
+            {/* Botão Central Play/Pause Verde Redondo do Figma (#22C55E) */}
+            <button
+              type="button"
+              onClick={togglePlay}
+              disabled={isLoading}
+              className="size-14 flex items-center justify-center rounded-full bg-[#22C55E] text-white shadow-xl shadow-green-500/40 active:scale-95 hover:scale-105 transition-transform"
+              aria-label={isPlaying ? "Pausar" : "Tocar"}
+            >
+              {isLoading ? (
+                <Loader2 className="size-6 animate-spin text-white" />
+              ) : isPlaying ? (
+                <Pause className="size-6 fill-white stroke-[0]" />
+              ) : (
+                <Play className="size-6 fill-white stroke-[0] ml-0.5" />
+              )}
+            </button>
 
-          <button
-            type="button"
-            onClick={next}
-            className="p-2 text-zinc-800 hover:text-black active:scale-90 transition-transform"
-            aria-label="Próxima"
-          >
-            <SkipForward className="size-5.5 fill-zinc-800" />
-          </button>
+            <button
+              type="button"
+              onClick={next}
+              className="p-2 text-white hover:text-white/80 active:scale-90 transition-transform"
+              aria-label="Próxima"
+            >
+              <SkipForward className="size-5.5 fill-white" />
+            </button>
 
-          <button
-            type="button"
-            onClick={toggleShuffle}
-            className={`p-2 transition-all active:scale-90 ${
-              shuffle ? "text-[#22C55E]" : "text-zinc-500 hover:text-zinc-800"
-            }`}
-            aria-label="Aleatório"
-          >
-            <Shuffle className="size-5" />
-          </button>
+            <button
+              type="button"
+              onClick={toggleShuffle}
+              className={`p-2 transition-all active:scale-90 ${
+                shuffle ? "text-[#22C55E]" : "text-white/60 hover:text-white"
+              }`}
+              aria-label="Aleatório"
+            >
+              <Shuffle className="size-5" />
+            </button>
+          </div>
         </div>
-      </div>
+      </DynamicBackground>
     </div>
   )
 }
