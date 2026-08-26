@@ -6,9 +6,6 @@
  * - Fornece suporte unificado a reconhecimento de fala (STT) para evitar instâncias concorrentes.
  */
 
-import { PorcupineWorker } from "@picovoice/porcupine-web"
-import { WebVoiceProcessor } from "@picovoice/web-voice-processor"
-
 export type WakeWordCallback = () => void
 export type SpeechResultCallback = (transcript: string, isFinal: boolean) => void
 export type SpeechEndCallback = () => void
@@ -16,10 +13,10 @@ export type SpeechEndCallback = () => void
 export type VoiceContext = "orb" | "music" | "chat"
 
 class VoiceInputManager {
-  private static instance: VoiceInputManager
+  private static instance: VoiceInputManager | null = null
   private audioContext: AudioContext | null = null
   private musicGainNode: GainNode | null = null
-  private porcupineWorker: PorcupineWorker | null = null
+  private porcupineWorker: any = null
   private isInitialized = false
   private isListening = false
   
@@ -33,7 +30,7 @@ class VoiceInputManager {
   private onSpeechEndCallback: SpeechEndCallback | null = null
   private isRecognitionActive = false
 
-  private constructor() {}
+  public constructor() {}
 
   public static getInstance(): VoiceInputManager {
     if (!VoiceInputManager.instance) {
@@ -131,6 +128,9 @@ class VoiceInputManager {
 
     try {
       if (key && typeof window !== "undefined") {
+        const { PorcupineWorker } = await import("@picovoice/porcupine-web")
+        const { WebVoiceProcessor } = await import("@picovoice/web-voice-processor")
+
         const keyword = customKeywordPath
           ? { customWritePath: customKeywordPath, label: "Hey Luci" }
           : { builtin: "Porcupine", sensitivity: 0.65 }
@@ -278,7 +278,10 @@ class VoiceInputManager {
     this.stopSpeechRecognition()
     if (this.porcupineWorker) {
       try {
-        await WebVoiceProcessor.unsubscribe(this.porcupineWorker)
+        if (typeof window !== "undefined") {
+          const { WebVoiceProcessor } = await import("@picovoice/web-voice-processor")
+          await WebVoiceProcessor.unsubscribe(this.porcupineWorker)
+        }
         await this.porcupineWorker.release()
       } catch {}
       this.porcupineWorker = null
@@ -288,4 +291,18 @@ class VoiceInputManager {
   }
 }
 
-export const voiceInputManager = VoiceInputManager.getInstance()
+export function getVoiceInputManager(): VoiceInputManager {
+  return VoiceInputManager.getInstance()
+}
+
+// Proxy seguro para acesso transparente e lazy à instância única
+export const voiceInputManager: VoiceInputManager = new Proxy({} as VoiceInputManager, {
+  get(_target, prop: keyof VoiceInputManager) {
+    const instance = VoiceInputManager.getInstance()
+    const value = instance[prop]
+    if (typeof value === "function") {
+      return value.bind(instance)
+    }
+    return value
+  },
+})
