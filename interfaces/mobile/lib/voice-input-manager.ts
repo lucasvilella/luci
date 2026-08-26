@@ -58,14 +58,26 @@ class VoiceInputManager {
    * Obtém ou inicializa o AudioContext compartilhado para todas as interfaces de áudio.
    */
   public getAudioContext(): AudioContext {
+    if (typeof window === "undefined") return null as any
     if (!this.audioContext || this.audioContext.state === "closed") {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
-      this.audioContext = new AudioCtx()
+      if (AudioCtx) {
+        this.audioContext = new AudioCtx()
+      }
     }
-    if (this.audioContext.state === "suspended") {
+    if (this.audioContext && this.audioContext.state === "suspended") {
       this.audioContext.resume().catch(() => {})
     }
-    return this.audioContext
+    return this.audioContext as AudioContext
+  }
+
+  public getMusicGainNode(): GainNode {
+    const ctx = this.getAudioContext()
+    if (!this.musicGainNode && ctx) {
+      this.musicGainNode = ctx.createGain()
+      this.musicGainNode.connect(ctx.destination)
+    }
+    return this.musicGainNode as GainNode
   }
 
   /**
