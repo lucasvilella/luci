@@ -23,7 +23,7 @@ import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { TrackImage } from "./track-image"
 import { DynamicBackground } from "./dynamic-background"
-import { fetchPlaylists, addTrackToPlaylist, createPlaylist, type UserPlaylist, recordTasteSignal } from "@/lib/lucimusic"
+import { fetchPlaylists, addTrackToPlaylist, createPlaylist, fetchArtist, type UserPlaylist, recordTasteSignal } from "@/lib/lucimusic"
 import { voiceInputManager } from "@/lib/voice-input-manager"
 
 export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) {

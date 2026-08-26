@@ -231,6 +231,8 @@ export function VoiceOrbView({
 
   // Inicia o STT compartilhado via voiceInputManager
   const startListeningSession = useCallback(() => {
+    if (isProcessingRef.current) return
+
     voiceInputManager.startSpeechRecognition(
       (currentSpeech: string, isFinal: boolean) => {
         if (!currentSpeech) return
@@ -280,16 +282,14 @@ export function VoiceOrbView({
           return
         }
 
-        // Se não estava processando e a Luci não está falando, reabre para escuta contínua de wake word
-        if (!isProcessingRef.current && audioQueueRef.current && !speaking) {
-          setTimeout(() => {
-            startListeningSession()
-          }, 300)
+        // Se a sessão do usuário foi cancelada ou terminou, não reinicia imediatamente para evitar flood
+        if (!isUserActiveSessionRef.current) {
+          setListening(false)
         }
       },
-      true
+      false
     )
-  }, [sendVoiceQuery, speaking])
+  }, [sendVoiceQuery])
 
   // ─── Inicialização do Reconhecimento de Voz & Wake Word Compartilhada ───
   useEffect(() => {
@@ -303,9 +303,6 @@ export function VoiceOrbView({
         voiceInputManager.stopSpeechRecognition()
       } else {
         setStatusText("Diga 'Ei, Luci' ou toque no microfone")
-        setTimeout(() => {
-          startListeningSession()
-        }, 400)
       }
     })
 
@@ -316,10 +313,9 @@ export function VoiceOrbView({
         isUserActiveSessionRef.current = true
         setListening(true)
         setStatusText("Ouvindo você...")
+        startListeningSession()
       }
     })
-
-    startListeningSession()
 
     return () => {
       clearSilenceTimer()
