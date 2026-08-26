@@ -233,6 +233,8 @@ export function VoiceOrbView({
   const startListeningSession = useCallback(() => {
     if (isProcessingRef.current) return
 
+    voiceInputManager.unlockAudio()
+
     voiceInputManager.startSpeechRecognition(
       (currentSpeech: string, isFinal: boolean) => {
         if (!currentSpeech) return
@@ -257,39 +259,42 @@ export function VoiceOrbView({
           setTranscript(capturedTextRef.current)
         }
 
-        // Se está em sessão de escuta ativa e possui texto
+        // Se está em sessão de escuta ativa e possui texto falado
         if (isUserActiveSessionRef.current && capturedTextRef.current.length >= 2) {
           clearSilenceTimer()
-          if (isFinal) {
-            sendVoiceQuery(capturedTextRef.current)
-          } else {
-            // Voice Activity / Silence Timeout resiliente (1.2s após última palavra falada)
-            silenceTimerRef.current = setTimeout(() => {
-              if (capturedTextRef.current.length >= 2 && !isProcessingRef.current) {
-                sendVoiceQuery(capturedTextRef.current)
-              }
-            }, 1200)
-          }
+          
+          // Debounce resiliente de 1.8s sem novas palavras antes de enviar ao backend
+          silenceTimerRef.current = setTimeout(() => {
+            if (capturedTextRef.current.length >= 2 && !isProcessingRef.current) {
+              sendVoiceQuery(capturedTextRef.current)
+            }
+          }, 1800)
         }
       },
       () => {
         isListeningRef.current = false
         clearSilenceTimer()
 
-        // Se o microfone encerrou (onend do browser) e havia texto capturado pendente, processa imediatamente
+        // 1. Se o Chrome Mobile encerrou (onend) e havia texto capturado pendente, dispara o envio
         if (isUserActiveSessionRef.current && capturedTextRef.current.trim().length >= 2 && !isProcessingRef.current) {
           sendVoiceQuery(capturedTextRef.current.trim())
           return
         }
 
-        // Se a sessão do usuário foi cancelada ou terminou, não reinicia imediatamente para evitar flood
-        if (!isUserActiveSessionRef.current) {
+        // 2. Se o usuário ainda está em modo "Ouvindo" mas o Chrome Mobile fechou a conexão prematuramente, reinicia suavemente
+        if (isUserActiveSessionRef.current && !isProcessingRef.current && !speaking) {
+          setTimeout(() => {
+            if (isUserActiveSessionRef.current && !isProcessingRef.current) {
+              startListeningSession()
+            }
+          }, 250)
+        } else {
           setListening(false)
         }
       },
-      false
+      true
     )
-  }, [sendVoiceQuery])
+  }, [sendVoiceQuery, speaking])
 
   // ─── Inicialização do Reconhecimento de Voz & Wake Word Compartilhada ───
   useEffect(() => {
@@ -302,7 +307,7 @@ export function VoiceOrbView({
         setStatusText("Luci está falando...")
         voiceInputManager.stopSpeechRecognition()
       } else {
-        setStatusText("Diga 'Ei, Luci' ou toque no microfone")
+        setStatusText("Toque no microfone para falar")
       }
     })
 
@@ -329,13 +334,14 @@ export function VoiceOrbView({
 
   // ─── Botão Central Único: Iniciar Escuta ou Cancelar ───
   const handleCentralMicClick = () => {
+    voiceInputManager.unlockAudio()
     audioQueueRef.current?.initAudioContext()
     clearSilenceTimer()
 
     if (speaking) {
       audioQueueRef.current?.stopAndClear()
       setSpeaking(false)
-      setStatusText("Diga 'Ei, Luci' ou toque no microfone")
+      setStatusText("Toque no microfone para falar")
       return
     }
 
@@ -344,7 +350,7 @@ export function VoiceOrbView({
       setListening(false)
       capturedTextRef.current = ""
       setTranscript("")
-      setStatusText("Cancelado. Diga 'Ei, Luci' ou toque no microfone")
+      setStatusText("Cancelado. Toque no microfone para falar")
       voiceInputManager.stopSpeechRecognition()
     } else {
       isUserActiveSessionRef.current = true

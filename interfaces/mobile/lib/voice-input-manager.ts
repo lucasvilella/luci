@@ -161,7 +161,27 @@ class VoiceInputManager {
   }
 
   /**
-   * Inicia o reconhecimento de fala unificado (STT) para Orb ou Ditado no Chat.
+   * Retorna se a Wake Word por hardware/WASM local está disponível.
+   */
+  public hasLocalWakeWord(): boolean {
+    return Boolean(this.porcupineWorker && this.isListening)
+  }
+
+  /**
+   * Desbloqueia o AudioContext no primeiro gesto do usuário (requisito Android/iOS PWA).
+   */
+  public unlockAudio(): void {
+    if (typeof window === "undefined") return
+    try {
+      const ctx = this.getAudioContext()
+      if (ctx && ctx.state === "suspended") {
+        ctx.resume().catch(() => {})
+      }
+    } catch {}
+  }
+
+  /**
+   * Inicia o reconhecimento de fala unificado (STT) com buffer cumulativo resiliente para Mobile PWA.
    */
   public startSpeechRecognition(
     onResult: SpeechResultCallback,
@@ -183,30 +203,38 @@ class VoiceInputManager {
       this.recognition.lang = "pt-BR"
       this.recognition.continuous = continuous
       this.recognition.interimResults = true
+      this.recognition.maxAlternatives = 1
 
       this.onSpeechResultCallback = onResult
       this.onSpeechEndCallback = onEnd || null
 
+      let accumulatedFinalText = ""
+
       this.recognition.onresult = (event: any) => {
-        let interimTranscript = ""
-        let finalTranscript = ""
+        let currentInterim = ""
 
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript
+          const item = event.results[i]
+          if (item.isFinal) {
+            accumulatedFinalText += " " + item[0].transcript
           } else {
-            interimTranscript += event.results[i][0].transcript
+            currentInterim += item[0].transcript
           }
         }
 
-        const fullText = (finalTranscript || interimTranscript).trim()
-        if (this.onSpeechResultCallback) {
-          this.onSpeechResultCallback(fullText, Boolean(finalTranscript))
+        const fullText = (accumulatedFinalText + " " + currentInterim).replace(/\s+/g, " ").trim()
+        const isFinal = Boolean(accumulatedFinalText.trim() && !currentInterim.trim())
+
+        if (this.onSpeechResultCallback && fullText) {
+          this.onSpeechResultCallback(fullText, isFinal)
         }
       }
 
       this.recognition.onerror = (e: any) => {
-        console.warn("[VoiceInputManager] Erro no SpeechRecognition:", e)
+        // Ignora erros comuns inofensivos de interrupção (ex: 'no-speech' ou 'aborted')
+        if (e.error !== "no-speech" && e.error !== "aborted") {
+          console.warn("[VoiceInputManager] SpeechRecognition:", e.error)
+        }
       }
 
       this.recognition.onend = () => {

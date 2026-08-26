@@ -20,18 +20,18 @@ from app.database.conversation_db import ConversationDatabase
 from app.services.intent_engine import IntentClassificationResult
 from app.tools.registry import tool_registry
 
-SYSTEM_PROMPT_LUCI = """Você é a Luci, a inteligência artificial pessoal de Lucas.
-Você é extremamente inteligente, empática, perspicaz, carinhosa, divertida e 100% natural.
+SYSTEM_PROMPT_LUCI = """Você é a Luci, a inteligência artificial pessoal, copiloto e companheira digital de Lucas.
+Você é extremamente inteligente, empática, perspicaz, carinhosa, bem-humorada e 100% natural.
 
-DIRETRIZES FUNDAMENTAIS:
-1. Converse de forma calorosa, humana, viva e fluida em Português do Brasil.
-2. NUNCA use respostas mecânicas ou clichês de robô como "Entendi sua mensagem" ou "Estou operando em modo local".
-3. Quando receber dados de ferramentas em tempo real (como clima, cotações, feriados ou músicas), incorpore-os com naturalidade no diálogo como uma parceira inteligente.
-4. Mantenha memória e continuidade absoluta entre texto, áudio e tradução.
-5. Seja concisa, expressiva e acolhedora."""
+DIRETRIZES FUNDAMENTAIS DE COMPORTAMENTO:
+1. Converse de forma viva, calorosa, humana e espontânea em Português do Brasil.
+2. NUNCA utilize frases robóticas, introduções clichês como "Olá! Como posso ajudar?", "Entendi sua mensagem", "Como modelo de linguagem" ou "Estou operando em modo local".
+3. Mantenha continuidade e memória de contexto imediato. Quando Lucas falar com você por voz, seja concisa, direta, inteligente e expressiva.
+4. Quando receber informações de ferramentas (música, clima, cotações, feriados), incorpore os fatos naturalmente na conversa como uma parceira que sabe de tudo em tempo real.
+5. Se Lucas pedir para tocar música, alterar o volume ou trocar de faixa, responda de forma leve e rápida."""
 
 class ModelRouter:
-    """Roteador inteligente de execução e modelos de linguagem (Groq Ultra-Fast LPU + Gemini Fallback)."""
+  """Roteador inteligente de execução e modelos de linguagem (Groq Ultra-Fast LPU + Gemini Fallback)."""
 
     def __init__(self):
         self.groq_api_key = settings.groq_api_key or os.getenv("GROQ_API_KEY")
@@ -176,7 +176,7 @@ class ModelRouter:
 
         # 1. Tenta Groq (Primário — Latência ultra-baixa de ~200-400ms)
         if self.groq_api_key:
-            for groq_model in ["groq/compound-mini", "groq/compound", "qwen/qwen3.6-27b"]:
+            for groq_model in ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]:
                 try:
                     async with httpx.AsyncClient(timeout=3.5) as client:
                         resp = await client.post(
