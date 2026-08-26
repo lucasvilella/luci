@@ -558,13 +558,15 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 
   const formatTime = useCallback((s: number) => formatSeconds(s), [])
 
-  // ─── Media Session API (PWA / Tela de Bloqueio) ───
+  // ─── Media Session API (Nativo Android Lockscreen & Notificação) ───
   useEffect(() => {
-    if ("mediaSession" in navigator && currentTrack) {
+    if (typeof window === "undefined" || !("mediaSession" in navigator)) return
+
+    if (currentTrack) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: currentTrack.title,
         artist: currentTrack.artist,
-        album: "Luci Music",
+        album: currentTrack.album || "Luci Music",
         artwork: [
           { src: currentTrack.thumbnail, sizes: "96x96", type: "image/jpeg" },
           { src: currentTrack.thumbnail, sizes: "128x128", type: "image/jpeg" },
@@ -575,12 +577,29 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
         ],
       })
 
-      navigator.mediaSession.setActionHandler("play", () => togglePlay())
-      navigator.mediaSession.setActionHandler("pause", () => togglePlay())
-      navigator.mediaSession.setActionHandler("previoustrack", () => prev())
-      navigator.mediaSession.setActionHandler("nexttrack", () => next())
+      navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused"
+
+      try {
+        navigator.mediaSession.setActionHandler("play", () => togglePlay())
+        navigator.mediaSession.setActionHandler("pause", () => togglePlay())
+        navigator.mediaSession.setActionHandler("previoustrack", () => prev())
+        navigator.mediaSession.setActionHandler("nexttrack", () => next())
+        navigator.mediaSession.setActionHandler("seekto", (details) => {
+          if (details.seekTime !== undefined && details.seekTime !== null) {
+            seek(details.seekTime)
+          }
+        })
+        navigator.mediaSession.setActionHandler("seekbackward", () => {
+          seek(Math.max(0, progress - 10))
+        })
+        navigator.mediaSession.setActionHandler("seekforward", () => {
+          seek(Math.min(duration, progress + 10))
+        })
+      } catch (e) {
+        console.warn("[MediaSession] Falha ao registrar handler:", e)
+      }
     }
-  }, [currentTrack, togglePlay, prev, next])
+  }, [currentTrack, isPlaying, progress, duration, togglePlay, prev, next, seek])
 
   const value = useMemo<MusicPlayerContextValue>(
     () => ({
