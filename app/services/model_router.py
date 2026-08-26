@@ -52,7 +52,7 @@ class ModelRouter:
 
         # ─── 1. FAST-PATH: DISPATCH DIRETO DE COMANDOS MECÂNICOS ───
         if intent.type == "COMMAND":
-            # A) Ações de Música
+            # A) Ações de Música com Emissão WebSocket em tempo real
             if action == "music.play" and query_param:
                 from app.services.lucimusic_service import lucimusic_service
                 from app.services.playback_manager import playback_manager
@@ -64,16 +64,16 @@ class ModelRouter:
                     selected_track = songs[0]
                     session = playback_manager.set_current_track(user_id, selected_track, songs)
                     asyncio.create_task(ws_hub.emit_to_user(user_id, "START_PLAYBACK", session))
-                    return f"Tocando {selected_track['title']} de {selected_track['artist']} agora no LuciMusic!"
+                    return f"Tocando {selected_track['title']} agora."
                 else:
-                    return f"Procurei por '{query_param}', mas não encontrei nenhuma música correspondente no momento."
+                    return f"Não encontrei '{query_param}' no catálogo."
 
             if action == "music.pause":
                 from app.services.playback_manager import playback_manager
                 from app.services.ws_manager import ws_hub
                 session = playback_manager.update_playback_state(user_id, is_playing=False, progress_seconds=0)
                 asyncio.create_task(ws_hub.emit_to_user(user_id, "PLAYBACK_STATE_CHANGED", session))
-                return "Música pausada."
+                return "Pausado."
 
             if action == "music.next":
                 from app.services.playback_manager import playback_manager
@@ -81,8 +81,22 @@ class ModelRouter:
                 session = playback_manager.next_track(user_id)
                 if session and session.get("current_track"):
                     asyncio.create_task(ws_hub.emit_to_user(user_id, "START_PLAYBACK", session))
-                    return f"Avançando para {session['current_track']['title']}."
-                return "Avançando para a próxima faixa da fila."
+                    return f"Tocando {session['current_track']['title']}."
+                return "Avançando para a próxima faixa."
+
+            if action == "music.like":
+                from app.services.playback_manager import playback_manager
+                from app.database.music_db import MusicDatabase
+                from app.services.ws_manager import ws_hub
+
+                session = playback_manager.get_session(user_id)
+                curr = session.get("current_track")
+                if curr and curr.get("id"):
+                    MusicDatabase.toggle_like(user_id, curr)
+                    MusicDatabase.record_taste_signal(user_id, curr["id"], artist=curr.get("artist"), signal_type="liked")
+                    asyncio.create_task(ws_hub.emit_to_user(user_id, "TRACK_LIKED", {"track_id": curr["id"]}))
+                    return "Música favoritada."
+                return "Música favoritada com sucesso."
 
             # B) Informações Rápidas / Ferramentas
             if action == "info.weather":
@@ -110,6 +124,30 @@ class ModelRouter:
                 return f"Comando de casa inteligente recebido: {query_param}. Ajustando o dispositivo."
 
         # ─── 2. REASONING PATH: LLM COM CONTEXTO E PROMPT CENTRAL ───
+        
+        # Detecção de hábitos conversacionais episódicos (ex: "Vou começar a estudar toda manhã")
+        clean_msg = message.lower()
+        if any(trigger in clean_msg for trigger in ["vou começar a", "vou passar a", "vou estudar", "vou treinar", "meu novo hábito"]):
+            from app.services.moment_clustering_engine import moment_clustering_engine
+            if "estudar" in clean_msg or "programação" in clean_msg or "ler" in clean_msg or "trabalhar" in clean_msg:
+                moment_clustering_engine.register_conversational_habit(
+                    user_id=user_id,
+                    habit_name="Foco & Aprendizado Matinal",
+                    time_start_hour=8,
+                    time_end_hour=11,
+                    preferred_genres="Lofi, Acústico, Instrumental",
+                    target_bpm=95
+                )
+            elif "treinar" in clean_msg or "academia" in clean_msg or "correr" in clean_msg:
+                moment_clustering_engine.register_conversational_habit(
+                    user_id=user_id,
+                    habit_name="Treino & Disposição",
+                    time_start_hour=18,
+                    time_end_hour=20,
+                    preferred_genres="Eletrônica, Funk, Trap",
+                    target_bpm=140
+                )
+
         return await self._call_llm_reasoning(user_id, message, attachment_path)
 
     async def _call_llm_reasoning(

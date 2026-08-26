@@ -56,6 +56,25 @@ class IntentEngine:
             "}"
         )
 
+    @staticmethod
+    def _levenshtein_distance(s1: str, s2: str) -> int:
+        """Calcula a distância de edição de Levenshtein para tolerância a pequenos erros."""
+        if len(s1) < len(s2):
+            return IntentEngine._levenshtein_distance(s2, s1)
+        if len(s2) == 0:
+            return len(s1)
+
+        previous_row = range(len(s2) + 1)
+        for i, c1 in enumerate(s1):
+            current_row = [i + 1]
+            for j, c2 in enumerate(s2):
+                insertions = previous_row[j + 1] + 1
+                deletions = current_row[j] + 1
+                substitutions = previous_row[j] + (c1 != c2)
+                current_row.append(min(insertions, deletions, substitutions))
+            previous_row = current_row
+        return previous_row[-1]
+
     async def classify(self, user_input: str) -> IntentClassificationResult:
         start_time = time.perf_counter()
         clean_input = user_input.strip().lower()
@@ -64,45 +83,67 @@ class IntentEngine:
             latency = (time.perf_counter() - start_time) * 1000
             return IntentClassificationResult("REASONING", 100, latency_ms=latency)
 
-        # ─── 1. FAST-PATH HEURISTICS (<1ms) ───
+        # ─── 1. FAST-PATH HEURISTICS (<3ms) COM REGEX E LEVENSHTEIN TOLERANT ───
         
         # A) Saudações e conversa geral -> REASONING (Fast-path < 1ms)
         is_greeting_or_chat = bool(re.search(
             r"\b(oi|ol[aá]|ei|tudo bem|como vai|como voc[eê] est[aá]|bom dia|boa tarde|boa noite|quem [eé] voc[eê]|ajuda|help|obrigad[oa]|valeu)\b",
             clean_input
         ))
-        if is_greeting_or_chat and not any(w in clean_input for w in ["toca", "toque", "tocar", "pausar", "pause", "pr[oó]xima", "proxima", "pular", "acenda", "apague", "ligue", "desligue"]):
+        if is_greeting_or_chat and not any(w in clean_input for w in ["toca", "toque", "tocar", "pausar", "pause", "pr[oó]xima", "proxima", "pular", "curtir", "curte", "favorita", "acenda", "apague", "ligue", "desligue"]):
             latency = (time.perf_counter() - start_time) * 1000
             return IntentClassificationResult("REASONING", 100, action=None, latency_ms=latency)
 
-        # B) Comandos mecânicos diretos de Música
-        # "toca ...", "toque ...", "tocar ...", "ouvir ..."
-        music_play_match = re.match(r"^(toca|toque|tocar|ouvir|coloque a m[uú]sica|tocar a m[uú]sica|bota)\s*(.*)", clean_input)
-        if music_play_match:
-            song_query = music_play_match.group(2).strip()
-            # Remove preposições comuns: "uma musica de", "a musica", "de"
-            for prefix in ["uma musica de", "uma música de", "a musica de", "a música de", "a musica", "a música", "musica de", "música de", "de "]:
-                if song_query.startswith(prefix):
-                    song_query = song_query[len(prefix):].strip()
+        # B) Parser Híbrido Local de Comandos Musicais (Slot Filling + Levenshtein)
+        
+        # Intenção: TOCAR (PLAY)
+        play_pattern = re.match(
+            r"^(?:luci,?\s*)?(?:toca|toque|coloque|reproduza|ouvir|ouça|bota|tocar)\s+(?:a\s+m[uú]sica\s+|o\s+[aá]lbum\s+|a\s+faixa\s+)?(?P<query>.+)",
+            clean_input
+        )
+        if play_pattern:
+            raw_query = play_pattern.group("query").strip()
+            # Limpeza de prefixos residuais
+            for prefix in ["uma musica de", "uma música de", "de ", "do ", "da "]:
+                if raw_query.startswith(prefix):
+                    raw_query = raw_query[len(prefix):].strip()
                     break
             latency = (time.perf_counter() - start_time) * 1000
             return IntentClassificationResult(
                 "COMMAND",
-                98,
+                99,
                 action="music.play",
-                query_param=song_query or clean_input,
+                query_param=raw_query or clean_input,
                 latency_ms=latency
             )
 
-        # Pausar / Mutar música
-        if re.match(r"^(pausar|pause|parar\s*m[uú]sica|mute|mutar)\b", clean_input):
+        # Intenção: PULAR / PRÓXIMA (NEXT)
+        if re.match(r"^(?:luci,?\s*)?(?:pule|pula|avan[cç]a|pr[oó]xima|proxima|troca|passa|next|pular)\s*(?:essa|a\s+m[uú]sica|a\s+faixa|o\s+som)?\b", clean_input):
+            latency = (time.perf_counter() - start_time) * 1000
+            return IntentClassificationResult("COMMAND", 99, action="music.next", latency_ms=latency)
+
+        # Intenção: PAUSAR / MUTAR (PAUSE)
+        if re.match(r"^(?:luci,?\s*)?(?:pausa|pause|para|parar|sil[eê]ncio|silencio|mutar|mute|stop)\s*(?:a\s+m[uú]sica|a\s+faixa|o\s+som)?\b", clean_input):
             latency = (time.perf_counter() - start_time) * 1000
             return IntentClassificationResult("COMMAND", 99, action="music.pause", latency_ms=latency)
 
-        # Próxima música / Pular
-        if re.match(r"^(pr[oó]xima(\s*m[uú]sica)?|proxima(\s*musica)?|pular(\s*m[uú]sica)?|next(\s*song|\s*track)?)\b", clean_input):
+        # Intenção: FAVORITAR / CURTIR (LIKE)
+        if re.match(r"^(?:luci,?\s*)?(?:curte|curtir|favorita|salva|gostei|adorei|love|like)\s*(?:dessa|essa|esta|m[uú]sica|faixa)?\b", clean_input):
             latency = (time.perf_counter() - start_time) * 1000
-            return IntentClassificationResult("COMMAND", 99, action="music.next", latency_ms=latency)
+            return IntentClassificationResult("COMMAND", 98, action="music.like", latency_ms=latency)
+
+        # Tolerância a pequenos erros de digitação (Levenshtein Distance <= 1 em comandos curtos)
+        first_word = clean_input.split()[0] if clean_input.split() else ""
+        if len(first_word) >= 4:
+            if self._levenshtein_distance(first_word, "pausar") <= 1 or self._levenshtein_distance(first_word, "pause") <= 1:
+                latency = (time.perf_counter() - start_time) * 1000
+                return IntentClassificationResult("COMMAND", 95, action="music.pause", latency_ms=latency)
+            if self._levenshtein_distance(first_word, "proxima") <= 1 or self._levenshtein_distance(first_word, "pular") <= 1:
+                latency = (time.perf_counter() - start_time) * 1000
+                return IntentClassificationResult("COMMAND", 95, action="music.next", latency_ms=latency)
+            if self._levenshtein_distance(first_word, "curtir") <= 1 or self._levenshtein_distance(first_word, "curte") <= 1:
+                latency = (time.perf_counter() - start_time) * 1000
+                return IntentClassificationResult("COMMAND", 95, action="music.like", latency_ms=latency)
 
         # C) Comandos de Informação Rápida / Ferramentas
         if re.search(r"\b(tempo|clima|temperatura|vai\s*chover|chuva|chover|previs[aã]o)\b", clean_input):

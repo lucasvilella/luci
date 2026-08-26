@@ -47,8 +47,19 @@ class PlaybackManagerService:
             session["queue"] = [track]
             session["queue_index"] = 0
 
-        # Grava histórico no SQLite central
+        # Grava histórico no SQLite central e registra métrica de sessão para clustering
         MusicDatabase.add_to_history(user_id, track)
+        
+        # Estimativa de BPM a partir da duração ou tags para clustering
+        dur = track.get("duration", 200)
+        est_bpm = 135 if "funk" in str(track).lower() or "eletr" in str(track).lower() else (90 if dur > 250 else 120)
+        MusicDatabase.record_session_metric(
+            user_id=user_id,
+            track_id=track.get("id", ""),
+            estimated_bpm=est_bpm,
+            volume_level=1.0,
+            context_tag=track.get("context_tag", "")
+        )
         return session
 
     def update_playback_state(self, user_id: str, is_playing: bool, progress_seconds: int = 0) -> Dict[str, Any]:

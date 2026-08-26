@@ -151,16 +151,47 @@ class MusicIntelligenceEngine:
                 {"artist": "", "search_query": "Melhores albuns brasileiros populares", "is_fallback": True}
             ]
 
+        # 6. Momentos Contextuais Ativos (Clustering + Hábitos Episódicos)
+        from app.services.moment_clustering_engine import moment_clustering_engine
+        from app.services.music_vector_engine import music_vector_engine
+
+        active_moments = moment_clustering_engine.run_clustering_and_update_moments(user_id)
+
+        # 7. Cálculo do Vetor de Perfil do Usuário u
+        interaction_history = history + liked_songs
+        user_profile_vec = music_vector_engine.calculate_user_profile_vector(interaction_history)
+
         return {
             "user_id": user_id,
             "is_cold_start": is_cold_start,
             "top_artists_count": len(ranked_artists),
+            "user_vector": user_profile_vec,
+            "active_moments": active_moments,
             "daily_mix_seeds": daily_mix_seeds,
             "similarity_seeds": similarity_seeds,
             "favorite_albums_seeds": favorite_albums_seeds,
             "trending_query": "Top Brasil 2026 Hits",
             "new_releases_query": "Novos Lançamentos 2026 Hits"
         }
+
+    async def generate_balanced_queue(self, user_id: str, candidate_tracks: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Aplica o modelo Multi-Armed Bandit (70% Consolidação / 20% Pontes / 10% Exploração)
+        sobre uma lista de faixas candidatas (ex: Watch Playlist ou Rádio Infinita).
+        """
+        from app.services.music_vector_engine import music_vector_engine
+        taste_profile = MusicDatabase.get_taste_profile(user_id, limit=5)
+        top_artists = [t.get("artist") for t in taste_profile.get("top_artists", []) if t.get("artist")]
+        
+        history = MusicDatabase.get_history(user_id, limit=20)
+        liked_songs = MusicDatabase.get_liked_songs(user_id, limit=10)
+        user_vec = music_vector_engine.calculate_user_profile_vector(history + liked_songs)
+
+        return music_vector_engine.rank_and_balance_recommendations(
+            user_vector=user_vec,
+            candidate_tracks=candidate_tracks,
+            top_genres=top_artists
+        )
 
 # Instância Singleton do Motor de Inteligência Musical
 music_intelligence_engine = MusicIntelligenceEngine()

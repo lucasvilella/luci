@@ -132,12 +132,48 @@ def init_db():
     )
     """)
 
+    # 7. Tabela de Momentos Contextuais Autônomos e Episódicos
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS user_moments (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        moment_name TEXT NOT NULL,
+        subtitle TEXT,
+        time_start_hour INTEGER DEFAULT 0,
+        time_end_hour INTEGER DEFAULT 23,
+        days_of_week TEXT DEFAULT 'all',
+        target_bpm_min INTEGER DEFAULT 60,
+        target_bpm_max INTEGER DEFAULT 180,
+        preferred_genres TEXT DEFAULT '',
+        is_active INTEGER DEFAULT 1,
+        source TEXT DEFAULT 'clustering', -- 'clustering' ou 'conversational'
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # 8. Tabela de Logs de Sessão para Clustering (timestamp, dia_da_semana, bpm_medio, nivel_volume)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS playback_session_metrics (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        track_id TEXT NOT NULL,
+        played_at INTEGER NOT NULL,
+        day_of_week INTEGER NOT NULL, -- 0=Monday, 6=Sunday
+        hour_of_day INTEGER NOT NULL,
+        estimated_bpm INTEGER DEFAULT 120,
+        volume_level REAL DEFAULT 1.0,
+        context_tag TEXT DEFAULT ''
+    )
+    """)
+
     # Índices para performance e busca rápida
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_user ON playback_history (user_id, played_at DESC)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_search ON playback_history (user_id, title, artist, context_tag)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_liked_user ON liked_songs (user_id, liked_at DESC)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_daily_mix ON daily_mix_cache (user_id, date_key)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_track_loudness ON track_loudness (track_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_moments ON user_moments (user_id, is_active)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_session_metrics ON playback_session_metrics (user_id, played_at DESC)")
 
     conn.commit()
     conn.close()
@@ -543,3 +579,94 @@ class MusicDatabase:
         """, (track_id, round(lufs_integrated, 2), round(gain_adjustment, 4)))
         conn.commit()
         conn.close()
+
+    @staticmethod
+    def record_session_metric(
+        user_id: str,
+        track_id: str,
+        estimated_bpm: int = 120,
+        volume_level: float = 1.0,
+        context_tag: str = ""
+    ) -> None:
+        """Grava uma tupla [timestamp, dia_da_semana, hora, bpm_medio, nivel_volume] para clustering."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        now = int(time.time())
+        local_time = time.localtime(now)
+        day_of_week = local_time.tm_wday # 0 = Segunda, 6 = Domingo
+        hour_of_day = local_time.tm_hour
+
+        cursor.execute("""
+        INSERT INTO playback_session_metrics (
+            user_id, track_id, played_at, day_of_week, hour_of_day, estimated_bpm, volume_level, context_tag
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (user_id, track_id, now, day_of_week, hour_of_day, estimated_bpm, volume_level, context_tag))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def get_session_metrics(user_id: str, limit: int = 200) -> List[Dict[str, Any]]:
+        """Retorna tuplas de métricas para a rotina de clustering."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT track_id, played_at, day_of_week, hour_of_day, estimated_bpm, volume_level, context_tag
+        FROM playback_session_metrics
+        WHERE user_id = ?
+        ORDER BY played_at DESC
+        LIMIT ?
+        """, (user_id, limit))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    @staticmethod
+    def save_user_moment(
+        user_id: str,
+        moment_id: str,
+        moment_name: str,
+        subtitle: str,
+        time_start_hour: int,
+        time_end_hour: int,
+        days_of_week: str = "all",
+        target_bpm_min: int = 60,
+        target_bpm_max: int = 180,
+        preferred_genres: str = "",
+        source: str = "clustering"
+    ) -> None:
+        """Salva ou atualiza uma entidade de momento identificada pela Luci."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT OR REPLACE INTO user_moments (
+            id, user_id, moment_name, subtitle, time_start_hour, time_end_hour,
+            days_of_week, target_bpm_min, target_bpm_max, preferred_genres, is_active, source
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+        """, (
+            moment_id, user_id, moment_name, subtitle, time_start_hour, time_end_hour,
+            days_of_week, target_bpm_min, target_bpm_max, preferred_genres, source
+        ))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def get_active_moments_for_now(user_id: str) -> List[Dict[str, Any]]:
+        """Retorna os momentos contextuais ativos para o dia e horário atuais."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        now = time.localtime()
+        current_hour = now.tm_hour
+        current_day = str(now.tm_wday) # 0 a 6
+
+        cursor.execute("""
+        SELECT id, moment_name, subtitle, time_start_hour, time_end_hour, days_of_week,
+               target_bpm_min, target_bpm_max, preferred_genres, source
+        FROM user_moments
+        WHERE user_id = ? AND is_active = 1
+          AND time_start_hour <= ? AND time_end_hour >= ?
+          AND (days_of_week = 'all' OR days_of_week LIKE ?)
+        ORDER BY source DESC, time_start_hour ASC
+        """, (user_id, current_hour, current_hour, f"%{current_day}%"))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(r) for r in rows]

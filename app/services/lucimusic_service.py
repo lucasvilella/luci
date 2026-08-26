@@ -534,6 +534,7 @@ class LuciMusicService:
 
         feed_data = {
             "created_by_luci": created_by_luci,
+            "active_moments": curation.get("active_moments", []),
             "daily_mixes": daily_mixes,
             "recently_played": history,
             "liked_preview": liked_songs,
