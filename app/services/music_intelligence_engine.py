@@ -161,10 +161,22 @@ class MusicIntelligenceEngine:
         interaction_history = history + liked_songs
         user_profile_vec = music_vector_engine.calculate_user_profile_vector(interaction_history)
 
+        # Sanitiza e separa artistas individuais (ex: "Jeninho, Mariana Fagundes" -> "Jeninho", "Mariana Fagundes")
+        individual_ranked_artists: List[str] = []
+        for raw_art in ranked_artists:
+            # Divide por vírgula, &, feat., ft., ' e '
+            import re
+            parts = re.split(r'[,/|&]|\bfeat\.?\b|\bft\.?\b|\b e \b', raw_art, flags=re.IGNORECASE)
+            for p in parts:
+                clean_p = p.strip()
+                if clean_p and len(clean_p) > 2 and clean_p.lower() not in [x.lower() for x in individual_ranked_artists]:
+                    individual_ranked_artists.append(clean_p)
+
         return {
             "user_id": user_id,
             "is_cold_start": is_cold_start,
-            "top_artists_count": len(ranked_artists),
+            "top_artists_count": len(individual_ranked_artists),
+            "ranked_artists": individual_ranked_artists,
             "user_vector": user_profile_vec,
             "active_moments": active_moments,
             "daily_mix_seeds": daily_mix_seeds,

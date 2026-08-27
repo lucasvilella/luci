@@ -59,9 +59,11 @@ export interface MusicHomeFeed {
   recently_played: LuciTrack[]
   liked_preview: LuciTrack[]
   trending_brasil: LuciTrack[]
+  trending_br?: LuciTrack[]
   new_releases?: LuciTrack[]
   based_on_listened?: SimilarityPlaylist[]
   favorite_albums?: AlbumItem[]
+  recommended_artists?: Array<{ id: string; name: string; thumbnail: string }>
 }
 
 export interface LyricsLine {

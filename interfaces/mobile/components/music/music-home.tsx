@@ -1,13 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
-  Menu,
-  Search,
-  Library as LibraryIcon,
+  User,
+  Bell,
   Play,
-  Pause,
-  Loader2,
 } from "lucide-react"
 import {
   type LuciTrack,
@@ -42,7 +39,7 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
   })
 
   const { playTrack, currentTrack, isPlaying, togglePlay } = useMusicPlayer()
-  const { goToSearch, goToLibrary, goToPlaylistDetail, goToAlbumDetail } = useMusicNavigation()
+  const { goToArtist, goToPlaylistDetail, goToAlbumDetail } = useMusicNavigation()
 
   useEffect(() => {
     const refreshFeed = () => {
@@ -66,51 +63,66 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
 
   const continueListening: LuciTrack[] = feed?.recently_played || []
 
-  // ─── Momentos do Dia (Banners Superiores Padronizados) ───
+  // ─── 1. Indicação da Luci (Banner Superior Dinâmico & Variável) ───
   const hour = new Date().getHours()
-  let bannerTag = "SELEÇÃO MATINAL"
-  let bannerTitle = "Café & Acústico"
-  let bannerArtist = "Sons leves para começar o dia"
-  let bannerImage = "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&q=80"
-  let bannerQuery = "Acústico Brasil MPB"
+  const dayOfMonth = new Date().getDate()
+
+  // Lista de 5 imagens da Seleção Matinal (rotaciona a cada 2 dias ou aleatório por dia)
+  const matinalImages = [
+    "/images/music/created-by-luci/selecao_matinal_01.png",
+    "/images/music/created-by-luci/selecao_matinal_02.png",
+    "/images/music/created-by-luci/selecao_matinal_03.png",
+    "/images/music/created-by-luci/selecao_matinal_04.png",
+    "/images/music/created-by-luci/selecao_matinal_05.png",
+  ]
+  const matinalImgIndex = (Math.floor(dayOfMonth / 2)) % matinalImages.length
+  const currentMatinalImg = matinalImages[matinalImgIndex]
+
+  let bannerTag = "MOMENTO DO DIA/GATILHO"
+  let bannerTitle = "TEMA CENTRAL DA PLAYLIST"
+  let bannerQuery = "Workout Motivation Hits"
+  let bannerGradient = "from-[#282669] via-[#312B7C] to-[#25225E]" // Roxo/Azul padrão
+  let bannerShadow = "shadow-indigo-950/20"
+  let bannerImage = "/images/music/created-by-luci/playlist_gym.png"
 
   if (hour >= 6 && hour < 12) {
-    bannerTag = "SELEÇÃO MATINAL"
-    bannerTitle = "Café & Acústico"
-    bannerArtist = "Sons leves para começar o dia"
-    bannerImage = "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&q=80"
+    // Manhã: Tom Calmo, Ensolarado & Relaxante (Âmbar/Laranja Dourado e Verde Claro Suave)
+    bannerTag = "SELEÇÃO MATINAL • BOM DIA"
+    bannerTitle = "ENERGIA & ACÚSTICO MATINAL"
     bannerQuery = "Acústico Brasil MPB"
-  } else if (hour >= 12 && hour < 17) {
-    bannerTag = "FOCO & TRABALHO"
-    bannerTitle = "Alta Performance"
-    bannerArtist = "Concentração e produtividade"
-    bannerImage = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&q=80"
+    bannerGradient = "from-[#D97706] via-[#B45309] to-[#78350F]" // Tons quentes e acolhedores de café/manhã
+    bannerShadow = "shadow-amber-950/25"
+    bannerImage = currentMatinalImg
+  } else if (hour >= 12 && hour < 18) {
+    // Tarde: Tons Relaxantes e Foco (Azul Petróleo / Esmeralda Calmo)
+    bannerTag = "FOCO & PERFORMANCE • TARDE"
+    bannerTitle = "CONCENTRAÇÃO & FLOW"
     bannerQuery = "Deep Focus Instrumental"
-  } else if (hour >= 17 && hour < 21) {
-    bannerTag = "ENERGIA & TREINO"
-    bannerTitle = "Ritmo Intenso"
-    bannerArtist = "Batidas aceleradas para treinar"
-    bannerImage = "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80"
+    bannerGradient = "from-[#0D9488] via-[#0F766E] to-[#115E59]" // Tons relaxantes de foco
+    bannerShadow = "shadow-teal-950/25"
+    bannerImage = currentMatinalImg
+  } else if (hour >= 18 && hour < 22) {
+    // Noite: Academia / Ritmo Intenso (Tons Poderosos e Energéticos Roxo/Azul Intenso)
+    bannerTag = "ENERGIA & TREINO • NOITE"
+    bannerTitle = "RITMO INTENSO & FORÇA"
     bannerQuery = "Workout Motivation Beats"
-  } else if (hour >= 21 || hour < 0) {
-    bannerTag = "DESACELERAR"
-    bannerTitle = "Sons da Noite"
-    bannerArtist = "Acústico & Sons Calmos"
-    bannerImage = "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=600&q=80"
-    bannerQuery = "Sertanejo Acustico Noite Relax"
+    bannerGradient = "from-[#282669] via-[#312B7C] to-[#25225E]" // Poderoso
+    bannerShadow = "shadow-indigo-950/25"
+    bannerImage = "/images/music/created-by-luci/playlist_gym.png"
   } else {
-    bannerTag = "MADRUGADA"
-    bannerTitle = "Sons da Madrugada"
-    bannerArtist = "Seleção calma para relaxar"
-    bannerImage = "https://images.unsplash.com/photo-1445985543470-41fba5c3144a?w=600&q=80"
-    bannerQuery = "Voz e Violao Acustico Suave"
+    // Madrugada: Desacelerar / Sons Calmos (Azul Noite Profundo / Roxo Suave)
+    bannerTag = "DESACELERAR • MADRUGADA"
+    bannerTitle = "SONS TRANQUILOS PARA RELAXAR"
+    bannerQuery = "Sertanejo Acustico Noite Relax"
+    bannerGradient = "from-[#1E1B4B] via-[#2E1065] to-[#18181B]" // Noite calma
+    bannerShadow = "shadow-purple-950/25"
+    bannerImage = currentMatinalImg
   }
 
   const [isBannerLoading, setIsBannerLoading] = useState(false)
   const [bannerTracks, setBannerTracks] = useState<LuciTrack[]>([])
 
   useEffect(() => {
-    // Pré-carrega as músicas temáticas do momento assim que a home abre
     searchMusic(bannerQuery, "songs")
       .then((res) => {
         if (res.songs && res.songs.length > 0) {
@@ -142,438 +154,524 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
     }
   }
 
+  // ─── Seções Dinâmicas (Permutação Diária) ───
+  // Indicação da Luci, Continuar Ouvindo e Daily Mix são FIXOS no topo.
+  // As demais seções rotacionam.
+  const dynamicSections = useMemo(() => {
+    const daySeed = new Date().getDate()
+
+    const sections = [
+      { id: "new-releases", type: "new-releases" },
+      { id: "featured-album-card", type: "featured-album-card" },
+      { id: "artists", type: "artists" },
+      { id: "trending-br", type: "trending-br" },
+      { id: "based-on-history", type: "based-on-history" },
+    ]
+
+    const offset = daySeed % sections.length
+    return [...sections.slice(offset), ...sections.slice(0, offset)]
+  }, [])
+
   return (
-    <div className="flex h-full flex-col bg-background text-foreground animate-view-in select-none">
-      {/* ─── Header Minimalista com Botão de 3 Tracinhos na Esquerda e Ações na Direita ─── */}
-      <header className="flex items-center justify-between px-5 pt-4 pb-3 bg-card/80 backdrop-blur-md border-b border-border/80 z-10">
+    <div className="flex h-full flex-col bg-[#F6F6F6] text-zinc-900 select-none overflow-y-auto pb-6">
+      {/* ─── Header Minimalista Exato do Figma (z-40 garante que nada passe por cima) ─── */}
+      <header className="sticky top-0 z-40 flex items-center justify-between px-5 pt-3 pb-2 bg-[#F6F6F6]/95 backdrop-blur-md">
+        {/* Botão Circular Hambúrguer com Sombra (Figma) */}
         <button
           type="button"
           onClick={onOpenMenu}
-          aria-label="Abrir Menu"
-          className="size-10 flex items-center justify-center rounded-full bg-secondary text-foreground hover:bg-secondary/80 active:scale-95 transition-all shadow-sm"
+          aria-label="Abrir Menu de Módulos"
+          className="size-11 flex flex-col justify-center items-center gap-1 rounded-full bg-white border border-zinc-200/60 shadow-md shadow-zinc-200/50 text-zinc-800 active:scale-90 transition-transform"
         >
-          <Menu className="size-5" />
+          <div className="w-4 h-[2px] bg-zinc-800 rounded-full" />
+          <div className="w-4 h-[2px] bg-zinc-800 rounded-full" />
+          <div className="w-4 h-[2px] bg-zinc-800 rounded-full" />
         </button>
 
-        <h1 className="text-sm font-extrabold tracking-tight text-foreground uppercase">Música</h1>
-
-        <div className="flex items-center gap-2">
+        {/* Ações da Direita: Perfil e Notificações com Badge Vermelho */}
+        <div className="flex items-center gap-4">
           <button
             type="button"
-            onClick={goToSearch}
-            className="size-10 flex items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
-            aria-label="Buscar"
+            aria-label="Perfil"
+            className="p-1.5 text-zinc-600 hover:text-zinc-900 transition-colors"
           >
-            <Search className="size-4.5" />
+            <User className="size-6 stroke-[1.8]" />
           </button>
           <button
             type="button"
-            onClick={goToLibrary}
-            className="size-10 flex items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
-            aria-label="Biblioteca"
+            aria-label="Notificações"
+            className="relative p-1.5 text-zinc-600 hover:text-zinc-900 transition-colors"
           >
-            <LibraryIcon className="size-4.5" />
+            <Bell className="size-6 stroke-[1.8]" />
+            {/* Badge de Notificação Vermelho do Figma */}
+            <span className="absolute top-1 right-1 size-2.5 rounded-full bg-[#EF4444] border-2 border-[#F6F6F6]" />
           </button>
         </div>
       </header>
 
-      {/* ─── Conteúdo Rolável da Home ─── */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-7 pb-28 no-scrollbar">
-        {/* ─── 1. Banner Editorial Premium (Figma Style: Fundo Pastel, Botão Play Superior, Capa Inclinada e Barra de Afinidade) ─── */}
-        <section
-          onClick={() => {
-            goToPlaylistDetail({
-              playlistId: `banner_${bannerTag.toLowerCase().replace(/\s+/g, "_")}`,
-              title: `${bannerTag} • ${bannerTitle}`,
-              thumbnail: bannerImage,
-              initialTracks: bannerTracks,
-            })
-          }}
-          className="relative w-full rounded-3xl p-5 shadow-sm cursor-pointer bg-gradient-to-br from-[#E9D5FF] via-[#DDD6FE] to-[#C4B5FD] text-zinc-900 overflow-hidden active:scale-[0.99] transition-transform border border-purple-200/60"
-        >
-          {/* Canto Superior Direito: Botão Play/Pause Circular Branco (Toca Imediatamente sem abrir a tela se clicar no botão) */}
-          <div className="absolute right-4 top-4 z-20">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                handlePlayBanner()
-              }}
-              className="size-9 rounded-full bg-white shadow-lg flex items-center justify-center text-zinc-900 hover:scale-110 active:scale-95 transition-transform"
-              aria-label="Tocar agora"
-            >
-              {isBannerLoading ? (
-                <Loader2 className="size-4 animate-spin text-zinc-900" />
-              ) : isPlaying && currentTrack && bannerTracks.some((t) => t.id === currentTrack.id) ? (
-                <Pause className="size-4 fill-zinc-900" />
-              ) : (
-                <Play className="size-4 fill-zinc-900 ml-0.5" />
-              )}
-            </button>
-          </div>
-
-          {/* Canto Inferior Direito: Capa Inclinada Estilizada */}
-          <div className="absolute -right-2 -bottom-3 w-28 h-28 pointer-events-none">
-            <img
-              src={bannerImage}
-              alt={bannerTitle}
-              referrerPolicy="no-referrer"
-              className="size-full rounded-2xl object-cover rotate-[15deg] shadow-xl border-2 border-white/40"
-            />
-          </div>
-
-          {/* Conteúdo Textual do Banner no Lado Esquerdo */}
-          <div className="max-w-[62%] space-y-3">
-            <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700 block">
-                {bannerTag}
-              </span>
-              <h2 className="text-xl font-bold tracking-tight text-zinc-900 leading-snug mt-0.5">
-                {bannerTitle}
-              </h2>
-              <p className="text-xs text-zinc-600 font-medium line-clamp-1 mt-0.5">
-                {bannerArtist}
-              </p>
+      <div className="px-5 space-y-6 pt-2">
+        {/* ─── 1. CARD INDICAÇÃO DA LUCI (COR E IMAGEM COMBINANDO COM O TEMA) ─── */}
+        <section className="relative pt-6">
+          <div
+            onClick={handlePlayBanner}
+            className={`relative rounded-[15px] bg-gradient-to-r ${bannerGradient} p-5 shadow-xl ${bannerShadow} text-white cursor-pointer active:scale-[0.99] transition-all min-h-[135px] flex items-center`}
+          >
+            {/* Linhas de fundo vetoriais sutis */}
+            <div className="absolute inset-0 rounded-[15px] overflow-hidden pointer-events-none opacity-30">
+              <svg className="w-full h-full" viewBox="0 0 300 120" fill="none">
+                <path d="M180 0C220 40 260 80 300 120" stroke="white" strokeWidth="0.5" strokeOpacity="0.3" />
+                <path d="M195 0C230 40 265 80 300 100" stroke="white" strokeWidth="0.5" strokeOpacity="0.3" />
+                <path d="M210 0C240 40 270 80 300 80" stroke="white" strokeWidth="0.5" strokeOpacity="0.3" />
+              </svg>
             </div>
 
-            {/* Barra de Progresso / Afinidade com a Luci */}
-            <div className="space-y-1 pt-1">
-              <div className="flex justify-between items-center text-[10px] font-bold text-zinc-600">
-                <span>Afinidade</span>
-                <span>88%</span>
+            {/* Informações de Texto */}
+            <div className="relative z-10 max-w-[58%]">
+              <span className="inline-block text-[9px] font-black tracking-wider text-white/80 uppercase mb-1">
+                {bannerTag}
+              </span>
+              <h2 className="text-[15px] font-black tracking-tight leading-snug text-white uppercase">
+                {bannerTitle}
+              </h2>
+              <div className="mt-3">
+                <div className="flex justify-between items-center text-[10px] text-white/80 font-semibold mb-1">
+                  <span>Afinidade</span>
+                  <span>88%</span>
+                </div>
+                {/* Barra de afinidade */}
+                <div className="h-1.5 w-full rounded-full bg-white/25 overflow-hidden">
+                  <div className="h-full bg-white rounded-full" style={{ width: "88%" }} />
+                </div>
               </div>
-              <div className="w-full h-1.5 bg-black/10 rounded-full overflow-hidden">
-                <div className="h-full bg-zinc-900 rounded-full w-[88%]" />
-              </div>
+            </div>
+
+            {/* Imagem do Tema Extravasando o Card para Cima (Figma) com z-10 */}
+            <div className="absolute right-0 bottom-0 pointer-events-none z-10 flex items-end justify-end">
+              <img
+                src={bannerImage}
+                alt="Tema da Playlist"
+                className="h-[180px] w-auto max-w-none object-contain select-none drop-shadow-2xl translate-x-1"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none"
+                }}
+              />
             </div>
           </div>
         </section>
 
-        {!feed ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 text-zinc-400">
-            <Loader2 className="size-8 animate-spin text-[#22C55E]" />
-            <p className="text-xs">Carregando feed...</p>
+        {/* ─── 2. CONTINUAR OUVINDO (FIGMA: APENAS PLAYLISTS E ÁLBUNS OUVINDO, CARD BRANCO PURO SEM BORDA E SEM SOMBRA) ─── */}
+        <section>
+          <div className="inline-block relative mb-3">
+            <h3 className="text-[13.5px] font-black uppercase tracking-wider text-zinc-900">
+              CONTINUAR OUVINDO
+            </h3>
+            <div className="h-[3px] w-full bg-[#62CF5E] rounded-full mt-1" />
           </div>
-        ) : (
-          <>
-            {/* ─── 2. CONTINUAR OUVINDO (Apenas Playlists e Álbuns Recentes) ─── */}
-            {((feed?.daily_mixes && feed.daily_mixes.length > 0) || (feed?.favorite_albums && feed.favorite_albums.length > 0)) && (
-              <section className="space-y-3">
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-900 font-sans">
-                  CONTINUAR OUVINDO
-                </h3>
+          <div className="grid grid-cols-2 gap-2.5">
+            {(() => {
+              // Constrói lista exclusiva de Playlists e Álbuns baseados no histórico e coleções
+              const rawHistory = feed?.recently_played || []
+              const seenCollections = new Set<string>()
+              const recentCollections: Array<{
+                id: string
+                title: string
+                type: "album" | "playlist"
+                thumbnail: string
+                artist?: string
+                trackRef?: LuciTrack
+              }> = []
 
-                <div className="grid grid-cols-2 gap-2.5">
-                  {/* Combina Daily Mixes e Álbuns para formar os 8 cards de Playlists e Álbuns */}
-                  {[
-                    ...(feed?.daily_mixes || []).map((mix, i) => ({
-                      type: "playlist" as const,
-                      id: mix.id,
-                      title: `Daily Mix ${i + 1}`,
-                      subtitle: mix.subtitle,
-                      thumbnail: mix.thumbnail,
-                      tracks: mix.tracks,
-                    })),
-                    ...(feed?.favorite_albums || []).map((alb) => ({
-                      type: "album" as const,
+              for (const t of rawHistory) {
+                if (t.album && t.album.trim() && !seenCollections.has(`album-${t.album.toLowerCase()}`)) {
+                  seenCollections.add(`album-${t.album.toLowerCase()}`)
+                  recentCollections.push({
+                    id: t.album,
+                    title: t.album,
+                    type: "album",
+                    thumbnail: t.thumbnail,
+                    artist: t.artist,
+                    trackRef: t
+                  })
+                }
+              }
+
+              // Se tiver menos de 6, complementa com Daily Mixes e Álbuns favoritos
+              if (recentCollections.length < 6 && feed?.daily_mixes) {
+                feed.daily_mixes.forEach((dm, idx) => {
+                  if (recentCollections.length < 6 && !seenCollections.has(`dm-${dm.title.toLowerCase()}`)) {
+                    seenCollections.add(`dm-${dm.title.toLowerCase()}`)
+                    recentCollections.push({
+                      id: `dm_${idx + 1}`,
+                      title: dm.title,
+                      type: "playlist",
+                      thumbnail: dm.thumbnail || `/images/music/daily-mix/dailymix_${idx + 1}.png`,
+                      artist: "Daily Mix",
+                      trackRef: dm.tracks?.[0]
+                    })
+                  }
+                })
+              }
+
+              if (recentCollections.length < 6 && feed?.favorite_albums) {
+                feed.favorite_albums.forEach((alb) => {
+                  if (recentCollections.length < 6 && !seenCollections.has(`alb-${alb.title.toLowerCase()}`)) {
+                    seenCollections.add(`alb-${alb.title.toLowerCase()}`)
+                    recentCollections.push({
                       id: alb.id || alb.title,
                       title: alb.title,
-                      subtitle: `Álbum • ${alb.artist}`,
+                      type: "album",
                       thumbnail: alb.thumbnail,
-                      tracks: [],
-                    })),
-                  ]
-                    .slice(0, 8)
-                    .map((item) => (
-                      <div
-                        key={item.id}
-                        onClick={() => {
-                          if (item.type === "album") {
-                            goToAlbumDetail({
-                              albumId: item.id,
-                              title: item.title,
-                              artist: (item as any).artist || item.subtitle.replace("Álbum • ", ""),
-                              thumbnail: item.thumbnail,
-                              initialTracks: item.tracks,
-                            })
-                          } else {
-                            goToPlaylistDetail({
-                              playlistId: item.id,
-                              title: item.title,
-                              thumbnail: item.thumbnail,
-                              initialTracks: item.tracks,
-                            })
-                          }
-                        }}
-                        className="flex items-center gap-3 p-1.5 pr-3 rounded-2xl bg-white border border-zinc-200/70 shadow-sm hover:border-zinc-300 transition-all cursor-pointer group active:scale-[0.98]"
-                      >
-                        <img
-                          src={
-                            item.thumbnail ||
-                            "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&q=80"
-                          }
-                          alt={item.title}
-                          referrerPolicy="no-referrer"
-                          className="size-11 rounded-xl object-cover bg-zinc-100 shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-zinc-900 truncate leading-tight">
-                            {item.title}
-                          </p>
-                          <p className="text-[11px] text-zinc-500 truncate mt-0.5">
-                            {item.subtitle}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </section>
-            )}
+                      artist: alb.artist
+                    })
+                  }
+                })
+              }
 
-            {/* ─── 3. DAILY MIX ─── */}
-            {feed?.daily_mixes && feed.daily_mixes.length > 0 && (
-              <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-900 font-sans">
-                    DAILY MIX
-                  </h3>
-                </div>
-
-                <div className="flex gap-3.5 overflow-x-auto pb-2 no-scrollbar">
-                  {feed.daily_mixes.map((mix, idx) => {
-                    const isMixPlaying = mix.tracks.some((t) => t.id === currentTrack?.id) && isPlaying
-                    return (
-                      <div
-                        key={mix.id}
-                        onClick={() => {
-                          console.log("[LuciMusic] Abrindo Daily Mix:", mix.title, mix.tracks)
-                          goToPlaylistDetail({
-                            playlistId: mix.id,
-                            title: `Daily Mix ${idx + 1}`,
-                            thumbnail: mix.thumbnail,
-                            initialTracks: mix.tracks,
-                          })
-                        }}
-                        className="relative group shrink-0 w-44 rounded-3xl overflow-hidden flex flex-col justify-between h-56 text-white shadow-md cursor-pointer transition-all active:scale-[0.98] hover:shadow-xl bg-zinc-900"
-                      >
-                        {/* Imagem de Capa do Primeiro Artista / Faixa */}
-                        {mix.thumbnail ? (
-                          <img
-                            src={mix.thumbnail}
-                            alt={mix.title}
-                            referrerPolicy="no-referrer"
-                            className="absolute inset-0 size-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : null}
-
-                        {/* Topo do Card com Botão de Play Flutuante Direto */}
-                        <div className="relative z-10 flex justify-end items-start p-3">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (mix.tracks.length > 0) {
-                                if (isMixPlaying) togglePlay()
-                                else playTrack(mix.tracks[0], mix.tracks)
-                              }
-                            }}
-                            className="size-9 rounded-full bg-white text-zinc-900 flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95"
-                            aria-label="Tocar Mix"
-                          >
-                            {isMixPlaying ? (
-                              <Pause className="size-4 fill-zinc-900" />
-                            ) : (
-                              <Play className="size-4 fill-zinc-900 ml-0.5" />
-                            )}
-                          </button>
-                        </div>
-
-                        {/* Faixa Inferior Escura com Transparência e Blur */}
-                        <div className="relative z-10 bg-black/75 backdrop-blur-md p-3.5 border-t border-white/10 space-y-1">
-                          <p className="text-sm font-black uppercase tracking-wider text-white leading-tight">
-                            DAILY MIX {idx + 1}
-                          </p>
-                          <p className="text-xs text-zinc-300 font-medium line-clamp-2 leading-snug">
-                            {mix.subtitle}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </section>
-            )}
-
-            {/* ─── 4. EM ALTA NO BRASIL ─── */}
-            {feed?.trending_brasil && feed.trending_brasil.length > 0 && (
-              <section className="space-y-3">
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-900 font-sans">
-                  EM ALTA NO BRASIL
-                </h3>
-
-                <div className="flex gap-3.5 overflow-x-auto pb-2 no-scrollbar">
-                  {feed.trending_brasil.map((track) => (
+              return (recentCollections.length > 0 ? recentCollections.slice(0, 6) : Array(6).fill(null)).map((item, i) => {
+                if (!item) {
+                  return (
                     <div
-                      key={track.id}
-                      onClick={() => playTrack(track, feed.trending_brasil)}
-                      className="group shrink-0 w-36 flex flex-col cursor-pointer active:scale-[0.98]"
+                      key={`skeleton-${i}`}
+                      className="flex items-center gap-3 rounded-[15px] bg-white p-2.5 min-h-[58px]"
                     >
-                      <div className="relative aspect-square w-full rounded-2xl overflow-hidden mb-2 bg-zinc-100 shadow-sm border border-zinc-200/50">
-                        <TrackImage
-                          src={track.thumbnail}
-                          trackId={track.id}
-                          alt={track.title}
-                          className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
+                      <div className="size-11 rounded-[10px] bg-zinc-100 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="h-4 w-20 bg-zinc-100 rounded" />
                       </div>
-                      <p className="text-xs font-bold text-zinc-900 truncate">
-                        {track.title}
-                      </p>
-                      <p className="text-[11px] text-zinc-500 truncate mt-0.5">
-                        {track.artist}
+                    </div>
+                  )
+                }
+
+                const isCurrent = currentTrack && (
+                  currentTrack.album === item.title ||
+                  (item.trackRef && currentTrack.id === item.trackRef.id)
+                )
+
+                const handleClick = () => {
+                  if (item.type === "album") {
+                    goToAlbumDetail(item.id, item.title, item.artist, item.thumbnail)
+                  } else {
+                    goToPlaylistDetail(item.id, item.title, item.thumbnail)
+                  }
+                }
+
+                return (
+                  <button
+                    key={`continue-${item.id}-${i}`}
+                    type="button"
+                    onClick={handleClick}
+                    className={`flex items-center gap-3 rounded-[15px] bg-white p-2.5 text-left transition-all active:scale-95 min-h-[58px] ${
+                      isCurrent ? "ring-2 ring-[#62CF5E]" : ""
+                    }`}
+                  >
+                    <img
+                      src={item.thumbnail}
+                      alt={item.title}
+                      className="size-11 rounded-[10px] object-cover bg-zinc-100 shrink-0"
+                      onError={(e) => {
+                        e.currentTarget.src = "/images/music/daily-mix/dailymix_1.png"
+                      }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13.5px] font-black text-zinc-900 leading-snug">
+                        {item.title}
                       </p>
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
+                  </button>
+                )
+              })
+            })()}
+          </div>
+        </section>
 
-            {/* ─── 5. NOVOS LANÇAMENTOS ─── */}
-            {feed?.new_releases && feed.new_releases.length > 0 && (
-              <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-900 font-sans">
+        {/* ─── 3. DAILY MIX (TEXTOS +10% DE TAMANHO) ─── */}
+        <section>
+          <div className="inline-block relative mb-3">
+            <h3 className="text-[13.5px] font-black uppercase tracking-wider text-zinc-900">
+              DAILY MIX
+            </h3>
+            <div className="h-[3px] w-full bg-[#62CF5E] rounded-full mt-1" />
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none -mx-5 px-5">
+            {(feed?.daily_mixes && feed.daily_mixes.length > 0 ? feed.daily_mixes : [1, 2, 3, 4, 5]).map((mix, idx) => {
+              const mixNum = idx + 1
+              const mixObj = typeof mix === "object" ? (mix as DailyMix) : null
+              const firstTrack = mixObj?.tracks?.[0]
+              const title = mixObj?.title || `DAILY MIX ${mixNum}`
+              const artistNames = mixObj?.tracks?.slice(0, 3).map((t) => t.artist).join(", ") || "Nome dos artistas, Nome dos artistas, Nome dos ..."
+              const frameImg = `/images/music/daily-mix/dailymix_${mixNum}.png`
+
+              return (
+                <div
+                  key={`dailymix-${idx}`}
+                  onClick={() => {
+                    if (mixObj && mixObj.tracks?.length) {
+                      playTrack(mixObj.tracks[0], mixObj.tracks)
+                    }
+                  }}
+                  className="w-[130px] shrink-0 cursor-pointer group active:scale-95 transition-transform"
+                >
+                  {/* Card com Foto do Artista Embaixo + Moldura PNG Sobreposta (Raio 15px) */}
+                  <div className="relative aspect-[1050/1200] w-full rounded-[15px] overflow-hidden bg-zinc-200 shadow-md">
+                    {/* Foto do 1º Artista preenchendo a largura e alinhada ao topo */}
+                    {firstTrack?.thumbnail ? (
+                      <img
+                        src={firstTrack.thumbnail}
+                        alt={title}
+                        className="absolute inset-0 w-full h-full object-cover object-top"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-b from-zinc-700 to-zinc-950" />
+                    )}
+
+                    {/* Moldura PNG Sobreposta */}
+                    <img
+                      src={frameImg}
+                      alt={title}
+                      className="absolute inset-0 w-full h-full object-cover pointer-events-none z-10"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none"
+                      }}
+                    />
+                  </div>
+
+                  {/* Legenda Abaixo */}
+                  <h4 className="text-[13px] font-black text-zinc-900 mt-2 truncate">
+                    {title}
+                  </h4>
+                  <p className="text-[11px] text-zinc-500 line-clamp-2 leading-tight mt-0.5 font-medium">
+                    {artistNames}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* ─── 4. SEÇÕES DINÂMICAS ─── */}
+        {dynamicSections.map((sec) => {
+          if (sec.type === "new-releases") {
+            const releases = feed?.new_releases || feed?.trending_brasil || []
+            return (
+              <section key="section-new-releases">
+                <div className="inline-block relative mb-3">
+                  <h3 className="text-[13.5px] font-black uppercase tracking-wider text-zinc-900">
                     NOVOS LANÇAMENTOS
                   </h3>
+                  <div className="h-[3px] w-full bg-[#62CF5E] rounded-full mt-1" />
                 </div>
-
-                <div className="flex gap-3.5 overflow-x-auto pb-2 no-scrollbar">
-                  {feed.new_releases.map((track) => (
+                {/* Carrossel de Capas Quadradas */}
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none -mx-5 px-5">
+                  {releases.slice(0, 8).map((track, i) => (
                     <div
-                      key={track.id}
-                      onClick={() => playTrack(track, feed.new_releases)}
-                      className="group shrink-0 w-36 flex flex-col cursor-pointer active:scale-[0.98]"
+                      key={`rel-${track.id}-${i}`}
+                      onClick={() => playTrack(track, releases)}
+                      className="w-[130px] shrink-0 cursor-pointer active:scale-95 transition-transform"
                     >
-                      <div className="relative aspect-square w-full rounded-2xl overflow-hidden mb-2 bg-zinc-100 shadow-sm border border-zinc-200/50">
-                        <TrackImage
-                          src={track.thumbnail}
-                          trackId={track.id}
-                          alt={track.title}
-                          className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                      <p className="text-xs font-bold text-zinc-900 truncate">
+                      <TrackImage
+                        src={track.thumbnail}
+                        trackId={track.id}
+                        alt={track.title}
+                        className="aspect-square w-full rounded-[15px] object-cover bg-zinc-100 shadow-md border border-zinc-200/50"
+                      />
+                      <h4 className="text-[13px] font-black text-zinc-900 mt-2 truncate uppercase">
                         {track.title}
-                      </p>
-                      <p className="text-[11px] text-zinc-500 truncate mt-0.5">
+                      </h4>
+                      <p className="text-[11px] text-zinc-500 truncate mt-0.5 font-medium">
                         {track.artist}
                       </p>
                     </div>
                   ))}
                 </div>
               </section>
-            )}
+            )
+          }
 
-            {/* ─── 6. COM BASE NO QUE VOCÊ OUVIU (Abre a Tela de Playlist do Figma) ─── */}
-            {feed?.based_on_listened && feed.based_on_listened.length > 0 && (
-              <section className="space-y-3">
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-900 font-sans">
-                  COM BASE NO QUE VOCÊ OUVIU
-                </h3>
+          {/* ─── Card de Destaque / Indicação de Álbum Novo (Seção Dinâmica com lado direito arredondado e linhas) ─── */}
+          if (sec.type === "featured-album-card") {
+            const featuredTrack = feed?.new_releases?.[0] || feed?.trending_brasil?.[0] || feed?.recently_played?.[0] || {
+              id: "featured-default",
+              title: "Hit em Destaque",
+              artist: "Indicação especial para o seu dia",
+              thumbnail: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300",
+              duration: 210,
+            }
 
-                <div className="flex gap-3.5 overflow-x-auto pb-2 no-scrollbar">
-                  {feed.based_on_listened.map((playlist) => (
-                    <div
-                      key={playlist.id}
-                      onClick={() =>
-                        goToPlaylistDetail({
-                          playlistId: playlist.id,
-                          title: playlist.title,
-                          thumbnail: playlist.thumbnail,
-                          initialTracks: playlist.tracks,
-                        })
-                      }
-                      className="group shrink-0 w-44 flex flex-col cursor-pointer active:scale-[0.98]"
-                    >
-                      <div
-                        className={`relative aspect-square w-full rounded-3xl overflow-hidden mb-2 shadow-md bg-gradient-to-br ${playlist.gradient} text-white p-3.5 flex flex-col justify-between`}
-                      >
-                        {playlist.thumbnail ? (
-                          <img
-                            src={playlist.thumbnail}
-                            alt={playlist.title}
-                            referrerPolicy="no-referrer"
-                            className="absolute inset-0 size-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500"
-                          />
-                        ) : null}
-                        <div className="absolute inset-0 bg-black/40" />
+            return (
+              <section key="section-featured-album-card">
+                <div
+                  onClick={() => playTrack(featuredTrack)}
+                  className="relative overflow-hidden flex items-center justify-between p-3.5 rounded-l-[15px] rounded-r-[60px] bg-[#62CF5E] text-white shadow-xl shadow-green-600/25 cursor-pointer active:scale-[0.99] transition-transform min-h-[94px]"
+                >
+                  {/* Padrão de Linhas Vetoriais Arredondadas no Lado Direito (Figma) */}
+                  <div className="absolute right-0 top-0 bottom-0 w-[42%] overflow-hidden pointer-events-none opacity-40">
+                    <svg className="w-full h-full" viewBox="0 0 140 100" fill="none">
+                      <path d="M20 0C60 0 140 30 140 100" stroke="white" strokeWidth="1.2" />
+                      <path d="M40 0C75 0 140 40 140 100" stroke="white" strokeWidth="1.2" />
+                      <path d="M60 0C90 0 140 50 140 100" stroke="white" strokeWidth="1.2" />
+                      <path d="M80 0C105 0 140 60 140 100" stroke="white" strokeWidth="1.2" />
+                      <path d="M100 0C118 0 140 70 140 100" stroke="white" strokeWidth="1.2" />
+                    </svg>
+                  </div>
 
-                        <div className="relative z-10 flex justify-end">
-                          <div className="size-8 rounded-full bg-white text-zinc-900 flex items-center justify-center shadow-md">
-                            <Play className="size-3.5 fill-zinc-900 ml-0.5" />
-                          </div>
-                        </div>
-
-                        <div className="relative z-10">
-                          <p className="text-xs font-black uppercase tracking-wide text-white leading-tight drop-shadow-sm">
-                            {playlist.title}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-xs font-bold text-zinc-900 truncate">
-                        {playlist.title}
-                      </p>
-                      <p className="text-[11px] text-zinc-500 line-clamp-1 mt-0.5">
-                        {playlist.subtitle}
+                  {/* Informações da Faixa / Álbum (+10% nos textos) */}
+                  <div className="flex items-center gap-3.5 min-w-0 flex-1 z-10">
+                    <TrackImage
+                      src={featuredTrack.thumbnail}
+                      trackId={featuredTrack.id}
+                      alt={featuredTrack.title}
+                      className="size-14 rounded-[12px] object-cover border border-white/30 shrink-0 shadow-md"
+                    />
+                    <div className="min-w-0 flex-1 pr-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-green-100 block mb-0.5">
+                        NOVO LANÇAMENTO
+                      </span>
+                      <h4 className="text-[13px] font-black truncate text-white leading-tight uppercase">
+                        {featuredTrack.title}
+                      </h4>
+                      <p className="text-[11px] text-green-100 truncate mt-0.5 font-semibold">
+                        {featuredTrack.artist}
                       </p>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Botão Play Circular Branco (Figma) */}
+                  <button
+                    type="button"
+                    aria-label="Tocar Lançamento"
+                    className="size-12 flex items-center justify-center rounded-full bg-white text-[#18181B] shrink-0 shadow-lg active:scale-90 transition-transform mr-1 z-10"
+                  >
+                    <Play className="size-5 fill-[#18181B] ml-0.5" />
+                  </button>
                 </div>
               </section>
-            )}
+            )
+          }
 
-            {/* ─── 7. ÁLBUNS COM AS MÚSICAS QUE VOCÊ ADORA ─── */}
-            {feed?.favorite_albums && feed.favorite_albums.length > 0 && (
-              <section className="space-y-3">
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-900 font-sans">
-                  ÁLBUNS COM AS MÚSICAS QUE VOCÊ ADORA
-                </h3>
+          {/* ─── Seção ARTISTAS (Figma: Fotos circulares limpas sem borda e sem sombra) ─── */}
+          if (sec.type === "artists") {
+            const artists = feed?.recommended_artists || [
+              { id: "1", name: "Mariana Fagundes", thumbnail: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300" },
+              { id: "2", name: "Ícaro e Gilmar", thumbnail: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300" },
+              { id: "3", name: "Humberto e Ronaldo", thumbnail: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300" },
+            ]
 
-                <div className="flex gap-3.5 overflow-x-auto pb-2 no-scrollbar">
-                  {feed.favorite_albums.map((album) => (
+            return (
+              <section key="section-artists">
+                <div className="inline-block relative mb-3">
+                  <h3 className="text-[13.5px] font-black uppercase tracking-wider text-zinc-900">
+                    ARTISTAS
+                  </h3>
+                  <div className="h-[3px] w-full bg-[#62CF5E] rounded-full mt-1" />
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none -mx-5 px-5">
+                  {artists.map((artist, i) => (
                     <div
-                      key={album.id || album.title}
-                      onClick={() => {
-                        goToAlbumDetail({
-                          albumId: album.id,
-                          title: album.title,
-                          artist: album.artist,
-                          thumbnail: album.thumbnail,
-                        })
-                      }}
-                      className="group shrink-0 w-36 flex flex-col cursor-pointer active:scale-[0.98]"
+                      key={`artist-${artist.id || i}-${i}`}
+                      onClick={() => goToArtist(artist.name)}
+                      className="w-[130px] shrink-0 text-center cursor-pointer active:scale-95 transition-transform"
                     >
-                      <div className="relative aspect-square w-full rounded-2xl overflow-hidden mb-2 bg-zinc-100 shadow-md border border-zinc-200/50">
+                      <div className="size-[130px] rounded-full overflow-hidden mx-auto bg-zinc-200">
                         <img
-                          src={album.thumbnail || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&q=80"}
-                          alt={album.title}
-                          referrerPolicy="no-referrer"
-                          className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          src={artist.thumbnail}
+                          alt={artist.name}
+                          className="w-full h-full object-cover"
                         />
                       </div>
-                      <p className="text-xs font-bold text-zinc-900 truncate">
-                        {album.title}
-                      </p>
-                      <p className="text-[11px] text-zinc-500 truncate mt-0.5">
-                        Álbum • {album.artist}
+                      <h4 className="text-[13px] font-black text-zinc-900 mt-2 truncate">
+                        {artist.name}
+                      </h4>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )
+          }
+
+          if (sec.type === "trending-br") {
+            const trending = feed?.trending_brasil || feed?.trending_br || []
+            return (
+              <section key="section-trending">
+                <div className="inline-block relative mb-3">
+                  <h3 className="text-[13.5px] font-black uppercase tracking-wider text-zinc-900">
+                    EM ALTA NO BRASIL
+                  </h3>
+                  <div className="h-[3px] w-full bg-[#62CF5E] rounded-full mt-1" />
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none -mx-5 px-5">
+                  {trending.slice(0, 8).map((track, i) => (
+                    <div
+                      key={`trend-${track.id}-${i}`}
+                      onClick={() => playTrack(track, trending)}
+                      className="w-[130px] shrink-0 cursor-pointer active:scale-95 transition-transform"
+                    >
+                      <TrackImage
+                        src={track.thumbnail}
+                        trackId={track.id}
+                        alt={track.title}
+                        className="aspect-square w-full rounded-[15px] object-cover bg-zinc-100 shadow-md border border-zinc-200/50"
+                      />
+                      <h4 className="text-[13px] font-black text-zinc-900 mt-2 truncate">
+                        {track.title}
+                      </h4>
+                      <p className="text-[11px] text-zinc-500 truncate mt-0.5 font-medium">
+                        {track.artist}
                       </p>
                     </div>
                   ))}
                 </div>
               </section>
-            )}
-          </>
-        )}
+            )
+          }
+
+          if (sec.type === "based-on-history") {
+            // Se based_on_listened tiver playlists similares, extrai tracks ou usa trending como fallback
+            const basedTracks: LuciTrack[] = []
+            if (feed?.based_on_listened && feed.based_on_listened.length > 0) {
+              for (const sim of feed.based_on_listened) {
+                if (sim.tracks && sim.tracks.length > 0) {
+                  basedTracks.push(...sim.tracks.slice(0, 2))
+                }
+              }
+            }
+            const displayTracks = basedTracks.length > 0 ? basedTracks : (feed?.trending_brasil || feed?.new_releases || [])
+
+            return (
+              <section key="section-based-history">
+                <div className="inline-block relative mb-3">
+                  <h3 className="text-[13.5px] font-black uppercase tracking-wider text-zinc-900">
+                    COM BASE NO QUE VOCÊ OUVIU
+                  </h3>
+                  <div className="h-[3px] w-full bg-[#62CF5E] rounded-full mt-1" />
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none -mx-5 px-5">
+                  {displayTracks.slice(0, 8).map((track, i) => (
+                    <div
+                      key={`based-${track.id}-${i}`}
+                      onClick={() => playTrack(track, displayTracks)}
+                      className="w-[130px] shrink-0 cursor-pointer active:scale-95 transition-transform"
+                    >
+                      <TrackImage
+                        src={track.thumbnail}
+                        trackId={track.id}
+                        alt={track.title}
+                        className="aspect-square w-full rounded-[15px] object-cover bg-zinc-100 shadow-md border border-zinc-200/50"
+                      />
+                      <h4 className="text-[13px] font-black text-zinc-900 mt-2 truncate uppercase">
+                        {track.title}
+                      </h4>
+                      <p className="text-[11px] text-zinc-500 truncate mt-0.5 font-medium">
+                        {track.artist}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )
+          }
+
+          return null
+        })}
       </div>
     </div>
   )

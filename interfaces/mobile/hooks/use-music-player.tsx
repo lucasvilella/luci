@@ -69,13 +69,6 @@ export type MusicPlayerContextValue = MusicPlayerState & MusicPlayerActions
 
 const MusicPlayerContext = createContext<MusicPlayerContextValue | null>(null)
 
-declare global {
-  interface Window {
-    YT: any
-    onYouTubeIframeAPIReady: () => void
-  }
-}
-
 export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [currentTrack, setCurrentTrack] = useState<LuciTrack | null>(null)
   const [queue, setQueue] = useState<LuciTrack[]>([])
@@ -92,9 +85,10 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const [loadingLyrics, setLoadingLyrics] = useState<boolean>(false)
 
   const originalQueueRef = useRef<LuciTrack[]>([])
-  const ytPlayerRef = useRef<any>(null)
-  const isPlayerReadyRef = useRef<boolean>(false)
-  const progressIntervalRef = useRef<any>(null)
+  const audioElementRef = useRef<HTMLAudioElement | null>(null)
+  const currentGainAdjustmentRef = useRef<number>(1.0)
+  const preDuckVolumeRef = useRef<number>(1.0)
+  const duckIntervalRef = useRef<any>(null)
 
   // Refs mutáveis para evitar closures desatualizadas nos eventos do player
   const queueRef = useRef<LuciTrack[]>([])
@@ -115,6 +109,14 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     repeatRef.current = repeat
   }, [repeat])
 
+  // ─── Normalização de Volume com ReplayGain ───
+  const applyNormalizedVolume = useCallback((baseVol: number) => {
+    if (!audioElementRef.current) return
+    const gain = currentGainAdjustmentRef.current || 1.0
+    const normalized = Math.max(0, Math.min(1, baseVol * gain))
+    audioElementRef.current.volume = normalized
+  }, [])
+
   // ─── Disparo garantido de fim de faixa ───
   const triggerTrackEnded = useCallback(() => {
     if (hasEndedHandledRef.current) return
@@ -125,9 +127,9 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     const currentIdx = queueIndexRef.current
 
     if (currentRepeat === "one") {
-      if (ytPlayerRef.current?.seekTo) {
-        ytPlayerRef.current.seekTo(0, true)
-        ytPlayerRef.current.playVideo()
+      if (audioElementRef.current) {
+        audioElementRef.current.currentTime = 0
+        audioElementRef.current.play().catch(() => {})
       }
       setTimeout(() => {
         hasEndedHandledRef.current = false
@@ -151,94 +153,64 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }, 1500)
   }, [])
 
-  // ─── 1. Inicializar YouTube IFrame Player (SimpMusic Engine Oficial) ───
+  // ─── 1. Inicializar Elemento de Áudio HTML5 Nativo (Persiste em Tela Bloqueada) ───
   useEffect(() => {
-    if (!document.getElementById("yt-iframe-api")) {
-      const tag = document.createElement("script")
-      tag.id = "yt-iframe-api"
-      tag.src = "https://www.youtube.com/iframe_api"
-      const firstScriptTag = document.getElementsByTagName("script")[0]
-      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag)
+    const audio = new Audio()
+    audio.preload = "auto"
+    audio.autoplay = true
+    // Permite que o áudio continue tocando no Android mesmo com a tela desligada
+    audio.crossOrigin = "anonymous"
+    audioElementRef.current = audio
+
+    const onPlay = () => {
+      setIsPlaying(true)
+      setIsLoading(false)
+      hasEndedHandledRef.current = false
     }
 
-    const initPlayer = () => {
-      if (window.YT && window.YT.Player) {
-        ytPlayerRef.current = new window.YT.Player("youtube-audio-engine", {
-          height: "1",
-          width: "1",
-          playerVars: {
-            autoplay: 1,
-            controls: 0,
-            disablekb: 1,
-            fs: 0,
-            playsinline: 1,
-            rel: 0,
-            origin: window.location.origin,
-          },
-          events: {
-            onReady: () => {
-              isPlayerReadyRef.current = true
-            },
-            onStateChange: (event: any) => {
-              // 1 = PLAYING, 2 = PAUSED, 0 = ENDED, 3 = BUFFERING
-              if (event.data === 1) {
-                setIsPlaying(true)
-                setIsLoading(false)
-                hasEndedHandledRef.current = false
-                if (ytPlayerRef.current?.getDuration) {
-                  const d = ytPlayerRef.current.getDuration()
-                  if (d > 0) setDuration(d)
-                }
-              } else if (event.data === 2) {
-                setIsPlaying(false)
-              } else if (event.data === 3) {
-                setIsLoading(true)
-              } else if (event.data === 0) {
-                triggerTrackEnded()
-              }
-            },
-            onError: (err: any) => {
-              console.error("[SimpMusic Engine] Erro no reprodutor:", err)
-              setIsLoading(false)
-              setIsPlaying(false)
-            },
-          },
-        })
+    const onPause = () => {
+      setIsPlaying(false)
+    }
+
+    const onWaiting = () => {
+      setIsLoading(true)
+    }
+
+    const onPlaying = () => {
+      setIsLoading(false)
+      setIsPlaying(true)
+    }
+
+    const onTimeUpdate = () => {
+      if (audio.currentTime && !isNaN(audio.currentTime)) {
+        setProgress(audio.currentTime)
       }
     }
 
-    if (window.YT && window.YT.Player) {
-      initPlayer()
-    } else {
-      window.onYouTubeIframeAPIReady = initPlayer
+    const onDurationChange = () => {
+      if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+        setDuration(audio.duration)
+      }
     }
 
-    // Intervalo suave de atualização do progresso com verificação de fim de faixa
-    progressIntervalRef.current = setInterval(() => {
-      if (ytPlayerRef.current && isPlayerReadyRef.current) {
-        try {
-          let cur = 0
-          let dur = 0
-          if (typeof ytPlayerRef.current.getCurrentTime === "function") {
-            cur = ytPlayerRef.current.getCurrentTime()
-            if (typeof cur === "number" && !isNaN(cur)) {
-              setProgress(cur)
-            }
-          }
-          if (typeof ytPlayerRef.current.getDuration === "function") {
-            dur = ytPlayerRef.current.getDuration()
-            if (typeof dur === "number" && dur > 0) {
-              setDuration(dur)
-            }
-          }
+    const onEnded = () => {
+      triggerTrackEnded()
+    }
 
-          // Fallback seguro: se a faixa atingiu o final (dur > 5 e cur >= dur - 0.5) e o estado não disparou
-          if (dur > 5 && cur > 0 && cur >= dur - 0.8 && !hasEndedHandledRef.current) {
-            triggerTrackEnded()
-          }
-        } catch {}
-      }
-    }, 250)
+    const onError = (e: any) => {
+      console.error("[HTML5 Audio Engine] Erro no stream:", e)
+      setIsLoading(false)
+      setIsPlaying(false)
+    }
+
+    audio.addEventListener("play", onPlay)
+    audio.addEventListener("pause", onPause)
+    audio.addEventListener("waiting", onWaiting)
+    audio.addEventListener("playing", onPlaying)
+    audio.addEventListener("timeupdate", onTimeUpdate)
+    audio.addEventListener("durationchange", onDurationChange)
+    audio.addEventListener("ended", onEnded)
+    audio.addEventListener("error", onError)
 
     // Carregar curtidas iniciais
     fetchLikedTracks().then((tracks) => {
@@ -246,52 +218,20 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }).catch(() => {})
 
     return () => {
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current)
-      try {
-        ytPlayerRef.current?.destroy()
-      } catch {}
+      audio.removeEventListener("play", onPlay)
+      audio.removeEventListener("pause", onPause)
+      audio.removeEventListener("waiting", onWaiting)
+      audio.removeEventListener("playing", onPlaying)
+      audio.removeEventListener("timeupdate", onTimeUpdate)
+      audio.removeEventListener("durationchange", onDurationChange)
+      audio.removeEventListener("ended", onEnded)
+      audio.removeEventListener("error", onError)
+      audio.pause()
+      audio.src = ""
     }
-  }, [])
+  }, [triggerTrackEnded])
 
-  // ─── 2. Web MediaSession API (Controle na Tela de Bloqueio e Notificação do Android) ───
-  useEffect(() => {
-    if ("mediaSession" in navigator && currentTrack) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentTrack.title,
-        artist: currentTrack.artist,
-        album: currentTrack.album || "LuciMusic",
-        artwork: [
-          { src: currentTrack.thumbnail, sizes: "512x512", type: "image/jpeg" },
-        ],
-      })
-
-      navigator.mediaSession.setActionHandler("play", () => {
-        ytPlayerRef.current?.playVideo()
-        setIsPlaying(true)
-      })
-
-      navigator.mediaSession.setActionHandler("pause", () => {
-        ytPlayerRef.current?.pauseVideo()
-        setIsPlaying(false)
-      })
-
-      navigator.mediaSession.setActionHandler("previoustrack", () => {
-        prev()
-      })
-
-      navigator.mediaSession.setActionHandler("nexttrack", () => {
-        next()
-      })
-
-      navigator.mediaSession.setActionHandler("seekto", (details) => {
-        if (details.seekTime !== undefined && details.seekTime !== null) {
-          seek(details.seekTime)
-        }
-      })
-    }
-  }, [currentTrack])
-
-  // ─── 3. Reproduzir Faixa ───
+  // ─── 2. Reproduzir Faixa via Proxy Nativo ───
   const playTrack = useCallback(async (track: LuciTrack, contextQueue?: LuciTrack[]) => {
     setIsLoading(true)
     setCurrentTrack(track)
@@ -320,34 +260,29 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 
     recordTrackPlayed(track)
 
-    // Reset ganho para 1.0 (neutro) e busca normalização de loudness pré-calculada
+    // Reset ganho para 1.0 (neutro) e busca normalização de loudness
     currentGainAdjustmentRef.current = 1.0
     fetch(`/api/v1/music/loudness/${track.id}`)
       .then((res) => res.json())
       .then((data) => {
         if (data && typeof data.gain_adjustment === "number") {
           currentGainAdjustmentRef.current = data.gain_adjustment
-          if (ytPlayerRef.current?.setVolume) {
-            applyNormalizedVolume(volume)
-          }
+          applyNormalizedVolume(volume)
         }
       })
       .catch(() => {})
 
-    // Tocar no player oficial
-    const startPlay = () => {
-      if (ytPlayerRef.current && typeof ytPlayerRef.current.loadVideoById === "function") {
-        ytPlayerRef.current.loadVideoById(track.id)
-        applyNormalizedVolume(volume)
-        ytPlayerRef.current.playVideo()
-        setIsPlaying(true)
-      } else {
-        setTimeout(startPlay, 200)
-      }
+    // Streaming proxy direto com HTTP 206 (funciona nativamente em background/lockscreen no Android)
+    const streamProxyUrl = `/api/v1/music/play/${track.id}`
+    if (audioElementRef.current) {
+      audioElementRef.current.src = streamProxyUrl
+      applyNormalizedVolume(volume)
+      audioElementRef.current.play().catch((err) => {
+        console.warn("[HTML5 Audio] Play bloqueado por gesto, aguardando clique:", err)
+      })
     }
-    startPlay()
 
-    // Letras
+    // Letras sincronizadas
     fetchLyrics(track.id, track.title, track.artist, track.duration)
       .then((l) => setLyrics(l))
       .catch(() => {})
@@ -357,11 +292,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     playTrackRef.current = playTrack
   }, [playTrack])
 
-  // ─── 4. Próxima / Fim de Faixa ───
-  const handleTrackEnded = useCallback(() => {
-    triggerTrackEnded()
-  }, [triggerTrackEnded])
-
+  // ─── 3. Próxima / Anterior / Controles ───
   const next = useCallback(() => {
     if (queue.length === 0) return
     if (queueIndex < queue.length - 1) {
@@ -375,8 +306,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   }, [queue, queueIndex, repeat, playTrack])
 
   const prev = useCallback(() => {
-    if (progress > 3 && ytPlayerRef.current?.seekTo) {
-      ytPlayerRef.current.seekTo(0, true)
+    if (progress > 3 && audioElementRef.current) {
+      audioElementRef.current.currentTime = 0
       setProgress(0)
       return
     }
@@ -384,48 +315,38 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       const prevIdx = queueIndex - 1
       setQueueIndex(prevIdx)
       playTrack(queue[prevIdx], queue)
-    } else if (ytPlayerRef.current?.seekTo) {
-      ytPlayerRef.current.seekTo(0, true)
+    } else if (audioElementRef.current) {
+      audioElementRef.current.currentTime = 0
       setProgress(0)
     }
   }, [progress, queue, queueIndex, playTrack])
 
   const togglePlay = useCallback(() => {
-    if (!ytPlayerRef.current) return
+    if (!audioElementRef.current) return
     if (isPlaying) {
-      ytPlayerRef.current.pauseVideo()
+      audioElementRef.current.pause()
       setIsPlaying(false)
     } else {
-      ytPlayerRef.current.playVideo()
+      audioElementRef.current.play().catch(() => {})
       setIsPlaying(true)
     }
   }, [isPlaying])
 
   const pause = useCallback(() => {
-    ytPlayerRef.current?.pauseVideo()
+    audioElementRef.current?.pause()
     setIsPlaying(false)
   }, [])
 
   const resume = useCallback(() => {
-    ytPlayerRef.current?.playVideo()
+    audioElementRef.current?.play().catch(() => {})
     setIsPlaying(true)
   }, [])
 
   const seek = useCallback((secs: number) => {
-    if (ytPlayerRef.current?.seekTo) {
-      ytPlayerRef.current.seekTo(secs, true)
+    if (audioElementRef.current) {
+      audioElementRef.current.currentTime = secs
       setProgress(secs)
     }
-  }, [])
-
-  const currentGainAdjustmentRef = useRef<number>(1.0)
-
-  const applyNormalizedVolume = useCallback((baseVol: number) => {
-    if (!ytPlayerRef.current?.setVolume) return
-    const gain = currentGainAdjustmentRef.current || 1.0
-    // Aplica o fator de ganho ao volume base com teto de 100%
-    const normalized = Math.max(0, Math.min(100, baseVol * gain * 100))
-    ytPlayerRef.current.setVolume(normalized)
   }, [])
 
   const setVolume = useCallback((v: number) => {
@@ -435,7 +356,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     applyNormalizedVolume(clamped)
   }, [applyNormalizedVolume])
 
-  // Ducking suave escalonado no YouTube Iframe Player
+  // Ducking suave escalonado no player
   const duckPlayerVolume = useCallback((targetLevel = 0.15, durationMs = 150) => {
     if (duckIntervalRef.current) {
       clearInterval(duckIntervalRef.current)
@@ -462,7 +383,6 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     }, stepTime)
   }, [volume, applyNormalizedVolume])
 
-  // Restauração suave do volume do player
   const restorePlayerVolume = useCallback((durationMs = 200) => {
     if (duckIntervalRef.current) {
       clearInterval(duckIntervalRef.current)
@@ -480,69 +400,64 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       const progressRatio = currentStep / steps
       const newVol = currentVol + (target - currentVol) * progressRatio
       setVolumeState(newVol)
-      if (ytPlayerRef.current?.setVolume) {
-        ytPlayerRef.current.setVolume(newVol * 100)
-      }
+      applyNormalizedVolume(newVol)
       if (currentStep >= steps) {
         clearInterval(duckIntervalRef.current)
         duckIntervalRef.current = null
       }
     }, stepTime)
-  }, [volume])
+  }, [volume, applyNormalizedVolume])
 
+  // ─── Modos Shuffle e Repeat ───
   const toggleShuffle = useCallback(() => {
     setShuffle((prev) => {
       const nextShuffle = !prev
       if (nextShuffle) {
-        if (queue.length > 1 && currentTrack) {
-          const rest = queue.filter((t) => t.id !== currentTrack.id)
-          const shuffled = [...rest].sort(() => Math.random() - 0.5)
-          setQueue([currentTrack, ...shuffled])
+        if (queue.length > 1) {
+          const current = queue[queueIndex] || queue[0]
+          const rest = queue.filter((t) => t.id !== current.id)
+          const shuffled = [current, ...rest.sort(() => Math.random() - 0.5)]
+          setQueue(shuffled)
           setQueueIndex(0)
         }
       } else {
+        const current = queue[queueIndex]
         setQueue(originalQueueRef.current)
-        if (currentTrack) {
-          const idx = originalQueueRef.current.findIndex((t) => t.id === currentTrack.id)
-          setQueueIndex(idx >= 0 ? idx : 0)
-        }
+        const idx = originalQueueRef.current.findIndex((t) => t.id === current?.id)
+        setQueueIndex(idx >= 0 ? idx : 0)
       }
       return nextShuffle
     })
-  }, [queue, currentTrack])
+  }, [queue, queueIndex])
 
   const toggleRepeat = useCallback(() => {
-    setRepeat((prev) => (prev === "off" ? "all" : prev === "all" ? "one" : "off"))
+    setRepeat((prev) => {
+      if (prev === "off") return "all"
+      if (prev === "all") return "one"
+      return "off"
+    })
   }, [])
 
+  // ─── Curtidas ───
   const toggleLike = useCallback(async (track: LuciTrack) => {
-    const liked = likedIds.has(track.id)
+    const isNowLiked = await toggleLikeTrack(track)
     setLikedIds((prev) => {
       const nextSet = new Set(prev)
-      if (liked) nextSet.delete(track.id)
-      else nextSet.add(track.id)
+      if (isNowLiked) nextSet.add(track.id)
+      else nextSet.delete(track.id)
       return nextSet
     })
-    try {
-      await toggleLikeTrack(track, liked)
-    } catch {
-      setLikedIds((prev) => {
-        const revert = new Set(prev)
-        if (liked) revert.add(track.id)
-        else revert.delete(track.id)
-        return revert
-      })
-    }
-  }, [likedIds])
+  }, [])
 
-  const isLiked = useCallback((id: string) => likedIds.has(id), [likedIds])
+  const isLiked = useCallback((trackId: string) => likedIds.has(trackId), [likedIds])
 
+  // ─── Fila ───
   const addToQueue = useCallback((track: LuciTrack) => {
     setQueue((prev) => [...prev, track])
   }, [])
 
-  const removeFromQueue = useCallback((idx: number) => {
-    setQueue((prev) => prev.filter((_, i) => i !== idx))
+  const removeFromQueue = useCallback((index: number) => {
+    setQueue((prev) => prev.filter((_, i) => i !== index))
   }, [])
 
   const loadLyricsForCurrent = useCallback(async () => {
@@ -673,21 +588,6 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   return (
     <MusicPlayerContext.Provider value={value}>
       {children}
-      <div
-        id="youtube-audio-engine-container"
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          width: "1px",
-          height: "1px",
-          opacity: 0.01,
-          pointerEvents: "none",
-          zIndex: -1,
-        }}
-      >
-        <div id="youtube-audio-engine" />
-      </div>
     </MusicPlayerContext.Provider>
   )
 }

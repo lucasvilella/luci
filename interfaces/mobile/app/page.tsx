@@ -16,8 +16,8 @@ export default function Page() {
 
   return (
     <main className="flex h-dvh w-full justify-center bg-background p-0 select-none">
-      {/* Container Principal do App */}
-      <div className="relative flex h-full w-full max-w-[480px] flex-col overflow-hidden bg-background shadow-2xl">
+      {/* Container Principal do App com suporte a Safe Area do Android */}
+      <div className="relative flex h-full w-full max-w-[480px] flex-col overflow-hidden bg-background shadow-2xl pt-[env(safe-area-inset-top,24px)]">
         {!mounted ? null : !user ? (
           <div className="min-h-0 flex-1 overflow-hidden">
             <AuthView />

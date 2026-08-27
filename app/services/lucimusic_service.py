@@ -427,24 +427,28 @@ class LuciMusicService:
         Monta o feed completo da Home a partir das decisões tomadas pelo MusicIntelligenceEngine.
         O Provider apenas busca, formata e organiza os dados sem tomar decisões de gosto.
         """
-        cache_key = f"home_feed_{user_id}"
+        # 1. Janela de Atualização Periódica das Indicações (12:00 e 00:00)
+        # Ex: "2026-08-27_00h" para 00:00-11:59 e "2026-08-27_12h" para 12:00-23:59
+        import datetime
+        now = datetime.datetime.now()
+        curation_window_key = f"{now.strftime('%Y-%m-%d')}_{'12h' if now.hour >= 12 else '00h'}"
+        cache_key = f"home_feed_{user_id}_{curation_window_key}"
+        
         cached = home_feed_cache.get(cache_key)
         if cached:
+            # Atualiza apenas histórico e curtidas imediatas em tempo real sem re-computar IA/APIs
             cached["recently_played"] = MusicDatabase.get_history(user_id, limit=10)
             cached["liked_preview"] = MusicDatabase.get_liked_songs(user_id, limit=10)
             return cached
 
-        # 1. Checa cache diário de mixes no SQLite para persistência diária até 00:01
-        import datetime
-        now = datetime.datetime.now()
-        active_date = (now - datetime.timedelta(days=1)).strftime("%Y-%m-%d") if (now.hour == 0 and now.minute == 0) else now.strftime("%Y-%m-%d")
-        
-        daily_mixes = MusicDatabase.get_daily_mixes_cache(user_id, active_date)
+        # 2. Daily Mix é fixo diário por data completa (Atualiza estritamente às 00:00)
+        daily_mix_date_key = now.strftime("%Y-%m-%d")
+        daily_mixes = MusicDatabase.get_daily_mixes_cache(user_id, daily_mix_date_key)
         if not daily_mixes:
             daily_mix_seeds = curation.get("daily_mix_seeds", [])
             daily_mixes = await self.resolve_seeds_to_tracks(daily_mix_seeds)
             if daily_mixes:
-                MusicDatabase.save_daily_mixes_cache(user_id, active_date, daily_mixes)
+                MusicDatabase.save_daily_mixes_cache(user_id, daily_mix_date_key, daily_mixes)
 
         # 2. Resolução paralela das demais seções
         loop = asyncio.get_running_loop()
@@ -519,14 +523,61 @@ class LuciMusicService:
                 }
             ]
 
-        # Resolução paralela
+        # Artistas Recomendados baseados no gosto real do usuário (Individuais)
+        ranked_artists_list = curation.get("ranked_artists", [])
+        if not ranked_artists_list:
+            taste_profile = MusicDatabase.get_taste_profile(user_id, limit=10)
+            raw_top = [t.get("artist") for t in taste_profile.get("top_artists", []) if t.get("artist")]
+            ranked_artists_list = []
+            for item in raw_top:
+                parts = re.split(r'[,/|&]|\bfeat\.?\b|\bft\.?\b|\b e \b', item, flags=re.IGNORECASE)
+                for p in parts:
+                    clean = p.strip()
+                    if clean and len(clean) > 2 and clean.lower() not in [x.lower() for x in ranked_artists_list]:
+                        ranked_artists_list.append(clean)
+            if not ranked_artists_list:
+                ranked_artists_list = ["Mariana Fagundes", "Ícaro e Gilmar", "Humberto e Ronaldo", "Gusttavo Lima", "Luan Santana", "Jorge e Mateus", "Marília Mendonça"]
+
+        def _get_artists_data():
+            artists_res = []
+            seen_names = set()
+            for art_name in ranked_artists_list[:8]:
+                clean_name = art_name.strip()
+                if not clean_name or clean_name.lower() in seen_names:
+                    continue
+                seen_names.add(clean_name.lower())
+                try:
+                    res = self.ytm.search(clean_name, filter="artists", limit=1)
+                    if res and len(res) > 0:
+                        item = res[0]
+                        thumb = (item.get("thumbnails") or [{}])[-1].get("url", "")
+                        artists_res.append({
+                            "id": item.get("browseId") or clean_name,
+                            "name": item.get("artist") or clean_name,
+                            "thumbnail": thumb
+                        })
+                    else:
+                        artists_res.append({
+                            "id": clean_name,
+                            "name": clean_name,
+                            "thumbnail": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300"
+                        })
+                except Exception:
+                    artists_res.append({
+                        "id": clean_name,
+                        "name": clean_name,
+                        "thumbnail": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300"
+                    })
+            return artists_res
+        # Tarefas paralelas de resolução
         similarity_task = self.resolve_seeds_to_tracks(curation.get("similarity_seeds", []))
         trending_task = loop.run_in_executor(None, _get_charts)
         new_releases_task = loop.run_in_executor(None, _get_new_releases)
         albums_task = loop.run_in_executor(None, _get_favorite_albums)
+        artists_task = loop.run_in_executor(None, _get_artists_data)
 
-        based_on_listened, trending, new_releases, favorite_albums = await asyncio.gather(
-            similarity_task, trending_task, new_releases_task, albums_task
+        based_on_listened, trending, new_releases, favorite_albums, recommended_artists = await asyncio.gather(
+            similarity_task, trending_task, new_releases_task, albums_task, artists_task
         )
 
         history = MusicDatabase.get_history(user_id, limit=10)
@@ -541,7 +592,8 @@ class LuciMusicService:
             "trending_brasil": trending,
             "new_releases": new_releases,
             "based_on_listened": based_on_listened,
-            "favorite_albums": favorite_albums
+            "favorite_albums": favorite_albums,
+            "recommended_artists": recommended_artists
         }
         home_feed_cache.set(cache_key, feed_data)
         return feed_data
