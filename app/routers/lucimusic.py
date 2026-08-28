@@ -24,17 +24,117 @@ def _get_current_user(request: Request) -> str:
         return user_query
     return "lucas"
 
-# ─── 1. Feed Principal (Início / Daily Mixes orquestrados pelo MusicIntelligenceEngine) ───
-@app_home := router.get("/home")
-async def get_music_home(request: Request):
+# ─── 1. Feed Principal (Início / Mood Filters orquestrados pelo MusicIntelligenceEngine) ───
+@router.get("/home")
+async def get_music_home(
+    request: Request,
+    mood: Optional[str] = Query("all", description="Filtro de mood: all, treino, foco, relax, energia, acustico")
+):
     """
-    Retorna o feed completo da tela Início.
-    O MusicIntelligenceEngine infere o contexto cognitivo e o LuciMusicService busca as faixas.
+    Retorna o feed completo da tela Início estruturado para o novo Design System.
     """
+    import datetime
     user_id = _get_current_user(request)
     curation = await music_intelligence_engine.get_home_curation(user_id)
     feed = await lucimusic_service.resolve_home_curation(curation, user_id)
-    return feed
+
+    # Saudação dinâmica pelo horário
+    hour = datetime.datetime.now().hour
+    if 5 <= hour < 12:
+        greeting = f"Bom dia, {user_id.capitalize()}"
+    elif 12 <= hour < 18:
+        greeting = f"Boa tarde, {user_id.capitalize()}"
+    else:
+        greeting = f"Boa noite, {user_id.capitalize()}"
+
+    # Estruturação no formato canônico da especificação UI/UX
+    quick_access = feed.get("recently_played", [])[:6]
+    if len(quick_access) < 6 and feed.get("liked_preview"):
+        for trk in feed.get("liked_preview", []):
+            if trk["id"] not in [q["id"] for q in quick_access]:
+                quick_access.append(trk)
+            if len(quick_access) >= 6:
+                break
+
+    moments = []
+    for m in curation.get("active_moments", []):
+        moments.append({
+            "id": m.get("id", "m_1"),
+            "title": m.get("moment_name", "Flow da Luci"),
+            "subtitle": m.get("subtitle", "Mix contínuo baseado no seu momento"),
+            "type": "flow_dynamic",
+            "cover_gradient": "linear-gradient(135deg, #0033ff 0%, #977dff 50%, #ffccf2 100%)"
+        })
+
+    if not moments:
+        moments = [
+            {
+                "id": "m_flow_default",
+                "title": "Flow Infinito da Luci",
+                "subtitle": "Mix contínuo inteligente calibrado para o seu gosto",
+                "type": "flow_dynamic",
+                "cover_gradient": "linear-gradient(135deg, #0033ff 0%, #977dff 50%, #ffccf2 100%)"
+            },
+            {
+                "id": "m_focus",
+                "title": "Modo Foco Deep Work",
+                "subtitle": "Batidas e instrumentais para concentração",
+                "type": "flow_dynamic",
+                "cover_gradient": "linear-gradient(135deg, #06003d 0%, #0033ff 100%)"
+            }
+        ]
+
+    # Formatando Made For You a partir dos Daily Mixes com reasons explicativos
+    made_for_you = []
+    for idx, mix in enumerate(feed.get("daily_mixes", [])):
+        made_for_you.append({
+            "playlist_id": mix.get("id"),
+            "title": mix.get("title"),
+            "subtitle": mix.get("subtitle"),
+            "reason": f"Sugerido pela Luci com base em {mix.get('subtitle') or 'seus hábitos'}",
+            "cover": mix.get("thumbnail"),
+            "gradient": mix.get("gradient"),
+            "tracks": mix.get("tracks", [])
+        })
+
+    # Resposta agregada completa
+    return {
+        "greeting": greeting,
+        "mood_active": mood,
+        "quick_access": quick_access,
+        "moments": moments,
+        "top_artists": feed.get("recommended_artists", [])[:8],
+        "made_for_you": made_for_you,
+        "discover_releases": feed.get("new_releases", [])[:10],
+        "trending_brasil": feed.get("trending_brasil", [])[:10],
+        "based_on_listened": feed.get("based_on_listened", [])
+    }
+
+class TrackEventPayload(BaseModel):
+    track_id: str
+    played_seconds: int = 0
+    total_seconds: int = 0
+    liked: Optional[bool] = False
+    skipped: Optional[bool] = False
+    context_mood: Optional[str] = "all"
+    artist: Optional[str] = ""
+
+@router.post("/track-event")
+async def record_track_event(payload: TrackEventPayload, request: Request):
+    """Feedback Loop: registra sinais de afinidade com o modelo matemático."""
+    user_id = _get_current_user(request)
+    signal = "completed" if payload.played_seconds >= (payload.total_seconds * 0.8) else "skipped_early" if payload.skipped else "playback"
+    if payload.liked:
+        signal = "liked"
+    
+    MusicDatabase.record_taste_signal(
+        user_id=user_id,
+        track_id=payload.track_id,
+        artist=payload.artist,
+        signal_type=signal,
+        context=payload.context_mood or "home_view"
+    )
+    return {"status": "ok", "signal_recorded": signal}
 
 @router.get("/daily-mixes")
 async def get_daily_mixes(request: Request):
@@ -50,15 +150,148 @@ async def get_genres():
     genres = await lucimusic_service.get_dynamic_genres()
     return {"genres": genres}
 
-# ─── 2. Busca Global ───
+# ─── 2. Busca Global (Híbrida: Determinística <150ms + Semântica Cognitiva LLM) ───
+@router.get("/search/suggestions")
+async def get_search_suggestions(q: str = Query(..., description="Termo parcial para autocomplete")):
+    """Retorna entidades diretas (artistas/álbuns) e termos sugeridos do YouTube Music."""
+    if not q or len(q.strip()) < 2:
+        return {"entities": [], "queries": []}
+
+    try:
+        entities = []
+        queries = []
+
+        # 1. Sugestões de texto da InnerTube / YTMusic
+        if lucimusic_service.ytm:
+            try:
+                suggestions = lucimusic_service.ytm.get_search_suggestions(q.strip())
+                queries = suggestions[:6] if isinstance(suggestions, list) else []
+            except Exception:
+                queries = [q.strip(), f"{q.strip()} ao vivo", f"{q.strip()} acústico"]
+
+        # 2. Entidades correspondentes diretas (Artistas / Álbuns)
+        direct_matches = await lucimusic_service.search(q.strip(), limit=3)
+        for art in direct_matches.get("artists", [])[:2]:
+            entities.append({
+                "id": art.get("id") or art.get("browseId") or art.get("name"),
+                "type": "artist",
+                "name": art.get("name") or art.get("artist"),
+                "avatar": art.get("thumbnail") or "",
+                "subtitle": "Artista"
+            })
+        for alb in direct_matches.get("albums", [])[:1]:
+            entities.append({
+                "id": alb.get("id") or alb.get("browseId"),
+                "type": "album",
+                "name": alb.get("title"),
+                "avatar": alb.get("thumbnail") or "",
+                "subtitle": f"Álbum • {alb.get('artist', '')}"
+            })
+
+        return {"entities": entities, "queries": queries}
+    except Exception as e:
+        return {"entities": [], "queries": [q]}
+
+@router.get("/search/history")
+async def get_search_history(request: Request, limit: int = Query(5, le=20)):
+    """Retorna o histórico de buscas recentes do usuário."""
+    user_id = _get_current_user(request)
+    return {"history": MusicDatabase.get_search_history(user_id, limit=limit)}
+
+class SaveSearchHistoryPayload(BaseModel):
+    query: str
+    type: Optional[str] = "text"
+    target_id: Optional[str] = ""
+
+@router.post("/search/history")
+async def save_search_history(payload: SaveSearchHistoryPayload, request: Request):
+    """Registra um termo no histórico de buscas."""
+    user_id = _get_current_user(request)
+    MusicDatabase.add_search_history(
+        user_id=user_id,
+        query_text=payload.query,
+        entity_type=payload.type or "text",
+        target_id=payload.target_id or ""
+    )
+    return {"status": "ok"}
+
+@router.delete("/search/history")
+async def clear_search_history(request: Request):
+    """Limpa todo o histórico de busca do usuário."""
+    user_id = _get_current_user(request)
+    MusicDatabase.clear_search_history(user_id)
+    return {"status": "ok"}
+
+@router.delete("/search/history/{item_id}")
+async def delete_search_history_item(item_id: int, request: Request):
+    """Remove um item específico do histórico de busca."""
+    user_id = _get_current_user(request)
+    MusicDatabase.delete_search_history_item(user_id, item_id)
+    return {"status": "ok"}
+
 @router.get("/search")
 async def search_music(
     q: str = Query(..., description="Termo de busca"),
-    filter: Optional[str] = Query(None, description="Filtro: songs, artists, albums, playlists")
+    filter: Optional[str] = Query(None, description="Filtro: all, songs, artists, albums, playlists"),
+    request: Request = None
 ):
-    """Busca faixas, artistas, álbuns e playlists no YouTube Music."""
-    results = await lucimusic_service.search(query=q, filter_type=filter)
-    return results
+    """Busca faixas, artistas, álbuns e playlists com interpretação semântica e top_result estruturado."""
+    from app.services.music_semantic_engine import music_semantic_engine
+    user_id = _get_current_user(request) if request else "lucas"
+
+    # Salva no histórico de buscas silenciosamente
+    MusicDatabase.add_search_history(user_id, q, entity_type="text")
+
+    if filter and filter != "all":
+        raw_results = await lucimusic_service.search(query=q, filter_type=filter)
+        return {
+            "top_result": None,
+            "tracks": raw_results.get("songs", []),
+            "songs": raw_results.get("songs", []),
+            "artists": raw_results.get("artists", []),
+            "albums": raw_results.get("albums", []),
+            "playlists": raw_results.get("playlists", [])
+        }
+
+    results = await music_semantic_engine.hybrid_search(user_id=user_id, query=q)
+
+    # Constrói o Top Result Card estruturado (conforme a especificação UI/UX)
+    top_result = None
+    artists = results.get("artists", [])
+    songs = results.get("songs", [])
+    albums = results.get("albums", [])
+
+    if artists:
+        top_art = artists[0]
+        top_result = {
+            "id": top_art.get("id") or top_art.get("browseId"),
+            "type": "artist",
+            "name": top_art.get("name") or top_art.get("artist"),
+            "followers": top_art.get("subscribers") or "Mais de 10M fãs",
+            "avatar": top_art.get("thumbnail"),
+            "has_radio": True
+        }
+    elif songs:
+        top_song = songs[0]
+        top_result = {
+            "id": top_song.get("id"),
+            "type": "song",
+            "name": top_song.get("title"),
+            "followers": top_song.get("artist"),
+            "avatar": top_song.get("thumbnail"),
+            "has_radio": True
+        }
+
+    return {
+        "type": results.get("type", "deterministic"),
+        "reasoning": results.get("reasoning"),
+        "top_result": top_result,
+        "tracks": songs,
+        "songs": songs,
+        "artists": artists,
+        "albums": albums,
+        "playlists": results.get("playlists", [])
+    }
 
 # ─── 3. Resolução de Stream Direto & Proxy de Áudio ───
 @router.get("/stream/{track_id}")
@@ -141,7 +374,54 @@ async def play_audio_proxy(track_id: str, request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao transmitir áudio: {str(e)}")
 
-# ─── 4. Letras Sincronizadas (LRCLIB) ───
+# ─── 4. Detalhes da Faixa e Letras Sincronizadas (LRCLIB) ───
+@router.get("/track/{track_id}")
+async def get_track_metadata(track_id: str, request: Request = None):
+    """Obtém stream e metadados completos de uma faixa para o Full Player."""
+    user_id = _get_current_user(request) if request else "lucas"
+    data = await lucimusic_service.get_stream_url(track_id)
+    is_liked = MusicDatabase.is_liked(user_id, track_id)
+
+    return {
+        "id": track_id,
+        "title": data.get("title") or "Música",
+        "artist": data.get("artist") or "Artista",
+        "artist_id": data.get("artist_id") or "",
+        "album": data.get("album") or "Single",
+        "album_id": data.get("album_id") or "",
+        "duration": data.get("duration") or 210,
+        "cover_url": data.get("thumbnail") or "",
+        "video_id": track_id,
+        "stream_url": f"/api/v1/music/play/{track_id}",
+        "is_liked": is_liked
+    }
+
+@router.get("/lyrics/{track_id}")
+async def get_lyrics_by_id(
+    track_id: str,
+    title: Optional[str] = Query(None),
+    artist: Optional[str] = Query(None),
+    duration: int = Query(0)
+):
+    """Retorna letras sincronizadas com timestamps formatados em time_ms."""
+    effective_title = title or "Música"
+    effective_artist = artist or "Artista"
+    lyrics = await lucimusic_service.get_lyrics(track_id, effective_title, effective_artist, duration)
+    
+    formatted_lines = []
+    for line in lyrics.get("lines", []):
+        formatted_lines.append({
+            "time_ms": int(line.get("seconds", 0) * 1000),
+            "text": line.get("text", "")
+        })
+
+    return {
+        "track_id": track_id,
+        "synced": lyrics.get("has_synced", False),
+        "lines": formatted_lines,
+        "plain": lyrics.get("plain", "")
+    }
+
 @router.get("/lyrics")
 async def get_lyrics(
     track_id: str = Query(..., description="ID da faixa"),
@@ -160,18 +440,284 @@ async def get_radio(track_id: str, limit: int = Query(20, le=50)):
     tracks = await lucimusic_service.get_radio_tracks(track_id, limit=limit)
     return {"tracks": tracks}
 
-# ─── 6. Página do Artista e Álbum ───
+# ─── 6. Página do Artista, Rádio Dinâmica e Seguir ───
 @router.get("/artist/{artist_id}")
-async def get_artist(artist_id: str):
-    """Retorna top faixas, álbuns e informações do artista."""
+async def get_artist(artist_id: str, request: Request = None):
+    """Retorna dados completos do artista com latest_release, vídeos, similares e status de seguido."""
+    user_id = _get_current_user(request) if request else "lucas"
     data = await lucimusic_service.get_artist_page(artist_id)
-    return data
+    
+    # Adiciona status de seguido
+    is_followed = MusicDatabase.is_following_artist(user_id, artist_id) or MusicDatabase.is_following_artist(user_id, data.get("name", ""))
+    
+    # Extrai ou gera latest_release a partir dos singles/álbuns
+    latest_release = None
+    if data.get("singles"):
+        s = data["singles"][0]
+        latest_release = {
+            "id": s.get("id"),
+            "title": s.get("title"),
+            "type": "Single",
+            "release_date": s.get("year") or "2026",
+            "cover": s.get("thumbnail")
+        }
+    elif data.get("albums"):
+        a = data["albums"][0]
+        latest_release = {
+            "id": a.get("id"),
+            "title": a.get("title"),
+            "type": "Álbum",
+            "release_date": a.get("year") or "2024",
+            "cover": a.get("thumbnail")
+        }
+
+    # Gera lista de vídeos & clipes formatados do artista
+    art_name = data.get("name") or artist_id
+    videos = []
+    if lucimusic_service.ytm:
+        try:
+            vid_search = lucimusic_service._safe_search(f"{art_name} clipe oficial", filter_type="videos", limit=5)
+            for v in vid_search:
+                if v.get("videoId"):
+                    videos.append({
+                        "id": v["videoId"],
+                        "title": v.get("title"),
+                        "thumbnail": (v.get("thumbnails") or [{}])[-1].get("url", f"https://i.ytimg.com/vi/{v['videoId']}/hqdefault.jpg"),
+                        "views": v.get("views") or "Visualizações"
+                    })
+        except Exception:
+            pass
+
+    return {
+        "id": data.get("id") or artist_id,
+        "name": data.get("name") or artist_id,
+        "banner_url": data.get("thumbnail"),
+        "avatar_url": data.get("thumbnail"),
+        "listeners": data.get("monthly_listeners") or f"{data.get('subscribers', '2.4M')} ouvintes",
+        "is_followed": is_followed,
+        "top_tracks": data.get("top_tracks", []),
+        "latest_release": latest_release,
+        "albums": data.get("albums", []),
+        "singles": data.get("singles", []),
+        "videos": videos,
+        "similar_artists": data.get("similar_artists", []),
+        "bio": data.get("description") or f"{art_name} é um artista consagrado com destaque nas principais paradas musicais e plataformas de streaming."
+    }
+
+@router.get("/artist/{artist_id}/radio")
+async def get_artist_dynamic_radio(artist_id: str, request: Request = None, limit: int = Query(25, le=50)):
+    """Gera rádio dinâmica balanceada da Luci (40% artista, 40% similares, 20% exploração)."""
+    user_id = _get_current_user(request) if request else "lucas"
+    artist_data = await lucimusic_service.get_artist_page(artist_id)
+    
+    top_tracks = artist_data.get("top_tracks", [])
+    similar_artists = artist_data.get("similar_artists", [])
+
+    candidate_pool = list(top_tracks[:10])
+
+    # Busca faixas de até 3 artistas similares
+    for sim in similar_artists[:3]:
+        try:
+            sim_tracks = await lucimusic_service.search(f"{sim['name']} sucessos", filter_type="songs", limit=5)
+            for st in sim_tracks.get("songs", []):
+                if st["id"] not in [c["id"] for c in candidate_pool]:
+                    candidate_pool.append(st)
+        except Exception:
+            pass
+
+    # Balanceamento estocástico
+    balanced = await music_intelligence_engine.generate_balanced_queue(user_id, candidate_pool)
+    return {"tracks": balanced.get("queue", candidate_pool)[:limit]}
+
+class FollowArtistPayload(BaseModel):
+    follow: bool
+    artist_name: Optional[str] = ""
+    avatar_url: Optional[str] = ""
+
+@router.post("/artist/{artist_id}/follow")
+async def toggle_artist_follow(artist_id: str, payload: FollowArtistPayload, request: Request):
+    """Seguir ou desseguir artista, atualizando pesos de afinidade."""
+    user_id = _get_current_user(request)
+    now_following = MusicDatabase.toggle_follow_artist(
+        user_id=user_id,
+        artist_id=artist_id,
+        artist_name=payload.artist_name or artist_id,
+        avatar_url=payload.avatar_url or ""
+    )
+    # Emite sinal de aprendizado de gosto
+    signal = "liked" if now_following else "unliked"
+    MusicDatabase.record_taste_signal(
+        user_id=user_id,
+        track_id=artist_id,
+        artist=payload.artist_name or artist_id,
+        signal_type=signal,
+        context="artist_follow"
+    )
+    return {"status": "ok", "is_followed": now_following}
 
 @router.get("/album/{album_id}")
-async def get_album(album_id: str, title: Optional[str] = Query(None), artist: Optional[str] = Query(None)):
-    """Retorna detalhes de um álbum com todas as suas faixas, ano e artista."""
+async def get_album(
+    album_id: str,
+    title: Optional[str] = Query(None),
+    artist: Optional[str] = Query(None),
+    request: Request = None
+):
+    """Retorna detalhes completos de um álbum com todas as faixas formatadas, direitos e álbuns relacionados."""
+    user_id = _get_current_user(request) if request else "lucas"
     data = await lucimusic_service.get_album_details(album_id=album_id, title=title, artist=artist)
-    return data
+
+    is_saved = MusicDatabase.is_collection_saved(user_id, album_id)
+
+    # Formatação padronizada para MediaCollection
+    tracks = []
+    raw_tracks = data.get("tracks", [])
+    for idx, t in enumerate(raw_tracks):
+        tracks.append({
+            "id": t.get("id"),
+            "track_number": idx + 1,
+            "title": t.get("title"),
+            "artist": t.get("artist") or data.get("artist"),
+            "album": data.get("title"),
+            "duration": t.get("duration") or 210,
+            "thumbnail": t.get("thumbnail") or data.get("thumbnail"),
+            "is_liked": False
+        })
+
+    # Busca álbuns relacionados do mesmo artista
+    related = []
+    art_name = data.get("artist") or artist
+    if art_name:
+        try:
+            art_res = await lucimusic_service.search(f"{art_name} albuns", filter_type="albums", limit=6)
+            for alb in art_res.get("albums", []):
+                if alb.get("id") != album_id:
+                    related.append({
+                        "id": alb.get("id") or alb.get("browseId"),
+                        "title": alb.get("title"),
+                        "artist": alb.get("artist") or art_name,
+                        "cover_url": alb.get("thumbnail")
+                    })
+        except Exception:
+            pass
+
+    return {
+        "collection_type": "album",
+        "id": album_id,
+        "title": data.get("title") or title or "Álbum",
+        "artist": data.get("artist") or artist or "Artista",
+        "artist_id": data.get("artistId") or "",
+        "release_year": data.get("year") or "2026",
+        "total_tracks": len(tracks),
+        "total_duration": f"{len(tracks) * 3} min",
+        "cover_url": data.get("thumbnail"),
+        "copyright": data.get("copyright") or f"℗ {data.get('year', '2026')} {data.get('artist', 'Gravadora')} - Licença Exclusiva",
+        "is_saved": is_saved,
+        "tracks": tracks,
+        "related_collections": related
+    }
+
+@router.get("/playlist/{playlist_id}")
+async def get_unified_playlist_details(playlist_id: str, request: Request = None):
+    """Retorna detalhes completos de uma playlist (customizada, gerada pela Luci ou do YouTube Music)."""
+    user_id = _get_current_user(request) if request else "lucas"
+    
+    # 1. Tenta buscar no banco local
+    local_pl = MusicDatabase.get_playlist_details(user_id, playlist_id)
+    if local_pl:
+        tracks = []
+        for idx, t in enumerate(local_pl.get("tracks", [])):
+            tracks.append({
+                "id": t.get("id"),
+                "track_number": idx + 1,
+                "title": t.get("title"),
+                "artist": t.get("artist"),
+                "album": t.get("album", "Playlist"),
+                "duration": t.get("duration", 180),
+                "thumbnail": t.get("thumbnail") or local_pl.get("thumbnail"),
+                "is_liked": False
+            })
+        return {
+            "collection_type": "playlist",
+            "id": playlist_id,
+            "title": local_pl.get("title"),
+            "artist": "Curadoria Luci" if local_pl.get("is_smart_ai") else "Você",
+            "release_year": "2026",
+            "total_tracks": len(tracks),
+            "total_duration": f"{len(tracks) * 3} min",
+            "cover_url": local_pl.get("thumbnail"),
+            "is_saved": True,
+            "is_smart_ai": bool(local_pl.get("is_smart_ai")),
+            "tracks": tracks,
+            "related_collections": []
+        }
+
+    # 2. Busca do YouTube Music InnerTube
+    tracks = []
+    if lucimusic_service.ytm:
+        try:
+            yt_pl = lucimusic_service.ytm.get_playlist(playlist_id)
+            for idx, t in enumerate(yt_pl.get("tracks", [])):
+                tracks.append({
+                    "id": t.get("videoId"),
+                    "track_number": idx + 1,
+                    "title": t.get("title"),
+                    "artist": (t.get("artists") or [{}])[0].get("name", "Artista"),
+                    "album": (t.get("album") or {}).get("name", "Playlist"),
+                    "duration": t.get("duration_seconds", 180),
+                    "thumbnail": (t.get("thumbnails") or [{}])[-1].get("url", ""),
+                    "is_liked": False
+                })
+            return {
+                "collection_type": "playlist",
+                "id": playlist_id,
+                "title": yt_pl.get("title", "Playlist"),
+                "artist": yt_pl.get("author", {}).get("name", "YouTube Music"),
+                "release_year": "2026",
+                "total_tracks": len(tracks),
+                "total_duration": yt_pl.get("duration", f"{len(tracks) * 3} min"),
+                "cover_url": (yt_pl.get("thumbnails") or [{}])[-1].get("url", ""),
+                "is_saved": MusicDatabase.is_collection_saved(user_id, playlist_id),
+                "is_smart_ai": False,
+                "tracks": tracks,
+                "related_collections": []
+            }
+        except Exception:
+            pass
+
+    return {
+        "collection_type": "playlist",
+        "id": playlist_id,
+        "title": "Playlist",
+        "artist": "Curadoria Luci",
+        "release_year": "2026",
+        "total_tracks": 0,
+        "total_duration": "0 min",
+        "cover_url": "",
+        "is_saved": False,
+        "tracks": [],
+        "related_collections": []
+    }
+
+class FavoriteCollectionPayload(BaseModel):
+    collection_type: str = "album"  # 'album' ou 'playlist'
+    favorite: bool = True
+    title: Optional[str] = ""
+    artist: Optional[str] = ""
+    cover_url: Optional[str] = ""
+
+@router.post("/collection/{collection_id}/favorite")
+async def toggle_favorite_collection(collection_id: str, payload: FavoriteCollectionPayload, request: Request):
+    """Salva ou remove um álbum ou playlist da biblioteca do usuário."""
+    user_id = _get_current_user(request)
+    now_saved = MusicDatabase.toggle_favorite_collection(
+        user_id=user_id,
+        collection_id=collection_id,
+        collection_type=payload.collection_type,
+        title=payload.title or collection_id,
+        artist=payload.artist or "",
+        cover_url=payload.cover_url or ""
+    )
+    return {"status": "ok", "is_saved": now_saved}
 
 # ─── 7. Histórico de Reprodução e Sinais de Aprendizado ───
 class TrackPayload(BaseModel):

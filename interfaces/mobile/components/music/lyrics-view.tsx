@@ -1,26 +1,25 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import {
-  ChevronLeft,
-  Heart,
+  ChevronDown,
+  MoreVertical,
+  Mic,
   Play,
   Pause,
   SkipBack,
   SkipForward,
-  Shuffle,
-  Repeat,
-  Repeat1,
   Loader2,
-  Play as PlaySmall,
+  Heart,
+  Share2,
+  Disc,
 } from "lucide-react"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
-import { TrackImage } from "./track-image"
-import { DynamicBackground } from "./dynamic-background"
+import { formatSeconds } from "@/lib/lucimusic"
 
 export function LyricsView() {
-  const { pop } = useMusicNavigation()
+  const { pop, goToArtist } = useMusicNavigation()
   const {
     currentTrack,
     isPlaying,
@@ -31,10 +30,6 @@ export function LyricsView() {
     progress,
     duration,
     seek,
-    repeat,
-    shuffle,
-    toggleRepeat,
-    toggleShuffle,
     lyrics,
     loadingLyrics,
     formatTime,
@@ -42,233 +37,237 @@ export function LyricsView() {
     isLiked,
   } = useMusicPlayer()
 
-  const activeLineRef = useRef<HTMLDivElement | null>(null)
+  // Auto-hide controls
+  const [controlsVisible, setControlsVisible] = useState(true)
+  const hideControlsTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Manual scroll detection (pause auto-scroll for 4s)
+  const isManualScrollingRef = useRef(false)
+  const resumeAutoScrollTimerRef = useRef<NodeJS.Timeout | null>(null)
+
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const progressBarRef = useRef<HTMLDivElement | null>(null)
 
-  // Encontra o índice da linha ativa baseado no tempo atual do áudio
-  const activeLineIndex = lyrics?.lines
-    ? lyrics.lines.reduce((acc, line, idx) => {
-        if (progress >= line.time) {
-          return idx
-        }
-        return acc
-      }, -1)
-    : -1
+  // Identifica a Linha de Letra Ativa
+  const activeLineIndex = lyrics?.lines?.findIndex((line, i) => {
+    const nextLine = lyrics.lines[i + 1]
+    const currentTime = progress
+    const lineSec = (line as any).timeSeconds ?? (line as any).seconds ?? (line as any).time ?? 0
+    const nextSec = nextLine ? ((nextLine as any).timeSeconds ?? (nextLine as any).seconds ?? (nextLine as any).time ?? 0) : Infinity
+    return currentTime >= lineSec && currentTime < nextSec
+  }) ?? -1
 
-  // Auto-scroll suave para manter a linha ativa centralizada
+  // Auto-scroll Suave com Spring Physics (transition cubic-bezier(0.25, 1, 0.5, 1))
   useEffect(() => {
-    if (activeLineRef.current && containerRef.current) {
-      activeLineRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      })
+    if (!isManualScrollingRef.current && activeLineIndex >= 0 && containerRef.current) {
+      const activeEl = containerRef.current.children[activeLineIndex] as HTMLElement
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
     }
   }, [activeLineIndex])
 
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const bar = progressBarRef.current
-    if (!bar || !duration) return
-    const rect = bar.getBoundingClientRect()
-    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-    seek(pct * duration)
+  // Gerenciamento de Interatividade do Usuário (Auto-Hide dos Controles)
+  const resetUserActivity = useCallback(() => {
+    setControlsVisible(true)
+    if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current)
+    hideControlsTimerRef.current = setTimeout(() => {
+      setControlsVisible(false)
+    }, 5000)
+  }, [])
+
+  useEffect(() => {
+    resetUserActivity()
+    return () => {
+      if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current)
+    }
+  }, [resetUserActivity])
+
+  // Trata Scroll Manual do Usuário
+  const handleScroll = () => {
+    resetUserActivity()
+    isManualScrollingRef.current = true
+    if (resumeAutoScrollTimerRef.current) clearTimeout(resumeAutoScrollTimerRef.current)
+    resumeAutoScrollTimerRef.current = setTimeout(() => {
+      isManualScrollingRef.current = false
+    }, 4000)
   }
 
-  if (!currentTrack) return null
+  // Salto Temporal Direto ao Clicar na Linha (Seek-on-Click)
+  const handleLineClick = (line: any) => {
+    resetUserActivity()
+    const targetSeconds = line.timeSeconds ?? line.seconds ?? line.time ?? (line.timeMs ? line.timeMs / 1000 : 0)
+    seek(targetSeconds)
+  }
 
+  if (!currentTrack) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center bg-[var(--bg-app)] text-[var(--text-secondary)] p-6 text-center">
+        <Disc className="size-16 animate-spin text-[var(--accent-purple)]/40 mb-4" />
+        <h2 className="text-base font-bold text-white">Nenhuma música reproduzindo</h2>
+        <button
+          type="button"
+          onClick={pop}
+          className="mt-6 px-6 py-2.5 rounded-full bg-[var(--accent-blue)] text-white text-xs font-bold shadow-lg"
+        >
+          Voltar
+        </button>
+      </div>
+    )
+  }
+
+  const totalSec = duration || currentTrack.duration || 180
+  const progressPercent = Math.min(100, Math.max(0, (progress / totalSec) * 100))
   const liked = isLiked(currentTrack.id)
-  const progressPct = duration > 0 ? Math.min(100, Math.max(0, (progress / duration) * 100)) : 0
 
   return (
-    <div className="fixed inset-0 z-50 flex h-full flex-col select-none overflow-hidden text-white animate-view-in">
-      <DynamicBackground imageUrl={currentTrack.thumbnail} intensity="vibrant" overlayOpacity={0.45}>
-        {/* ─── 1. Header Oficial do Figma: Voltar (ChevronLeft Circular), Título da Música Centralizado ─── */}
-        <header className="relative z-10 flex items-center justify-between px-6 pt-5 pb-2 shrink-0">
+    <div
+      onClick={resetUserActivity}
+      className="relative flex h-full flex-col bg-[var(--bg-app)] text-[var(--text-primary)] select-none overflow-hidden"
+    >
+      {/* ─── CAMADA 0: Dynamic Apple Music Fluid Mesh Gradient (filter: blur(90px)) ─── */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute -top-28 -left-28 size-[480px] rounded-full bg-[#0033ff] opacity-50 blur-[90px] animate-liquid-glow" />
+        <div className="absolute top-1/3 -right-28 size-[420px] rounded-full bg-[#977dff] opacity-40 blur-[90px] animate-liquid-glow [animation-delay:-4s]" />
+        <div className="absolute -bottom-28 left-1/4 size-[500px] rounded-full bg-[#06003d] opacity-95 blur-[100px]" />
+        <div className="absolute top-1/2 left-1/3 size-[300px] rounded-full bg-[#ffccf2] opacity-15 blur-[80px] animate-liquid-glow [animation-delay:-8s]" />
+
+        {/* ─── CAMADA 1: Overlay de Leitura (--lyrics-scrim) ─── */}
+        <div className="absolute inset-0 bg-[#00001f]/45" />
+      </div>
+
+      {/* ─── CONTEÚDO PRINCIPAL (Z-10) ─── */}
+      <div className="relative z-10 flex h-full flex-col justify-between p-6">
+        {/* Header Superior */}
+        <header
+          className={`flex items-center justify-between transition-opacity duration-500 shrink-0 ${
+            controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        >
           <button
             type="button"
             onClick={pop}
-            className="size-11 flex items-center justify-center rounded-full bg-white/15 backdrop-blur-xl border border-white/20 text-white active:scale-95 transition-all shadow-sm hover:bg-white/25"
-            aria-label="Voltar para o Player"
+            aria-label="Fechar Letras"
+            className="size-10 flex items-center justify-center rounded-full bg-[var(--bg-surface-glass)] backdrop-blur-2xl border border-[var(--border)] text-white active:scale-90 transition-all shadow-md"
           >
-            <ChevronLeft className="size-5.5 stroke-[2.2]" />
+            <ChevronDown className="size-6" />
           </button>
 
-          <h2 className="text-base font-extrabold tracking-tight text-white font-sans truncate max-w-[240px] text-center drop-shadow-sm">
-            {currentTrack.title}
-          </h2>
-
-          {/* Espaçador invisível para manter o título perfeitamente centralizado */}
-          <div className="size-11" />
-        </header>
-
-        {/* ─── 2. Corpo Central das Letras Sincronizadas (Figma Style com Destaque e Play Icon na Linha Ativa) ─── */}
-        <div
-          ref={containerRef}
-          className="relative z-10 flex-1 overflow-y-auto px-7 py-6 space-y-5 text-left no-scrollbar scroll-smooth"
-        >
-        {loadingLyrics ? (
-          <div className="flex flex-col items-center justify-center py-36 gap-3 text-zinc-400">
-            <Loader2 className="size-8 animate-spin text-[#22C55E]" />
-            <p className="text-xs font-medium">Sincronizando letra da música...</p>
-          </div>
-        ) : lyrics?.has_synced && lyrics.lines.length > 0 ? (
-          lyrics.lines.map((line, idx) => {
-            const isActive = idx === activeLineIndex
-
-            return (
-              <div
-                key={`${line.time}-${idx}`}
-                ref={isActive ? activeLineRef : null}
-                onClick={() => seek(line.time)}
-                className="group cursor-pointer transition-all duration-300 flex items-start gap-2.5"
-              >
-                {/* Ícone de Play Verde na linha ativa conforme o Figma */}
-                <div className="w-4 pt-1 shrink-0">
-                  {isActive && (
-                    <PlaySmall className="size-3.5 fill-[#22C55E] text-[#22C55E] animate-pulse" />
-                  )}
-                </div>
-
-                <p
-                  className={`text-lg font-extrabold leading-snug tracking-tight font-sans transition-all duration-300 ${
-                    isActive
-                      ? "text-white text-xl scale-[1.02] origin-left"
-                      : "text-white/40 hover:text-white/70"
-                  }`}
-                >
-                  {line.text}
-                </p>
-              </div>
-            )
-          })
-        ) : (
-          <div className="py-28 text-center space-y-3 px-6">
-            <p className="text-sm font-semibold text-zinc-300">
-              {lyrics?.plain || "Letra sincronizada não encontrada para esta faixa."}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* ─── 3. Rodapé Oficial do Figma: Mini Player Branco Inferior com Controles e Botão Verde ─── */}
-      <div className="relative z-20 bg-white text-zinc-900 px-6 pt-3.5 pb-6 shadow-2xl rounded-t-[32px] border-t border-zinc-200 shrink-0">
-        {/* Linha da Faixa: Mini Capa, Título, Artista e Coração */}
-        <div className="flex items-center justify-between pb-2">
-          <div className="flex items-center gap-3 min-w-0 flex-1 pr-3">
-            <TrackImage
-              src={currentTrack.thumbnail}
-              trackId={currentTrack.id}
-              alt={currentTrack.title}
-              className="size-11 rounded-xl object-cover bg-zinc-100 border border-zinc-200/60 shrink-0"
-            />
-            <div className="min-w-0">
-              <h3 className="text-sm font-extrabold text-zinc-900 truncate leading-tight">
-                {currentTrack.title}
-              </h3>
-              <p className="text-xs text-zinc-500 truncate mt-0.5 font-medium">
-                {currentTrack.artist}
-              </p>
-            </div>
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white shadow-sm">
+            <Mic className="size-3.5 text-[var(--accent-pink)] animate-pulse" />
+            <span className="text-[11px] font-black uppercase tracking-wider">Modo Karaoke</span>
           </div>
 
           <button
             type="button"
             onClick={() => toggleLike(currentTrack)}
-            className="p-2 text-zinc-700 hover:text-black active:scale-90 transition-transform"
-            aria-label="Curtir"
+            aria-label="Favoritar"
+            className="size-10 flex items-center justify-center rounded-full bg-[var(--bg-surface-glass)] backdrop-blur-2xl border border-[var(--border)] text-white active:scale-90 transition-all shadow-md"
           >
-            <Heart
-              className={`size-5 transition-colors ${
-                liked ? "fill-[#EC4899] text-[#EC4899]" : "text-zinc-600"
-              }`}
-            />
+            <Heart className={`size-5 ${liked ? "fill-[var(--accent-purple)] text-[var(--accent-purple)]" : "text-white/80"}`} />
           </button>
+        </header>
+
+        {/* ─── CONTAINER DE LETRAS SINCRONIZADAS (Time-Synced Karaoke) ─── */}
+        <div
+          ref={containerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto my-6 py-28 space-y-7 text-left no-scrollbar px-2"
+        >
+          {loadingLyrics ? (
+            <div className="flex flex-col items-center justify-center py-36 gap-3 text-[var(--text-secondary)] text-center">
+              <Loader2 className="size-8 animate-spin text-[var(--accent-purple)]" />
+              <p className="text-xs font-bold">Sincronizando letra da música...</p>
+            </div>
+          ) : lyrics?.lines && lyrics.lines.length > 0 ? (
+            lyrics.lines.map((line, idx) => {
+              const isActive = idx === activeLineIndex
+              const isPast = idx < activeLineIndex
+              const isFarFuture = idx > activeLineIndex + 1
+
+              return (
+                <div
+                  key={`karaoke-line-${idx}`}
+                  onClick={() => handleLineClick(line)}
+                  className={`cursor-pointer transition-all duration-400 ease-[cubic-bezier(0.25,1,0.5,1)] origin-left py-1 select-none ${
+                    isActive
+                      ? "text-[28px] sm:text-[32px] font-bold text-white scale-100 drop-shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
+                      : isPast || isFarFuture
+                      ? "text-[22px] sm:text-[24px] font-medium text-[rgba(242,230,238,0.30)] hover:text-white/60"
+                      : "text-[22px] sm:text-[24px] font-medium text-[rgba(242,230,238,0.40)] hover:text-white/60"
+                  }`}
+                >
+                  {line.text}
+                </div>
+              )
+            })
+          ) : lyrics?.plain ? (
+            <p className="text-base font-semibold text-white/80 whitespace-pre-line leading-relaxed px-4 py-8">
+              {lyrics.plain}
+            </p>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-36 gap-2 text-[var(--text-muted)] text-center">
+              <p className="text-base font-bold text-white">Letra não disponível</p>
+              <p className="text-xs">Não encontramos a transcrição sincronizada para esta faixa.</p>
+            </div>
+          )}
         </div>
 
-        {/* Barra de Progresso Oficial do Figma */}
-        <div className="space-y-1.5 py-1">
-          <div
-            ref={progressBarRef}
-            onClick={handleSeek}
-            className="group relative h-1 w-full cursor-pointer rounded-full bg-zinc-200 overflow-visible"
-          >
-            <div
-              className="absolute left-0 top-0 h-full rounded-full bg-zinc-600"
-              style={{ width: `${progressPct}%` }}
-            />
-            <div
-              className="absolute top-1/2 -translate-y-1/2 size-3 rounded-full bg-zinc-600 shadow-sm border-2 border-white transition-transform group-hover:scale-125"
-              style={{ left: `calc(${progressPct}% - 6px)` }}
-            />
+        {/* ─── MINI-CONTROLE FLUTUANTE INFERIOR (Auto-Hide) ─── */}
+        <footer
+          className={`flex items-center justify-between p-3.5 rounded-3xl bg-[var(--bg-surface-glass)] backdrop-blur-2xl border border-[var(--border)] shadow-2xl transition-all duration-500 shrink-0 ${
+            controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6 pointer-events-none"
+          }`}
+        >
+          {/* Informações da Faixa */}
+          <div className="min-w-0 flex-1 pl-2">
+            <h4 className="text-xs font-black text-white truncate leading-tight">{currentTrack.title}</h4>
+            <p className="text-[10.5px] font-semibold text-[var(--text-secondary)] truncate">{currentTrack.artist}</p>
           </div>
 
-          <div className="flex justify-between text-[11px] font-semibold text-zinc-500">
-            <span>{formatTime(progress)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
+          {/* Controles de Playback */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={prev}
+              aria-label="Anterior"
+              className="p-1.5 text-white active:scale-90 transition-transform"
+            >
+              <SkipBack className="size-5 fill-current" />
+            </button>
 
-        {/* Controles de Reprodução Oficiais do Figma (Repeat, Prev, Botão Verde Gigante Play/Pause, Next, Shuffle) */}
-        <div className="flex items-center justify-between px-2 pt-1">
-          <button
-            type="button"
-            onClick={toggleRepeat}
-            className={`p-2 transition-all active:scale-90 ${
-              repeat !== "off" ? "text-[#22C55E]" : "text-zinc-500 hover:text-zinc-800"
-            }`}
-            aria-label="Repetir"
-          >
-            {repeat === "one" ? <Repeat1 className="size-5" /> : <Repeat className="size-5" />}
-          </button>
-
-          <button
-            type="button"
-            onClick={prev}
-            className="p-2 text-white hover:text-white/80 active:scale-90 transition-transform"
-            aria-label="Anterior"
-          >
-            <SkipBack className="size-5.5 fill-white" />
-          </button>
-
-            {/* Botão Central Play/Pause Verde Redondo do Figma (#22C55E) */}
             <button
               type="button"
               onClick={togglePlay}
-              disabled={isLoading}
-              className="size-14 flex items-center justify-center rounded-full bg-[#22C55E] text-white shadow-xl shadow-green-500/40 active:scale-95 hover:scale-105 transition-transform"
-              aria-label={isPlaying ? "Pausar" : "Tocar"}
+              aria-label={isPlaying ? "Pausar" : "Reproduzir"}
+              className="size-11 rounded-full bg-white text-black flex items-center justify-center shadow-lg active:scale-90 transition-transform"
             >
               {isLoading ? (
-                <Loader2 className="size-6 animate-spin text-white" />
+                <Loader2 className="size-4 animate-spin text-black" />
               ) : isPlaying ? (
-                <Pause className="size-6 fill-white stroke-[0]" />
+                <Pause className="size-5 fill-black text-black" />
               ) : (
-                <Play className="size-6 fill-white stroke-[0] ml-0.5" />
+                <Play className="size-5 fill-black text-black translate-x-0.5" />
               )}
             </button>
 
             <button
               type="button"
               onClick={next}
-              className="p-2 text-white hover:text-white/80 active:scale-90 transition-transform"
-              aria-label="Próxima"
+              aria-label="Próximo"
+              className="p-1.5 text-white active:scale-90 transition-transform"
             >
-              <SkipForward className="size-5.5 fill-white" />
-            </button>
-
-            <button
-              type="button"
-              onClick={toggleShuffle}
-              className={`p-2 transition-all active:scale-90 ${
-                shuffle ? "text-[#22C55E]" : "text-white/60 hover:text-white"
-              }`}
-              aria-label="Aleatório"
-            >
-              <Shuffle className="size-5" />
+              <SkipForward className="size-5 fill-current" />
             </button>
           </div>
-        </div>
-      </DynamicBackground>
+
+          {/* Duração & Barra */}
+          <div className="text-right pl-3 pr-1">
+            <span className="text-[10px] font-bold text-[var(--accent-pink)]">
+              {formatTime(progress)} / {formatTime(totalSec)}
+            </span>
+          </div>
+        </footer>
+      </div>
     </div>
   )
 }

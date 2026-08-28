@@ -117,7 +117,7 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     audioElementRef.current.volume = normalized
   }, [])
 
-  // ─── Disparo garantido de fim de faixa ───
+  // ─── Disparo garantido de fim de faixa com fila infinita ───
   const triggerTrackEnded = useCallback(() => {
     if (hasEndedHandledRef.current) return
     hasEndedHandledRef.current = true
@@ -140,10 +140,31 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     if (currentIdx < currentQ.length - 1) {
       const nextIdx = currentIdx + 1
       setQueueIndex(nextIdx)
+      queueIndexRef.current = nextIdx
       playTrackRef.current(currentQ[nextIdx], currentQ)
     } else if (currentRepeat === "all" && currentQ.length > 0) {
       setQueueIndex(0)
+      queueIndexRef.current = 0
       playTrackRef.current(currentQ[0], currentQ)
+    } else if (currentQ.length > 0) {
+      // Fila infinita automática: busca novas músicas relacionadas baseadas na última tocada
+      const lastTrack = currentQ[currentIdx] || currentQ[0]
+      fetchRadioTracks(lastTrack.id).then((moreTracks) => {
+        const filtered = moreTracks.filter((t) => !currentQ.some((q) => q.id === t.id))
+        if (filtered.length > 0) {
+          const newQ = [...currentQ, ...filtered]
+          setQueue(newQ)
+          queueRef.current = newQ
+          const nextIdx = currentIdx + 1
+          setQueueIndex(nextIdx)
+          queueIndexRef.current = nextIdx
+          playTrackRef.current(newQ[nextIdx], newQ)
+        } else {
+          setIsPlaying(false)
+        }
+      }).catch(() => {
+        setIsPlaying(false)
+      })
     } else {
       setIsPlaying(false)
     }
@@ -152,6 +173,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       hasEndedHandledRef.current = false
     }, 1500)
   }, [])
+
+  const preloadedTrackIdRef = useRef<string | null>(null)
 
   // ─── 1. Inicializar Elemento de Áudio HTML5 Nativo (Persiste em Tela Bloqueada) ───
   useEffect(() => {
@@ -184,6 +207,23 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     const onTimeUpdate = () => {
       if (audio.currentTime && !isNaN(audio.currentTime)) {
         setProgress(audio.currentTime)
+
+        // ── Pré-Carregamento Inteligente (Gapless/Fast Next Track) ──
+        // Quando faltar menos de 12 segundos para a música acabar, já faz prefetch do stream da próxima música
+        const remaining = (audio.duration || 0) - audio.currentTime
+        if (remaining > 0 && remaining < 12) {
+          const currentQ = queueRef.current
+          const currentIdx = queueIndexRef.current
+          const nextTrack = currentQ[currentIdx + 1]
+
+          if (nextTrack && preloadedTrackIdRef.current !== nextTrack.id) {
+            preloadedTrackIdRef.current = nextTrack.id
+            // Prefetch do endpoint de stream para aquecer o cache do backend
+            fetch(`/api/v1/music/play/${nextTrack.id}`, {
+              headers: { Range: "bytes=0-1024" }
+            }).catch(() => {})
+          }
+        }
       }
     }
 
@@ -203,10 +243,23 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       setIsPlaying(false)
     }
 
+    const onCanPlay = () => {
+      setIsLoading(false)
+      audio.play().catch(() => {})
+    }
+
+    const onLoadedMetadata = () => {
+      if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+        setDuration(audio.duration)
+      }
+    }
+
     audio.addEventListener("play", onPlay)
     audio.addEventListener("pause", onPause)
     audio.addEventListener("waiting", onWaiting)
     audio.addEventListener("playing", onPlaying)
+    audio.addEventListener("canplay", onCanPlay)
+    audio.addEventListener("loadedmetadata", onLoadedMetadata)
     audio.addEventListener("timeupdate", onTimeUpdate)
     audio.addEventListener("durationchange", onDurationChange)
     audio.addEventListener("ended", onEnded)
@@ -222,6 +275,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       audio.removeEventListener("pause", onPause)
       audio.removeEventListener("waiting", onWaiting)
       audio.removeEventListener("playing", onPlaying)
+      audio.removeEventListener("canplay", onCanPlay)
+      audio.removeEventListener("loadedmetadata", onLoadedMetadata)
       audio.removeEventListener("timeupdate", onTimeUpdate)
       audio.removeEventListener("durationchange", onDurationChange)
       audio.removeEventListener("ended", onEnded)
@@ -239,24 +294,30 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setProgress(0)
     setDuration(track.duration || 0)
 
-    // Fila
-    if (contextQueue && contextQueue.length > 0) {
-      originalQueueRef.current = contextQueue
-      const idx = contextQueue.findIndex((t) => t.id === track.id)
-      setQueue(contextQueue)
-      setQueueIndex(idx >= 0 ? idx : 0)
-    } else {
-      setQueue([track])
-      setQueueIndex(0)
-      originalQueueRef.current = [track]
+    // Configura fila imediata
+    let effectiveQueue = contextQueue && contextQueue.length > 0 ? contextQueue : [track]
+    const idx = effectiveQueue.findIndex((t) => t.id === track.id)
+    const validIdx = idx >= 0 ? idx : 0
 
-      fetchRadioTracks(track.id).then((related) => {
-        if (related.length > 0) {
-          setQueue((prev) => [...prev, ...related])
-          originalQueueRef.current = [...originalQueueRef.current, ...related]
+    setQueue(effectiveQueue)
+    queueRef.current = effectiveQueue
+    setQueueIndex(validIdx)
+    queueIndexRef.current = validIdx
+    originalQueueRef.current = effectiveQueue
+
+    // Busca imediatamente a rádio inteligente em background para abastecer a fila com antecedência
+    fetchRadioTracks(track.id).then((related) => {
+      if (related.length > 0) {
+        const currentList = queueRef.current
+        const unadded = related.filter((r) => !currentList.some((q) => q.id === r.id))
+        if (unadded.length > 0) {
+          const expanded = [...currentList, ...unadded]
+          setQueue(expanded)
+          queueRef.current = expanded
+          originalQueueRef.current = expanded
         }
-      }).catch(() => {})
-    }
+      }
+    }).catch(() => {})
 
     recordTrackPlayed(track)
 

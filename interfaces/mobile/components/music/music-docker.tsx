@@ -1,87 +1,61 @@
 "use client"
 
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
+import { Home, Compass, Library } from "lucide-react"
 
 export function MusicDocker() {
   const { screen, reset, goToSearch, goToLibrary } = useMusicNavigation()
 
-  // O docker não deve aparecer nas telas de now-playing e lyrics
+  // O sub-header/tabs não deve aparecer nas telas cheias
   if (screen.type === "now-playing" || screen.type === "lyrics") return null
 
   const isHome = screen.type === "home" || screen.type === "playlist-detail" || screen.type === "album-detail" || screen.type === "artist"
-  const isSearch = screen.type === "search"
+  const isExplore = screen.type === "search"
   const isLibrary = screen.type === "library" || screen.type === "playlists"
 
   return (
-    <nav
-      aria-label="Navegação Principal"
-      className="flex items-center justify-around bg-[#F8FAFC]/95 border-t border-zinc-200/80 px-6 py-3 backdrop-blur-lg z-20"
+    <div
+      aria-label="Sub-Navegação Topo LuciMusic"
+      className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--bg-app)]/80 backdrop-blur-md border-b border-[var(--border)] z-10 shrink-0"
     >
-      {/* Botão Home */}
       <button
         type="button"
         onClick={reset}
-        aria-label="Início"
-        className="flex flex-col items-center justify-center p-1.5 transition-transform active:scale-90"
+        className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
+          isHome
+            ? "bg-[var(--accent-blue)] text-white shadow-md shadow-[#0033ff]/30"
+            : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-white"
+        }`}
       >
-        <svg
-          className={`size-6 transition-colors ${
-            isHome ? "text-[#62CF5E] stroke-[#62CF5E]" : "text-zinc-400 hover:text-zinc-600 stroke-zinc-400"
-          }`}
-          viewBox="0 0 24 24"
-          fill="none"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-          <polyline points="9 22 9 12 15 12 15 22" />
-        </svg>
+        <Home className="size-3.5" />
+        <span>Início</span>
       </button>
 
-      {/* Botão Busca */}
       <button
         type="button"
         onClick={goToSearch}
-        aria-label="Buscar"
-        className="flex flex-col items-center justify-center p-1.5 transition-transform active:scale-90"
+        className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
+          isExplore
+            ? "bg-[var(--accent-blue)] text-white shadow-md shadow-[#0033ff]/30"
+            : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-white"
+        }`}
       >
-        <svg
-          className={`size-6 transition-colors ${
-            isSearch ? "text-[#62CF5E] stroke-[#62CF5E]" : "text-zinc-400 hover:text-zinc-600 stroke-zinc-400"
-          }`}
-          viewBox="0 0 24 24"
-          fill="none"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
+        <Compass className="size-3.5" />
+        <span>Explorar</span>
       </button>
 
-      {/* Botão Biblioteca */}
       <button
         type="button"
         onClick={goToLibrary}
-        aria-label="Sua Biblioteca"
-        className="flex flex-col items-center justify-center p-1.5 transition-transform active:scale-90"
+        className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
+          isLibrary
+            ? "bg-[var(--accent-blue)] text-white shadow-md shadow-[#0033ff]/30"
+            : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-white"
+        }`}
       >
-        <svg
-          className={`size-6 transition-colors ${
-            isLibrary ? "text-[#62CF5E] stroke-[#62CF5E]" : "text-zinc-400 hover:text-zinc-600 stroke-zinc-400"
-          }`}
-          viewBox="0 0 24 24"
-          fill="none"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 2v20" />
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-        </svg>
+        <Library className="size-3.5" />
+        <span>Biblioteca</span>
       </button>
-    </nav>
+    </div>
   )
 }

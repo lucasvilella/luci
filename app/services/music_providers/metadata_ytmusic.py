@@ -118,21 +118,40 @@ class YTMusicMetadataProvider(MetadataProvider):
             else:
                 songs_res = self.ytm.search(query, filter="songs", limit=limit)
                 all_res = self.ytm.search(query, limit=limit)
-                categorized = {"songs": songs_res, "artists": [], "albums": [], "playlists": []}
+                playlists_res = self.ytm.search(query, filter="playlists", limit=8)
+                categorized = {"songs": songs_res, "artists": [], "albums": [], "playlists": playlists_res}
                 for r in all_res:
                     category = r.get("resultType")
                     if category == "artist":
                         categorized["artists"].append(r)
                     elif category == "album":
                         categorized["albums"].append(r)
-                    elif category == "playlist":
+                    elif category == "playlist" and not any(p.get("browseId") == r.get("browseId") for p in categorized["playlists"]):
                         categorized["playlists"].append(r)
                 return categorized
 
         raw = await loop.run_in_executor(None, _execute)
 
+        # Desduplicação inteligente de faixas (Spotify Style: não repete a mesma música com artistas secundários)
+        formatted_songs = []
+        seen_signatures = set()
+
+        for s in raw.get("songs", []):
+            if not s.get("videoId"):
+                continue
+            fmt = self.format_track(s)
+            
+            # Chave de desduplicação normalizada (Título limpo + Artista principal limpo)
+            clean_t = re.sub(r'\(.*?\)|\[.*?\]', '', fmt["title"].lower()).strip()
+            clean_a = fmt["artist"].split(",")[0].split("&")[0].split(" e ")[0].strip().lower()
+            sig = f"{clean_t}___{clean_a}"
+
+            if sig not in seen_signatures:
+                seen_signatures.add(sig)
+                formatted_songs.append(fmt)
+
         return {
-            "songs": [self.format_track(s) for s in raw.get("songs", []) if s.get("videoId")],
+            "songs": formatted_songs,
             "artists": [
                 {
                     "id": a.get("browseId", ""),
@@ -155,8 +174,8 @@ class YTMusicMetadataProvider(MetadataProvider):
                 {
                     "id": p.get("browseId", ""),
                     "title": p.get("title", ""),
-                    "author": p.get("author", ""),
-                    "itemCount": p.get("itemCount", ""),
+                    "author": p.get("author", "") or (p.get("authors") or [{}])[0].get("name", ""),
+                    "itemCount": p.get("itemCount", "") or "Playlist",
                     "thumbnail": (p.get("thumbnails") or [{}])[-1].get("url", "")
                 }
                 for p in raw.get("playlists", []) if p.get("browseId")

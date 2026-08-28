@@ -1,14 +1,25 @@
 package com.luci.assistant;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
+    private PowerManager.WakeLock wakeLock;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        try {
+            PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (powerManager != null) {
+                wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LuciAssistant:AudioPlaybackLock");
+                wakeLock.acquire(10 * 60 * 1000L /* 10 minutes */);
+            }
+        } catch (Exception ignored) {}
     }
 
     @Override
@@ -23,8 +34,6 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onPause() {
-        // Não chamamos super.onPause() no WebView para evitar que o player de mídia pare
-        // ao desligar ou bloquear a tela
         super.onPause();
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().resumeTimers();
@@ -36,6 +45,16 @@ public class MainActivity extends BridgeActivity {
         super.onStop();
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().resumeTimers();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (wakeLock != null && wakeLock.isHeld()) {
+            try {
+                wakeLock.release();
+            } catch (Exception ignored) {}
         }
     }
 }

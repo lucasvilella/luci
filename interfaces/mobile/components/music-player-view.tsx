@@ -26,7 +26,12 @@ function MusicScreenRouter({
   const { screen } = useMusicNavigation()
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-[#F8FAFC]">
+    <div className="relative flex h-full flex-col overflow-hidden bg-[var(--bg-app)] text-[var(--text-primary)]">
+      {/* Sub-navegação Topo LuciMusic (Início, Explorar, Biblioteca) */}
+      <div className="flex-none">
+        <MusicDocker />
+      </div>
+
       <div className="flex-1 overflow-hidden">
         {screen.type === "home" && <MusicHome onOpenMenu={onOpenMenu} />}
         {screen.type === "now-playing" && <NowPlaying onSwitchToLuci={onSwitchToLuci} />}
@@ -58,14 +63,9 @@ function MusicScreenRouter({
         {screen.type === "settings" && <SettingsScreen />}
       </div>
       
-      {/* Mini Player */}
+      {/* Mini Player Persistente Flutuante */}
       <div className="flex-none">
         <MiniPlayer />
-      </div>
-      
-      {/* Docker Inferior de Navegação */}
-      <div className="flex-none">
-        <MusicDocker />
       </div>
     </div>
   )

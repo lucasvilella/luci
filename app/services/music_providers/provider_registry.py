@@ -17,8 +17,9 @@ logger = logging.getLogger("LuciMusic.ProviderRegistry")
 
 class MusicProviderRegistry:
     def __init__(self):
-        self.metadata_primary: MetadataProvider = MusicBrainzMetadataProvider()
-        self.metadata_fallback: MetadataProvider = YTMusicMetadataProvider()
+        # YouTube Music direto como provedor primário para busca rica, rápida, com capas reais e playlists
+        self.metadata_primary: MetadataProvider = YTMusicMetadataProvider()
+        self.metadata_fallback: MetadataProvider = MusicBrainzMetadataProvider()
         self.audio_source: AudioSourceProvider = YTMusicAudioProvider()
 
     def _normalize_string(self, text: str) -> str:
@@ -28,31 +29,16 @@ class MusicProviderRegistry:
 
     async def search(self, query: str, limit: int = 20, filter_type: Optional[str] = None) -> Dict[str, Any]:
         """
-        Executa busca com arquitetura de fallback transparente:
-        1. Tenta catálogo do MusicBrainz/ListenBrainz (Primário)
-        2. Em caso de vazio ou erro -> Recorre ao YouTube Music (Fallback)
+        Executa busca inteligente rápida com desduplicação de faixas e ranking de relevância.
         """
-        # Se for filtro específico de playlists, consulta direto YT Music (MusicBrainz é focado em recordings/releases)
-        if filter_type in ["playlists", "albums", "artists"]:
-            return await self.metadata_fallback.search(query, limit=limit, filter_type=filter_type)
-
         try:
-            mb_results = await self.metadata_primary.search(query, limit=limit)
-            if mb_results and mb_results.get("songs"):
-                logger.info(f"[MusicProviderRegistry] Busca '{query}' atendida pelo PRIMÁRIO ({self.metadata_primary.name}) com {len(mb_results['songs'])} faixas.")
-                
-                # Complementa com artistas/álbuns do fallback caso MusicBrainz retorne vazio nas seções secundárias
-                fallback_secondary = await self.metadata_fallback.search(query, limit=limit)
-                mb_results["artists"] = fallback_secondary.get("artists", [])
-                mb_results["albums"] = fallback_secondary.get("albums", [])
-                mb_results["playlists"] = fallback_secondary.get("playlists", [])
-                return mb_results
+            results = await self.metadata_primary.search(query, limit=limit, filter_type=filter_type)
+            if results and (results.get("songs") or results.get("artists") or results.get("albums") or results.get("playlists")):
+                return results
         except Exception as e:
-            logger.warning(f"[MusicProviderRegistry] MusicBrainz indisponível ou falhou ({e}), ativando fallback...")
+            logger.warning(f"[MusicProviderRegistry] Provedor primário falhou ({e}), tentando secundário...")
 
-        # Fallback para YouTube Music
-        logger.info(f"[MusicProviderRegistry] Busca '{query}' atendida pelo FALLBACK ({self.metadata_fallback.name}).")
-        return await self.metadata_fallback.search(query, limit=limit, filter_type=filter_type)
+        return await self.metadata_fallback.search(query, limit=limit)
 
     async def resolve_audio_stream(self, track_id: str, title: Optional[str] = None, artist: Optional[str] = None) -> Dict[str, Any]:
         """

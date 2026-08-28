@@ -6,6 +6,7 @@ import { MusicPlayerView } from "@/components/music-player-view"
 import { ProfileView } from "@/components/profile-view"
 import { AuthView } from "@/components/auth-view"
 import { DropdownMenu } from "@/components/dropdown-menu"
+import { BottomNav } from "@/components/bottom-nav"
 import { useAuth } from "@/hooks/use-auth"
 import { Menu } from "lucide-react"
 
@@ -65,6 +66,14 @@ export default function Page() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Bottom Deck Global (5 Destinos Centrais) */}
+            <div className="flex-none">
+              <BottomNav
+                active={currentModule}
+                onChange={(mod) => setCurrentModule(mod)}
+              />
             </div>
           </>
         )}

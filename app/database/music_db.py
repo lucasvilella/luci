@@ -198,11 +198,11 @@ class MusicDatabase:
         # Determina tag de contexto automática por horário se não for passada
         if not context_tag:
             hour = time.localtime(now).tm_hour
-            if 6 <= hour < 12:
+            if 6 <= hour < 10:
                 context_tag = "manha"
-            elif 12 <= hour < 18:
+            elif 10 <= hour < 18:
                 context_tag = "tarde"
-            elif 18 <= hour < 23:
+            elif 18 <= hour < 22:
                 context_tag = "noite"
             else:
                 context_tag = "madrugada"
@@ -438,6 +438,11 @@ class MusicDatabase:
         }
 
     @staticmethod
+    def get_playlists(user_id: str) -> List[Dict[str, Any]]:
+        """Alias para get_user_playlists."""
+        return MusicDatabase.get_user_playlists(user_id)
+
+    @staticmethod
     def get_user_playlists(user_id: str) -> List[Dict[str, Any]]:
         """Retorna todas as playlists do usuário com contagem de faixas."""
         conn = get_db_connection()
@@ -670,3 +675,212 @@ class MusicDatabase:
         rows = cursor.fetchall()
         conn.close()
         return [dict(r) for r in rows]
+
+    @staticmethod
+    def add_search_history(user_id: str, query_text: str, entity_type: str = "text", target_id: str = "") -> None:
+        """Salva uma busca recente no histórico do usuário."""
+        if not query_text or not query_text.strip():
+            return
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS search_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            query_text TEXT NOT NULL,
+            entity_type TEXT DEFAULT 'text',
+            target_id TEXT DEFAULT '',
+            searched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        # Remove busca duplicada do mesmo termo para manter o mais recente no topo
+        cursor.execute("DELETE FROM search_history WHERE user_id = ? AND query_text = ?", (user_id, query_text.strip()))
+        cursor.execute("""
+        INSERT INTO search_history (user_id, query_text, entity_type, target_id)
+        VALUES (?, ?, ?, ?)
+        """, (user_id, query_text.strip(), entity_type, target_id or ""))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def get_search_history(user_id: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """Retorna os últimos termos ou faixas pesquisadas pelo usuário."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS search_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            query_text TEXT NOT NULL,
+            entity_type TEXT DEFAULT 'text',
+            target_id TEXT DEFAULT '',
+            searched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        cursor.execute("""
+        SELECT id, query_text, entity_type, target_id, searched_at
+        FROM search_history
+        WHERE user_id = ?
+        ORDER BY id DESC
+        LIMIT ?
+        """, (user_id, limit))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    @staticmethod
+    def clear_search_history(user_id: str) -> None:
+        """Limpa todo o histórico de busca do usuário."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM search_history WHERE user_id = ?", (user_id,))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def delete_search_history_item(user_id: str, item_id: int) -> None:
+        """Remove um item específico do histórico de busca."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM search_history WHERE user_id = ? AND id = ?", (user_id, item_id))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def toggle_follow_artist(user_id: str, artist_id: str, artist_name: str, avatar_url: str = "") -> bool:
+        """Adiciona ou remove um artista seguido pelo usuário."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_followed_artists (
+            artist_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            artist_name TEXT NOT NULL,
+            avatar_url TEXT,
+            followed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, artist_id)
+        )
+        """)
+        cursor.execute("SELECT 1 FROM user_followed_artists WHERE user_id = ? AND artist_id = ?", (user_id, artist_id))
+        exists = cursor.fetchone()
+        if exists:
+            cursor.execute("DELETE FROM user_followed_artists WHERE user_id = ? AND artist_id = ?", (user_id, artist_id))
+            conn.commit()
+            conn.close()
+            return False
+        else:
+            cursor.execute("""
+            INSERT INTO user_followed_artists (user_id, artist_id, artist_name, avatar_url)
+            VALUES (?, ?, ?, ?)
+            """, (user_id, artist_id, artist_name, avatar_url or ""))
+            conn.commit()
+            conn.close()
+            return True
+
+    @staticmethod
+    def is_following_artist(user_id: str, artist_id: str) -> bool:
+        """Verifica se o usuário segue o artista."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_followed_artists (
+            artist_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            artist_name TEXT NOT NULL,
+            avatar_url TEXT,
+            followed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, artist_id)
+        )
+        """)
+        cursor.execute("SELECT 1 FROM user_followed_artists WHERE user_id = ? AND artist_id = ?", (user_id, artist_id))
+        row = cursor.fetchone()
+        conn.close()
+        return bool(row)
+
+    @staticmethod
+    def get_followed_artists(user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Retorna todos os artistas seguidos pelo usuário."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_followed_artists (
+            artist_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            artist_name TEXT NOT NULL,
+            avatar_url TEXT,
+            followed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, artist_id)
+        )
+        """)
+        cursor.execute("""
+        SELECT artist_id as id, artist_name as name, avatar_url as thumbnail, followed_at
+        FROM user_followed_artists
+        WHERE user_id = ?
+        ORDER BY followed_at DESC
+        LIMIT ?
+        """, (user_id, limit))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    @staticmethod
+    def toggle_favorite_collection(
+        user_id: str,
+        collection_id: str,
+        collection_type: str = "album",
+        title: str = "",
+        artist: str = "",
+        cover_url: str = ""
+    ) -> bool:
+        """Salva ou remove um álbum/playlist dos favoritos da biblioteca do usuário."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_favorite_collections (
+            user_id TEXT NOT NULL,
+            collection_id TEXT NOT NULL,
+            collection_type TEXT NOT NULL, -- 'album' ou 'playlist'
+            title TEXT NOT NULL,
+            artist TEXT DEFAULT '',
+            cover_url TEXT DEFAULT '',
+            saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, collection_id)
+        )
+        """)
+        cursor.execute("SELECT 1 FROM user_favorite_collections WHERE user_id = ? AND collection_id = ?", (user_id, collection_id))
+        exists = cursor.fetchone()
+        if exists:
+            cursor.execute("DELETE FROM user_favorite_collections WHERE user_id = ? AND collection_id = ?", (user_id, collection_id))
+            conn.commit()
+            conn.close()
+            return False
+        else:
+            cursor.execute("""
+            INSERT INTO user_favorite_collections (user_id, collection_id, collection_type, title, artist, cover_url)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, (user_id, collection_id, collection_type, title, artist or "", cover_url or ""))
+            conn.commit()
+            conn.close()
+            return True
+
+    @staticmethod
+    def is_collection_saved(user_id: str, collection_id: str) -> bool:
+        """Verifica se o álbum ou playlist está nos favoritos do usuário."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_favorite_collections (
+            user_id TEXT NOT NULL,
+            collection_id TEXT NOT NULL,
+            collection_type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            artist TEXT DEFAULT '',
+            cover_url TEXT DEFAULT '',
+            saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, collection_id)
+        )
+        """)
+        cursor.execute("SELECT 1 FROM user_favorite_collections WHERE user_id = ? AND collection_id = ?", (user_id, collection_id))
+        row = cursor.fetchone()
+        conn.close()
+        return bool(row)

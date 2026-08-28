@@ -5,7 +5,6 @@ const config: CapacitorConfig = {
   appName: 'Luci',
   webDir: 'out',
   server: {
-    // Live Reload: aponta para o backend da máquina de dev na rede local
     url: 'http://192.168.68.138:5173',
     cleartext: true,
     androidScheme: 'https'
