@@ -57,26 +57,17 @@ const MusicPlayerContext = createContext<MusicPlayerContextValue | null>(null)
 export function MusicPlayerProvider({ children }: { children: ReactNode }) {
   const store = useAudioPlayerStore()
 
-  // Conecta ducking automático com o VoiceInputManager da Luci
   useEffect(() => {
-    fetchLikedTracks().then((tracks) => {
-      if (tracks && tracks.length) {
-        useAudioPlayerStore.setState({
-          likedIds: new Set(tracks.map((t) => t.id)),
-        })
-      }
-    }).catch(console.error)
-
-    const unsubscribe = voiceInputManager.subscribe((state) => {
-      if (state.state === "listening" || state.state === "thinking" || state.state === "speaking") {
-        store.setAudioDucking(true)
-      } else if (state.state === "idle" || state.state === "error") {
-        store.setAudioDucking(false)
-      }
-    })
-
-    return () => unsubscribe()
-  }, [store])
+    fetchLikedTracks()
+      .then((tracks) => {
+        if (tracks && tracks.length) {
+          useAudioPlayerStore.setState({
+            likedIds: new Set(tracks.map((t) => t.id)),
+          })
+        }
+      })
+      .catch(console.error)
+  }, [])
 
   return (
     <MusicPlayerContext.Provider value={store}>
