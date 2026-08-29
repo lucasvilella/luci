@@ -5,7 +5,6 @@ const config: CapacitorConfig = {
   appName: 'Luci',
   webDir: 'out',
   server: {
-    url: 'http://192.168.68.138:5173',
     cleartext: true,
     androidScheme: 'https'
   },
