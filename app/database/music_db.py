@@ -940,3 +940,71 @@ class MusicDatabase:
         rows = cursor.fetchall()
         conn.close()
         return [dict(r) for r in rows]
+
+    @staticmethod
+    def add_collection_history(
+        user_id: str,
+        collection_id: str,
+        collection_type: str,
+        title: str,
+        subtitle: str,
+        cover_url: str,
+        last_track_index: int = 0
+    ) -> None:
+        """Registra a reprodução contínua de um álbum ou playlist para 'Continuar Ouvindo'."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_collection_history (
+            user_id TEXT NOT NULL,
+            collection_id TEXT NOT NULL,
+            collection_type TEXT NOT NULL, -- 'album' ou 'playlist'
+            title TEXT NOT NULL,
+            subtitle TEXT NOT NULL,
+            cover_url TEXT NOT NULL,
+            last_track_index INTEGER DEFAULT 0,
+            last_played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, collection_id, collection_type)
+        )
+        """)
+        cursor.execute("""
+        INSERT INTO user_collection_history (user_id, collection_id, collection_type, title, subtitle, cover_url, last_track_index, last_played_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(user_id, collection_id, collection_type) DO UPDATE SET
+            title=excluded.title,
+            subtitle=excluded.subtitle,
+            cover_url=excluded.cover_url,
+            last_track_index=excluded.last_track_index,
+            last_played_at=CURRENT_TIMESTAMP
+        """, (user_id, collection_id, collection_type, title, subtitle, cover_url, last_track_index))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def get_collection_history(user_id: str, limit: int = 6) -> List[Dict[str, Any]]:
+        """Retorna os últimos álbuns e playlists ouvidos para o carrossel 'Continuar Ouvindo'."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_collection_history (
+            user_id TEXT NOT NULL,
+            collection_id TEXT NOT NULL,
+            collection_type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            subtitle TEXT NOT NULL,
+            cover_url TEXT NOT NULL,
+            last_track_index INTEGER DEFAULT 0,
+            last_played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, collection_id, collection_type)
+        )
+        """)
+        cursor.execute("""
+        SELECT collection_id as id, collection_type as type, title, subtitle, cover_url, last_track_index
+        FROM user_collection_history
+        WHERE user_id = ?
+        ORDER BY last_played_at DESC
+        LIMIT ?
+        """, (user_id, limit))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(r) for r in rows]

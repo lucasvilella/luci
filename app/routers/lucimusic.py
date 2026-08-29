@@ -47,68 +47,132 @@ async def get_music_home(
     else:
         greeting = f"Boa noite, {user_id.capitalize()}"
 
-    # Estruturação no formato canônico da especificação UI/UX
-    quick_access = feed.get("recently_played", [])[:6]
-    if len(quick_access) < 6 and feed.get("liked_preview"):
-        for trk in feed.get("liked_preview", []):
-            if trk["id"] not in [q["id"] for q in quick_access]:
-                quick_access.append(trk)
-            if len(quick_access) >= 6:
-                break
+    # 1. Continuar Ouvindo (Coleções: Álbuns e Playlists)
+    continue_listening = MusicDatabase.get_collection_history(user_id, limit=6)
+    if not continue_listening:
+        # Fallback para álbuns/playlists favoritados
+        saved_albums = MusicDatabase.get_saved_albums(user_id, limit=3)
+        saved_pls = MusicDatabase.get_saved_playlists(user_id, limit=3)
+        for alb in saved_albums:
+            continue_listening.append({
+                "id": alb["id"],
+                "type": "album",
+                "title": alb["title"],
+                "subtitle": alb.get("artist", "Álbum"),
+                "cover_url": alb.get("cover_url", ""),
+                "last_track_index": 0
+            })
+        for pl in saved_pls:
+            continue_listening.append({
+                "id": pl["id"],
+                "type": "playlist",
+                "title": pl["title"],
+                "subtitle": pl.get("artist", "Playlist"),
+                "cover_url": pl.get("cover_url", ""),
+                "last_track_index": 0
+            })
 
-    moments = []
-    for m in curation.get("active_moments", []):
-        moments.append({
-            "id": m.get("id", "m_1"),
-            "title": m.get("moment_name", "Flow da Luci"),
-            "subtitle": m.get("subtitle", "Mix contínuo baseado no seu momento"),
-            "type": "flow_dynamic",
-            "cover_gradient": "linear-gradient(135deg, #0033ff 0%, #977dff 50%, #ffccf2 100%)"
+    # 2. Daily Mixes (5 Mixes Estruturados da Luci)
+    daily_mixes = []
+    gradient_themes = [
+        "linear-gradient(135deg, #0600AB 0%, #977DFF 100%)",
+        "linear-gradient(135deg, #0033FF 0%, #0600AB 100%)",
+        "linear-gradient(135deg, #00001F 0%, #0033FF 100%)",
+        "linear-gradient(135deg, #06003D 0%, #977DFF 100%)",
+        "linear-gradient(135deg, #977DFF 0%, #FFCCF2 100%)"
+    ]
+    raw_mixes = feed.get("daily_mixes", [])
+    for idx in range(5):
+        if idx < len(raw_mixes):
+            m = raw_mixes[idx]
+            daily_mixes.append({
+                "mix_id": idx + 1,
+                "title": m.get("title") or f"Daily Mix {idx + 1}",
+                "subtitle": m.get("subtitle") or "Mix diário calibrado pela Luci",
+                "gradient": gradient_themes[idx % len(gradient_themes)],
+                "cover_url": m.get("thumbnail") or "",
+                "tracks": m.get("tracks", [])
+            })
+        else:
+            daily_mixes.append({
+                "mix_id": idx + 1,
+                "title": f"Daily Mix {idx + 1}",
+                "subtitle": "Seleção especial com base nos seus gostos",
+                "gradient": gradient_themes[idx % len(gradient_themes)],
+                "cover_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500",
+                "tracks": []
+            })
+
+    # 3. Artistas Favoritos (Afinidade)
+    favorite_artists = feed.get("recommended_artists", [])[:8]
+
+    # 4. Artistas Recomendados pela Luci (Pontes de Descoberta com Razão)
+    recommended_artists = []
+    for art in feed.get("recommended_artists", [])[2:8]:
+        fav_name = favorite_artists[0]["name"] if favorite_artists else "seus artistas favoritos"
+        recommended_artists.append({
+            "id": art.get("id"),
+            "name": art.get("name"),
+            "avatar": art.get("thumbnail") or art.get("avatar") or "",
+            "reason": f"Porque você curte {fav_name}"
         })
 
-    if not moments:
-        moments = [
-            {
-                "id": "m_flow_default",
-                "title": "Flow Infinito da Luci",
-                "subtitle": "Mix contínuo inteligente calibrado para o seu gosto",
-                "type": "flow_dynamic",
-                "cover_gradient": "linear-gradient(135deg, #0033ff 0%, #977dff 50%, #ffccf2 100%)"
-            },
-            {
-                "id": "m_focus",
-                "title": "Modo Foco Deep Work",
-                "subtitle": "Batidas e instrumentais para concentração",
-                "type": "flow_dynamic",
-                "cover_gradient": "linear-gradient(135deg, #06003d 0%, #0033ff 100%)"
-            }
-        ]
+    # 5. Em Alta no Brasil (Trending & Charts)
+    trending_brasil = feed.get("trending_brasil", [])[:10]
 
-    # Formatando Made For You a partir dos Daily Mixes com reasons explicativos
-    made_for_you = []
-    for idx, mix in enumerate(feed.get("daily_mixes", [])):
-        made_for_you.append({
-            "playlist_id": mix.get("id"),
-            "title": mix.get("title"),
-            "subtitle": mix.get("subtitle"),
-            "reason": f"Sugerido pela Luci com base em {mix.get('subtitle') or 'seus hábitos'}",
-            "cover": mix.get("thumbnail"),
-            "gradient": mix.get("gradient"),
-            "tracks": mix.get("tracks", [])
-        })
+    # 6. Lançamentos Relevantes
+    new_releases = feed.get("new_releases", [])[:10]
 
-    # Resposta agregada completa
+    # 7. Radar de Alta Energia (Treino) & 8. Foco/Descompressão
+    custom_workout = {
+        "title": "Radar de Alta Energia & Treino",
+        "subtitle": "BPM elevado para manter o ritmo",
+        "tracks": [t for t in trending_brasil[:6]]
+    }
+    custom_focus = {
+        "title": "Sessão Foco & Descompressão",
+        "subtitle": "Frequência calma e relaxante",
+        "tracks": [t for t in (feed.get("based_on_listened", [{}])[0].get("tracks", []) if feed.get("based_on_listened") else trending_brasil[-6:])]
+    }
+
+    # Resposta estruturada canônica da Home
     return {
         "greeting": greeting,
         "mood_active": mood,
-        "quick_access": quick_access,
+        "continue_listening": continue_listening,
+        "daily_mixes": daily_mixes,
+        "favorite_artists": favorite_artists,
+        "recommended_artists": recommended_artists,
+        "trending_brasil": trending_brasil,
+        "new_releases": new_releases,
+        "custom_workout": custom_workout,
+        "custom_focus": custom_focus,
         "moments": moments,
-        "top_artists": feed.get("recommended_artists", [])[:8],
-        "made_for_you": made_for_you,
-        "discover_releases": feed.get("new_releases", [])[:10],
-        "trending_brasil": feed.get("trending_brasil", [])[:10],
-        "based_on_listened": feed.get("based_on_listened", [])
+        "quick_access": quick_access
     }
+
+class CollectionHistoryPayload(BaseModel):
+    collection_id: str
+    collection_type: str
+    title: str
+    subtitle: Optional[str] = ""
+    cover_url: Optional[str] = ""
+    last_track_index: Optional[int] = 0
+
+@router.post("/history/collection")
+async def record_collection_history(payload: CollectionHistoryPayload, request: Request):
+    """Registra a reprodução de um álbum ou playlist para a seção 'Continuar Ouvindo'."""
+    user_id = _get_current_user(request)
+    MusicDatabase.add_collection_history(
+        user_id=user_id,
+        collection_id=payload.collection_id,
+        collection_type=payload.collection_type,
+        title=payload.title,
+        subtitle=payload.subtitle or "",
+        cover_url=payload.cover_url or "",
+        last_track_index=payload.last_track_index or 0
+    )
+    return {"status": "ok"}
 
 class TrackEventPayload(BaseModel):
     track_id: str

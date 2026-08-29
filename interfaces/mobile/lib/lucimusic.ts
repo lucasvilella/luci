@@ -71,24 +71,55 @@ export interface MadeForYouItem {
   tracks: LuciTrack[]
 }
 
+export interface ContinueListeningItem {
+  id: string
+  type: "album" | "playlist"
+  title: string
+  subtitle: string
+  cover_url: string
+  last_track_index?: number
+}
+
+export interface StructuredDailyMix {
+  mix_id: number
+  title: string
+  subtitle: string
+  gradient: string
+  cover_url: string
+  tracks?: LuciTrack[]
+}
+
+export interface RecommendedArtistItem {
+  id: string
+  name: string
+  avatar: string
+  reason?: string
+}
+
 export interface MusicHomeFeed {
   greeting?: string
   mood_active?: string
+  continue_listening?: ContinueListeningItem[]
+  daily_mixes?: StructuredDailyMix[]
+  favorite_artists?: Array<{ id: string; name: string; thumbnail?: string; avatar?: string }>
+  recommended_artists?: RecommendedArtistItem[]
+  trending_brasil?: LuciTrack[]
+  new_releases?: LuciTrack[]
+  custom_workout?: {
+    title: string
+    subtitle: string
+    tracks: LuciTrack[]
+  }
+  custom_focus?: {
+    title: string
+    subtitle: string
+    tracks: LuciTrack[]
+  }
   quick_access?: LuciTrack[]
   moments?: LuciMoment[]
   top_artists?: Array<{ id: string; name: string; thumbnail: string }>
   made_for_you?: MadeForYouItem[]
   discover_releases?: LuciTrack[]
-  trending_brasil?: LuciTrack[]
-  based_on_listened?: SimilarityPlaylist[]
-  favorite_albums?: AlbumItem[]
-  recommended_artists?: Array<{ id: string; name: string; thumbnail: string }>
-  created_by_luci?: CreatedByLuciPlaylist[]
-  daily_mixes?: DailyMix[]
-  recently_played?: LuciTrack[]
-  liked_preview?: LuciTrack[]
-  trending_br?: LuciTrack[]
-  new_releases?: LuciTrack[]
 }
 
 export interface LyricsLine {

@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react"
 import {
   Clock,
-  Settings,
   Sparkles,
   Zap,
   Target,
@@ -12,7 +11,6 @@ import {
   Coffee,
   Play,
   Flame,
-  Radio,
   ChevronRight,
   MoreVertical,
   Heart,
@@ -20,24 +18,28 @@ import {
   Share2,
   Disc3,
   FileText,
+  Radio,
+  Disc,
+  ListMusic,
+  Plus,
+  Loader2,
 } from "lucide-react"
 import {
   type LuciTrack,
-  type DailyMix,
   type MusicHomeFeed,
-  type MadeForYouItem,
   fetchMusicHome,
   recordTrackEvent,
 } from "@/lib/lucimusic"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { TrackImage } from "./track-image"
+import { AddToPlaylistModal } from "./add-to-playlist-modal"
 
 const MOOD_PILLS = [
   { id: "all", label: "Todos", icon: null },
   { id: "treino", label: "Treino", icon: Zap },
-  { id: "foco", label: "Foco / Trabalho", icon: Target },
-  { id: "relax", label: "Relaxante", icon: Moon },
+  { id: "foco", label: "Foco", icon: Target },
+  { id: "relax", label: "Relax", icon: Moon },
   { id: "energia", label: "Energia", icon: Rocket },
   { id: "acustico", label: "Acústico", icon: Coffee },
 ]
@@ -47,12 +49,13 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
   const [feed, setFeed] = useState<MusicHomeFeed | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Action Sheet (Long-press / menu de 3 pontinhos)
+  // Modais de Ação
   const [actionSheetTrack, setActionSheetTrack] = useState<LuciTrack | null>(null)
+  const [playlistModalTrack, setPlaylistModalTrack] = useState<LuciTrack | null>(null)
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const { playTrack, currentTrack, isPlaying, addToQueue, toggleLike, isLiked } = useMusicPlayer()
-  const { goToArtist, goToPlaylistDetail, goToLyrics } = useMusicNavigation()
+  const { goToArtist, goToPlaylistDetail, goToAlbumDetail, goToLyrics } = useMusicNavigation()
 
   // Carrega feed da Home conforme o mood ativo
   useEffect(() => {
@@ -60,13 +63,10 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
     setLoading(true)
     fetchMusicHome(activeMood)
       .then((data) => {
-        if (isMounted) {
-          setFeed(data)
-          setLoading(false)
-        }
+        if (isMounted) setFeed(data)
       })
-      .catch((err) => {
-        console.error("[LuciMusic] Erro ao buscar feed:", err)
+      .catch((err) => console.error("[MusicHome] Erro ao carregar feed:", err))
+      .finally(() => {
         if (isMounted) setLoading(false)
       })
 
@@ -75,21 +75,8 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
     }
   }, [activeMood])
 
-  const handleTouchStart = (track: LuciTrack) => {
-    longPressTimerRef.current = setTimeout(() => {
-      setActionSheetTrack(track)
-    }, 550)
-  }
-
-  const handleTouchEnd = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
-    }
-  }
-
-  const handlePlayTrack = (track: LuciTrack, context?: LuciTrack[]) => {
-    playTrack(track, context)
+  const handlePlaySingle = (track: LuciTrack, allTracks: LuciTrack[]) => {
+    playTrack(track, allTracks)
     recordTrackEvent({
       track_id: track.id,
       played_seconds: 1,
@@ -99,345 +86,420 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
     })
   }
 
+  const handleTouchStart = (track: LuciTrack) => {
+    longPressTimerRef.current = setTimeout(() => {
+      setActionSheetTrack(track)
+    }, 500)
+  }
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }
+
   return (
     <div className="relative flex h-full flex-col bg-[var(--bg-app)] text-[var(--text-primary)] select-none overflow-y-auto pb-32">
-      {/* ─── A. Header Contextual ─── */}
-      <header className="sticky top-0 z-20 flex items-center justify-between px-5 pt-4 pb-3 bg-[var(--bg-surface-glass)] backdrop-blur-xl border-b border-[var(--border)]">
-        {/* Saudação e Avatar */}
-        <div className="flex items-center gap-3">
-          <div className="size-9 rounded-full bg-gradient-to-tr from-[#0033ff] via-[#977dff] to-[#ffccf2] p-[1.5px] shadow-sm">
-            <div className="size-full rounded-full bg-[var(--bg-surface)] flex items-center justify-center text-xs font-black text-[var(--accent-pink)]">
-              LV
+      {/* ─── HEADER CONTEXTUAL ─── */}
+      <header className="sticky top-0 z-20 px-5 pt-4 pb-3 bg-[var(--bg-surface-glass)] backdrop-blur-2xl border-b border-[var(--border)]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="size-9 rounded-full bg-gradient-to-tr from-[#0033ff] to-[#977dff] p-[2px] shadow-md">
+              <div className="size-full rounded-full bg-[var(--bg-surface)] flex items-center justify-center text-[10px] font-black text-white">
+                LV
+              </div>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] block">
+                {feed?.greeting || "Olá, Lucas"}
+              </span>
+              <h1 className="text-base font-black text-white leading-none">
+                LuciMusic
+              </h1>
             </div>
           </div>
-          <div>
-            <span className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-wider block leading-none">
-              Módulo de Música
-            </span>
-            <h1 className="text-base font-bold text-[var(--text-primary)] mt-0.5 leading-tight">
-              {feed?.greeting || "Olá, Lucas"}
-            </h1>
+
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-surface)] border border-[var(--border)] shadow-sm">
+              <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] font-black text-white">Online</span>
+            </div>
           </div>
         </div>
 
-        {/* Indicador de Status & Atalhos */}
-        <div className="flex items-center gap-2">
-          {/* Status Servidor Luci */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--bg-surface)] border border-[var(--border)]">
-            <span className="size-2 rounded-full bg-[#00ff88] animate-pulse" />
-            <span className="text-[10px] font-semibold text-[var(--text-secondary)]">Luci Online</span>
-          </div>
-
-          <button
-            type="button"
-            aria-label="Histórico Recente"
-            className="size-8 flex items-center justify-center rounded-full bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-white active:scale-95 transition-all"
-          >
-            <Clock className="size-4" />
-          </button>
-
-          <button
-            type="button"
-            aria-label="Configurações"
-            onClick={onOpenMenu}
-            className="size-8 flex items-center justify-center rounded-full bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-white active:scale-95 transition-all"
-          >
-            <Settings className="size-4" />
-          </button>
+        {/* ─── PÍLULAS DE MOOD / FILTROS RÁPIDOS ─── */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-3 pb-1">
+          {MOOD_PILLS.map((pill) => {
+            const Icon = pill.icon
+            const isActive = activeMood === pill.id
+            return (
+              <button
+                key={pill.id}
+                type="button"
+                onClick={() => setActiveMood(pill.id)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${
+                  isActive
+                    ? "bg-[var(--accent-blue)] text-white shadow-md shadow-[#0033ff]/30"
+                    : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-white border border-[var(--border)]"
+                }`}
+              >
+                {Icon && <Icon className="size-3" />}
+                <span>{pill.label}</span>
+              </button>
+            )
+          })}
         </div>
       </header>
 
-      {/* ─── B. Seção 1: Filtros de Mood / Pílulas Dinâmicas (Scroll Horizontal) ─── */}
-      <div className="flex items-center gap-2.5 overflow-x-auto px-5 py-3.5 no-scrollbar shrink-0">
-        {MOOD_PILLS.map((pill) => {
-          const isActive = activeMood === pill.id
-          const Icon = pill.icon
-
-          return (
-            <button
-              key={pill.id}
-              type="button"
-              onClick={() => setActiveMood(pill.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 backdrop-blur-md ${
-                isActive
-                  ? "bg-gradient-to-r from-[#0033ff] to-[#977dff] text-white shadow-lg shadow-[#0033ff]/30 border border-white/20"
-                  : "bg-[var(--bg-surface-glass)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)]"
-              }`}
-            >
-              {Icon && <Icon className="size-3.5" />}
-              <span>{pill.label}</span>
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="space-y-7 px-5 pt-1">
-        {/* ─── C. Seção 2: "Flow Luci" & Dashboard de Momentos ─── */}
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="size-4 text-[var(--accent-pink)]" />
-              <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)]">
-                Flow & Momentos Inteligentes
-              </h2>
-            </div>
-            <span className="text-[11px] font-semibold text-[var(--text-secondary)]">IA Ativa</span>
+      {/* ─── CONTEÚDO PRINCIPAL DAS 8 SEÇÕES ─── */}
+      <div className="p-5 space-y-8">
+        {loading && !feed ? (
+          <div className="flex flex-col items-center justify-center py-36 gap-3 text-[var(--text-secondary)]">
+            <Loader2 className="size-8 animate-spin text-[var(--accent-purple)]" />
+            <p className="text-xs font-bold">Calibrando seu fluxo musical...</p>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Card Principal: Flow Infinito com Efeito Orb */}
-            <div
-              onClick={() => {
-                const first = feed?.discover_releases?.[0] || feed?.trending_brasil?.[0]
-                if (first) handlePlayTrack(first, feed?.trending_brasil)
-              }}
-              className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br from-[#0033ff] via-[#977dff] to-[#ffccf2] text-white shadow-xl shadow-[#0033ff]/20 cursor-pointer active:scale-[0.99] transition-transform group"
-            >
-              <div className="absolute -right-6 -bottom-6 size-28 rounded-full bg-white/20 blur-2xl group-hover:scale-125 transition-transform" />
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/20 text-[10px] font-black uppercase tracking-wider text-white backdrop-blur-md">
-                    <Radio className="size-3 text-[#ffccf2] animate-pulse" />
-                    Autônomo
-                  </span>
-                  <h3 className="text-lg font-black text-white leading-tight">Flow Infinito</h3>
-                  <p className="text-xs text-white/80 font-medium">
-                    Mix contínuo calibrado para o momento atual
-                  </p>
+        ) : feed ? (
+          <>
+            {/* ─── 1. CONTINUAR OUVINDO (Álbuns e Playlists Recentes) ─── */}
+            {feed.continue_listening && feed.continue_listening.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                    Continuar Ouvindo
+                  </h2>
                 </div>
-                <div className="size-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
-                  <Play className="size-6 fill-white text-white translate-x-0.5" />
-                </div>
-              </div>
-            </div>
 
-            {/* Momentos Contextuais (Cards Quadrados Médios) */}
-            {feed?.moments && feed.moments.length > 0 && (
-              <div className="flex gap-3 overflow-x-auto no-scrollbar py-0.5">
-                {feed.moments.slice(0, 3).map((moment) => (
-                  <div
-                    key={moment.id}
-                    onClick={() => {
-                      const first = feed?.discover_releases?.[0] || feed?.trending_brasil?.[0]
-                      if (first) handlePlayTrack(first, feed?.trending_brasil)
-                    }}
-                    className="w-44 shrink-0 rounded-2xl p-3.5 bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent-purple)]/40 cursor-pointer active:scale-95 transition-all flex flex-col justify-between"
-                  >
-                    <div>
-                      <span className="text-[10px] font-bold text-[var(--accent-pink)] uppercase tracking-wider block">
-                        Momento
-                      </span>
-                      <h4 className="text-xs font-black text-[var(--text-primary)] mt-1 line-clamp-1">
-                        {moment.title}
-                      </h4>
-                      <p className="text-[11px] text-[var(--text-muted)] mt-0.5 line-clamp-2">
-                        {moment.subtitle}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between pt-3 mt-2 border-t border-white/5">
-                      <span className="text-[10px] font-semibold text-[var(--text-secondary)]">Ouvir agora</span>
-                      <div className="size-6 rounded-full bg-[var(--accent-blue)] flex items-center justify-center">
-                        <Play className="size-3 fill-white text-white translate-x-0.5" />
+                <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1">
+                  {feed.continue_listening.map((item) => (
+                    <div
+                      key={`cont-${item.id}`}
+                      onClick={() => {
+                        if (item.type === "album") {
+                          goToAlbumDetail(item.id, item.title, item.subtitle, item.cover_url)
+                        } else {
+                          goToPlaylistDetail(item.id, item.title, item.cover_url)
+                        }
+                      }}
+                      className="w-36 shrink-0 space-y-2 cursor-pointer group active:scale-95 transition-all"
+                    >
+                      <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-zinc-900 shadow-md">
+                        <img
+                          src={item.cover_url || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300"}
+                          alt={item.title}
+                          className="size-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20">
+                          <div className="h-full bg-[var(--accent-blue)] w-1/2 rounded-full" />
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-white truncate group-hover:text-[var(--accent-pink)]">
+                          {item.title}
+                        </h4>
+                        <p className="text-[10px] font-semibold text-[var(--text-secondary)] truncate">
+                          {item.subtitle}
+                        </p>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </section>
             )}
-          </div>
-        </section>
 
-        {/* ─── D. Seção 3: "Direto ao Ponto" (Grelha 2x3 de Acesso Rápido) ─── */}
-        {feed?.quick_access && feed.quick_access.length > 0 && (
-          <section className="space-y-3">
-            <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-              Direto ao Ponto
-            </h2>
-            <div className="grid grid-cols-2 gap-2.5">
-              {feed.quick_access.slice(0, 6).map((track) => {
-                const isCurrent = currentTrack?.id === track.id
-                return (
-                  <div
-                    key={`quick-${track.id}`}
-                    onClick={() => handlePlayTrack(track, feed.quick_access)}
-                    onTouchStart={() => handleTouchStart(track)}
-                    onTouchEnd={handleTouchEnd}
-                    onContextMenu={(e) => {
-                      e.preventDefault()
-                      setActionSheetTrack(track)
-                    }}
-                    className={`flex items-center gap-2.5 rounded-xl bg-[var(--bg-surface)] border p-2 cursor-pointer transition-all active:scale-95 group ${
-                      isCurrent
-                        ? "border-[var(--accent-purple)] bg-[var(--bg-surface)]/90 shadow-md shadow-[#977dff]/15"
-                        : "border-[var(--border)] hover:border-[var(--accent-purple)]/30"
-                    }`}
-                  >
-                    <TrackImage
-                      src={track.thumbnail}
-                      trackId={track.id}
-                      alt={track.title}
-                      className="size-11 shrink-0 rounded-lg object-cover bg-zinc-900"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-xs font-black truncate leading-tight ${
-                        isCurrent ? "text-[var(--accent-pink)]" : "text-[var(--text-primary)]"
-                      }`}>
-                        {track.title}
-                      </p>
-                      <p className="text-[10.5px] font-semibold text-[var(--text-secondary)] truncate mt-0.5">
-                        {track.artist}
+            {/* ─── 2. SEUS DAILY MIXES (5 Mixes Segmentados da Luci) ─── */}
+            {feed.daily_mixes && feed.daily_mixes.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="size-4 text-[var(--accent-pink)]" />
+                    <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                      Seus Daily Mixes
+                    </h2>
+                  </div>
+                  <span className="text-[10px] font-bold text-[var(--accent-pink)]">Atualizado hoje</span>
+                </div>
+
+                <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1">
+                  {feed.daily_mixes.map((mix) => (
+                    <div
+                      key={`mix-${mix.mix_id}`}
+                      onClick={() => goToPlaylistDetail(`daily_mix_${mix.mix_id}`, mix.title, mix.cover_url)}
+                      className="w-40 shrink-0 space-y-2.5 cursor-pointer group active:scale-95 transition-all"
+                    >
+                      <div
+                        className="relative aspect-square w-full rounded-2xl overflow-hidden p-3 flex flex-col justify-between shadow-lg"
+                        style={{ background: mix.gradient }}
+                      >
+                        <div className="size-7 rounded-lg bg-black/30 backdrop-blur-md flex items-center justify-center text-[11px] font-black text-white">
+                          #{mix.mix_id}
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-white drop-shadow-md leading-tight">
+                            {mix.title}
+                          </h4>
+                        </div>
+                      </div>
+                      <p className="text-[10.5px] font-medium text-[var(--text-secondary)] line-clamp-2 leading-tight">
+                        {mix.subtitle}
                       </p>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* ─── E. Seção 4: Artistas Mais Ouvidos (Círculos Horizontais) ─── */}
-        {feed?.top_artists && feed.top_artists.length > 0 && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                Artistas em Destaque
-              </h2>
-            </div>
-            <div className="flex gap-4 overflow-x-auto no-scrollbar py-1">
-              {feed.top_artists.map((artist) => (
-                <div
-                  key={`artist-${artist.id}`}
-                  onClick={() => goToArtist(artist.id)}
-                  className="flex flex-col items-center gap-1.5 w-20 shrink-0 cursor-pointer active:scale-95 transition-transform group"
-                >
-                  <div className="size-18 rounded-full p-[2px] bg-gradient-to-br from-[var(--border)] to-[var(--accent-purple)]/40 group-hover:to-[var(--accent-pink)] transition-all">
-                    <img
-                      src={artist.thumbnail}
-                      alt={artist.name}
-                      className="size-full rounded-full object-cover bg-zinc-900"
-                      loading="lazy"
-                    />
-                  </div>
-                  <span className="text-[11px] font-bold text-[var(--text-primary)] text-center line-clamp-1 group-hover:text-[var(--accent-pink)] transition-colors">
-                    {artist.name}
-                  </span>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
+              </section>
+            )}
 
-        {/* ─── F. Seção 5: Recomendações da Luci ("Feito para Você") ─── */}
-        {feed?.made_for_you && feed.made_for_you.length > 0 && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Flame className="size-4 text-[var(--accent-purple)]" />
-                <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-primary)]">
-                  Feito para Você
+            {/* ─── 3. SEUS ARTISTAS FAVORITOS (Avatares Circulares) ─── */}
+            {feed.favorite_artists && feed.favorite_artists.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                  Seus Artistas Favoritos
                 </h2>
-              </div>
-            </div>
 
-            <div className="flex gap-3.5 overflow-x-auto no-scrollbar py-1">
-              {feed.made_for_you.map((item) => (
-                <div
-                  key={`made-for-you-${item.playlist_id}`}
-                  onClick={() => {
-                    if (item.tracks && item.tracks.length > 0) {
-                      goToPlaylistDetail(item.playlist_id, item.title, item.cover, item.tracks)
-                    }
-                  }}
-                  className="w-36 shrink-0 space-y-2 cursor-pointer active:scale-95 transition-transform group"
-                >
-                  <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-[var(--border)] group-hover:border-[var(--accent-purple)]/50 shadow-lg transition-all">
-                    <img
-                      src={item.cover}
-                      alt={item.title}
-                      className="size-full object-cover"
-                      loading="lazy"
-                    />
-                    <div className="absolute bottom-2 right-2 size-8 rounded-full bg-[var(--accent-blue)] text-white flex items-center justify-center shadow-md">
-                      <Play className="size-4 fill-white translate-x-0.5" />
+                <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
+                  {feed.favorite_artists.map((art) => (
+                    <div
+                      key={`fav-art-${art.id}`}
+                      onClick={() => goToArtist(art.id || art.name)}
+                      className="flex flex-col items-center gap-1.5 w-20 shrink-0 cursor-pointer active:scale-95 transition-all group"
+                    >
+                      <div className="size-16 rounded-full p-[2px] bg-gradient-to-tr from-[#0033ff] to-[#977dff] shadow-md">
+                        <img
+                          src={art.thumbnail || art.avatar || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200"}
+                          alt={art.name}
+                          className="size-full rounded-full object-cover bg-zinc-900"
+                        />
+                      </div>
+                      <span className="text-[11px] font-bold text-white text-center truncate w-full group-hover:text-[var(--accent-pink)]">
+                        {art.name}
+                      </span>
                     </div>
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-[var(--text-primary)] line-clamp-1 group-hover:text-[var(--accent-pink)] transition-colors">
-                      {item.title}
-                    </h3>
-                    <p className="text-[10px] font-medium text-[var(--text-muted)] line-clamp-2 mt-0.5">
-                      {item.reason}
-                    </p>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ─── 4. ARTISTAS RECOMENDADOS PELA LUCI (Pontes de Descoberta) ─── */}
+            {feed.recommended_artists && feed.recommended_artists.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="size-4 text-[var(--accent-pink)]" />
+                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                    Descobertas Recomendadas
+                  </h2>
+                </div>
+
+                <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1">
+                  {feed.recommended_artists.map((rec) => (
+                    <div
+                      key={`rec-art-${rec.id}`}
+                      onClick={() => goToArtist(rec.id || rec.name)}
+                      className="w-36 shrink-0 p-3 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent-purple)]/40 cursor-pointer active:scale-95 transition-all space-y-2 group shadow-md"
+                    >
+                      <img
+                        src={rec.avatar || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200"}
+                        alt={rec.name}
+                        className="size-16 rounded-full mx-auto object-cover bg-zinc-900 shadow-sm"
+                      />
+                      <div className="text-center">
+                        <h4 className="text-xs font-black text-white truncate group-hover:text-[var(--accent-pink)]">
+                          {rec.name}
+                        </h4>
+                        <p className="text-[9.5px] font-medium text-[var(--accent-pink)] mt-0.5 line-clamp-1">
+                          {rec.reason || "Recomendado para você"}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ─── 5. EM ALTA NO BRASIL (Trending Top 50) ─── */}
+            {feed.trending_brasil && feed.trending_brasil.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Flame className="size-4 text-orange-500" />
+                    <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                      Em Alta no Brasil
+                    </h2>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
 
-        {/* ─── G. Seção 6: Lançamentos & Novidades (Descoberta 10%) ─── */}
-        {feed?.discover_releases && feed.discover_releases.length > 0 && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="size-4 text-[var(--accent-pink)]" />
-                <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-primary)]">
-                  Lançamentos & Novidades
+                <div className="space-y-2">
+                  {feed.trending_brasil.slice(0, 5).map((track, idx) => {
+                    const isCurrent = currentTrack?.id === track.id
+                    return (
+                      <div
+                        key={`trend-${track.id}-${idx}`}
+                        onClick={() => handlePlaySingle(track, feed.trending_brasil || [])}
+                        onTouchStart={() => handleTouchStart(track)}
+                        onTouchEnd={handleTouchEnd}
+                        className={`flex items-center gap-3 p-2.5 rounded-2xl bg-[var(--bg-surface)] border transition-all active:scale-[0.99] cursor-pointer ${
+                          isCurrent
+                            ? "border-[var(--accent-purple)] shadow-md"
+                            : "border-[var(--border)] hover:border-[var(--accent-purple)]/40"
+                        }`}
+                      >
+                        <span className="text-xs font-black text-[var(--accent-secondary)] w-4 text-center">
+                          {idx + 1}
+                        </span>
+                        <TrackImage
+                          src={track.thumbnail}
+                          trackId={track.id}
+                          alt={track.title}
+                          className="size-11 rounded-xl object-cover bg-zinc-900 shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <h4 className={`text-xs font-black truncate ${isCurrent ? "text-[var(--accent-pink)]" : "text-white"}`}>
+                            {track.title}
+                          </h4>
+                          <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate">
+                            {track.artist}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setActionSheetTrack(track)
+                          }}
+                          className="p-1.5 text-[var(--text-secondary)] hover:text-white"
+                        >
+                          <MoreVertical className="size-4" />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* ─── 6. LANÇAMENTOS RELEVANTES (Novidades) ─── */}
+            {feed.new_releases && feed.new_releases.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                  Lançamentos Recentes
                 </h2>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--accent-pink)]/15 text-[var(--accent-pink)]">
-                Descoberta
-              </span>
-            </div>
 
-            <div className="flex gap-3 overflow-x-auto no-scrollbar py-1">
-              {feed.discover_releases.map((track) => (
-                <div
-                  key={`release-${track.id}`}
-                  onClick={() => handlePlayTrack(track, feed.discover_releases)}
-                  onTouchStart={() => handleTouchStart(track)}
-                  onTouchEnd={handleTouchEnd}
-                  onContextMenu={(e) => {
-                    e.preventDefault()
-                    setActionSheetTrack(track)
-                  }}
-                  className="w-32 shrink-0 space-y-1.5 cursor-pointer active:scale-95 transition-transform group"
-                >
-                  <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-[var(--border)] group-hover:border-[var(--accent-pink)]/40 shadow-md transition-all">
-                    <TrackImage
-                      src={track.thumbnail}
-                      trackId={track.id}
-                      alt={track.title}
-                      className="size-full object-cover"
-                    />
-                    <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-[var(--bg-app)]/80 backdrop-blur-md text-[9px] font-black text-[var(--accent-pink)]">
-                      Novo
+                <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1">
+                  {feed.new_releases.map((rel) => (
+                    <div
+                      key={`rel-${rel.id}`}
+                      onClick={() => handlePlaySingle(rel, feed.new_releases || [])}
+                      className="w-36 shrink-0 space-y-2 cursor-pointer group active:scale-95 transition-all"
+                    >
+                      <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-zinc-900 shadow-md">
+                        <TrackImage
+                          src={rel.thumbnail}
+                          trackId={rel.id}
+                          alt={rel.title}
+                          className="size-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[9px] font-black text-[var(--accent-pink)] border border-white/10">
+                          Novo
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-white truncate group-hover:text-[var(--accent-pink)]">
+                          {rel.title}
+                        </h4>
+                        <p className="text-[10px] font-semibold text-[var(--text-secondary)] truncate">
+                          {rel.artist}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-xs font-bold text-[var(--text-primary)] line-clamp-1 group-hover:text-[var(--accent-pink)]">
-                    {track.title}
-                  </p>
-                  <p className="text-[10px] font-medium text-[var(--text-secondary)] line-clamp-1">
-                    {track.artist}
-                  </p>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
+              </section>
+            )}
+
+            {/* ─── 7. RADAR DE ALTA ENERGIA & TREINO ─── */}
+            {feed.custom_workout && feed.custom_workout.tracks.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center gap-1.5">
+                  <Zap className="size-4 text-yellow-400" />
+                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                    {feed.custom_workout.title}
+                  </h2>
+                </div>
+
+                <div className="space-y-2">
+                  {feed.custom_workout.tracks.slice(0, 4).map((trk) => (
+                    <div
+                      key={`work-${trk.id}`}
+                      onClick={() => handlePlaySingle(trk, feed.custom_workout?.tracks || [])}
+                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-[#0033ff]/20 to-[#06003d] border border-[var(--border)] hover:border-[var(--accent-purple)]/40 cursor-pointer active:scale-[0.99] transition-all"
+                    >
+                      <TrackImage
+                        src={trk.thumbnail}
+                        trackId={trk.id}
+                        alt={trk.title}
+                        className="size-11 rounded-xl object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs font-black text-white truncate">{trk.title}</h4>
+                        <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate">{trk.artist}</p>
+                      </div>
+                      <div className="size-8 rounded-full bg-white/10 flex items-center justify-center text-white">
+                        <Play className="size-3.5 fill-white translate-x-0.5" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ─── 8. SESSÃO FOCO & DESCOMPRESSÃO ─── */}
+            {feed.custom_focus && feed.custom_focus.tracks.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center gap-1.5">
+                  <Moon className="size-4 text-[var(--accent-purple)]" />
+                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                    {feed.custom_focus.title}
+                  </h2>
+                </div>
+
+                <div className="space-y-2">
+                  {feed.custom_focus.tracks.slice(0, 4).map((trk) => (
+                    <div
+                      key={`focus-${trk.id}`}
+                      onClick={() => handlePlaySingle(trk, feed.custom_focus?.tracks || [])}
+                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent-purple)]/40 cursor-pointer active:scale-[0.99] transition-all"
+                    >
+                      <TrackImage
+                        src={trk.thumbnail}
+                        trackId={trk.id}
+                        alt={trk.title}
+                        className="size-11 rounded-xl object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs font-black text-white truncate">{trk.title}</h4>
+                        <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate">{trk.artist}</p>
+                      </div>
+                      <div className="size-8 rounded-full bg-white/10 flex items-center justify-center text-white">
+                        <Play className="size-3.5 fill-white translate-x-0.5" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        ) : null}
       </div>
 
-      {/* ─── Modal / Action Sheet em Vidro Fosco (Toque Longo) ─── */}
+      {/* ─── ACTION SHEET DE OPÇÕES DA FAIXA ─── */}
       {actionSheetTrack && (
         <div
           onClick={() => setActionSheetTrack(null)}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fade-in"
         >
           <div
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-[480px] rounded-t-3xl bg-[var(--bg-surface)] border-t border-[var(--border)] p-6 space-y-4 shadow-2xl animate-slide-up"
           >
-            {/* Header da Faixa */}
             <div className="flex items-center gap-3 pb-3 border-b border-white/10">
               <TrackImage
                 src={actionSheetTrack.thumbnail}
@@ -446,17 +508,24 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
                 className="size-12 rounded-xl object-cover"
               />
               <div className="min-w-0 flex-1">
-                <h4 className="text-sm font-black text-[var(--text-primary)] truncate">
-                  {actionSheetTrack.title}
-                </h4>
-                <p className="text-xs text-[var(--text-secondary)] truncate">
-                  {actionSheetTrack.artist}
-                </p>
+                <h4 className="text-sm font-black text-white truncate">{actionSheetTrack.title}</h4>
+                <p className="text-xs text-[var(--text-secondary)] truncate">{actionSheetTrack.artist}</p>
               </div>
             </div>
 
-            {/* Ações */}
             <div className="space-y-1 text-sm font-bold text-[var(--text-primary)]">
+              <button
+                type="button"
+                onClick={() => {
+                  setPlaylistModalTrack(actionSheetTrack)
+                  setActionSheetTrack(null)
+                }}
+                className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
+              >
+                <Plus className="size-5 text-[var(--accent-purple)]" />
+                <span>Adicionar à Playlist</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -466,7 +535,7 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
                 className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
               >
                 <ListPlus className="size-5 text-[var(--accent-purple)]" />
-                <span>Adicionar à fila</span>
+                <span>Adicionar à Fila</span>
               </button>
 
               <button
@@ -478,7 +547,7 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
                 className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
               >
                 <Disc3 className="size-5 text-[var(--accent-purple)]" />
-                <span>Ir para página do artista</span>
+                <span>Ver Artista</span>
               </button>
 
               <button
@@ -490,42 +559,19 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
                 className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
               >
                 <FileText className="size-5 text-[var(--accent-purple)]" />
-                <span>Ver letra da música</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  toggleLike(actionSheetTrack)
-                  setActionSheetTrack(null)
-                }}
-                className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
-              >
-                <Heart className={`size-5 ${isLiked(actionSheetTrack.id) ? "fill-[var(--accent-purple)] text-[var(--accent-purple)]" : "text-[var(--accent-purple)]"}`} />
-                <span>{isLiked(actionSheetTrack.id) ? "Remover dos favoritos" : "Favoritar música"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({
-                      title: actionSheetTrack.title,
-                      text: `Ouvindo ${actionSheetTrack.title} de ${actionSheetTrack.artist} na Luci`,
-                      url: window.location.href,
-                    })
-                  }
-                  setActionSheetTrack(null)
-                }}
-                className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
-              >
-                <Share2 className="size-5 text-[var(--accent-purple)]" />
-                <span>Compartilhar no Chat da Luci</span>
+                <span>Ver Letra</span>
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* ─── MODAL ADICIONAR À PLAYLIST ─── */}
+      <AddToPlaylistModal
+        track={playlistModalTrack}
+        isOpen={!!playlistModalTrack}
+        onClose={() => setPlaylistModalTrack(null)}
+      />
     </div>
   )
 }
