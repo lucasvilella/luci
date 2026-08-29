@@ -44,10 +44,70 @@ const MOOD_PILLS = [
   { id: "acustico", label: "Acústico", icon: Coffee },
 ]
 
+const DEFAULT_HOME_FEED: MusicHomeFeed = {
+  greeting: "Boa tarde, Lucas",
+  mood_active: "all",
+  continue_listening: [
+    {
+      id: "MPREb_95vF8Xw4tC0",
+      type: "album",
+      title: "Top Hits Brasil",
+      subtitle: "Os maiores sucessos do momento",
+      cover_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300",
+    },
+    {
+      id: "liked_songs",
+      type: "playlist",
+      title: "Mais Queridas",
+      subtitle: "Suas músicas favoritas",
+      cover_url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300",
+    },
+  ],
+  daily_mixes: [
+    {
+      mix_id: 1,
+      title: "Daily Mix 1",
+      subtitle: "Sertanejo & Acústico",
+      gradient: "from-[#5c62ec] to-[#7c82ff]",
+      cover_url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300",
+      tracks: [],
+    },
+    {
+      mix_id: 2,
+      title: "Daily Mix 2",
+      subtitle: "Rock & Clássicos",
+      gradient: "from-[#3a3e98] to-[#5c62ec]",
+      cover_url: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300",
+      tracks: [],
+    },
+    {
+      mix_id: 3,
+      title: "Daily Mix 3",
+      subtitle: "Pop & Eletrônica",
+      gradient: "from-[#5c62ec] to-[#ffccf2]",
+      cover_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300",
+      tracks: [],
+    },
+  ],
+  favorite_artists: [
+    { id: "art1", name: "Jorge & Mateus", avatar: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200" },
+    { id: "art2", name: "Coldplay", avatar: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200" },
+    { id: "art3", name: "Alok", avatar: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200" },
+  ],
+  recommended_artists: [
+    { id: "rec1", name: "Imagine Dragons", avatar: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200", reason: "Porque você curte Coldplay" },
+    { id: "rec2", name: "Henrique & Juliano", avatar: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200", reason: "Porque você curte Jorge & Mateus" },
+  ],
+  trending_brasil: [
+    { id: "tb1", title: "Hino do Momento", artist: "Artista Top", duration: 195, thumbnail: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300" },
+    { id: "tb2", title: "Noite Estrelada", artist: "Luci Vibes", duration: 210, thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300" },
+  ],
+}
+
 export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
   const [activeMood, setActiveMood] = useState("all")
-  const [feed, setFeed] = useState<MusicHomeFeed | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [feed, setFeed] = useState<MusicHomeFeed>(DEFAULT_HOME_FEED)
+  const [loading, setLoading] = useState(false)
 
   // Modais de Ação
   const [actionSheetTrack, setActionSheetTrack] = useState<LuciTrack | null>(null)
@@ -60,14 +120,12 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
   // Carrega feed da Home conforme o mood ativo
   useEffect(() => {
     let isMounted = true
-    setLoading(true)
     fetchMusicHome(activeMood)
       .then((data) => {
-        if (isMounted) setFeed(data)
+        if (isMounted && data) setFeed(data)
       })
-      .catch((err) => console.error("[MusicHome] Erro ao carregar feed:", err))
-      .finally(() => {
-        if (isMounted) setLoading(false)
+      .catch((err) => {
+        console.warn("[MusicHome] Usando feed em cache/fallback local:", err)
       })
 
     return () => {
