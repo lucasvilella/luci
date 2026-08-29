@@ -161,7 +161,7 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
           </div>
         ) : feed ? (
           <>
-            {/* ─── 1. CONTINUAR OUVINDO (Álbuns e Playlists Recentes) ─── */}
+            {/* ─── 01 (IMEDIATO): CONTINUAR OUVINDO (Cards 160x160 - Apenas Álbuns e Playlists) ─── */}
             {feed.continue_listening && feed.continue_listening.length > 0 && (
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -170,7 +170,7 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
                   </h2>
                 </div>
 
-                <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1">
+                <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
                   {feed.continue_listening.map((item) => (
                     <div
                       key={`cont-${item.id}`}
@@ -181,7 +181,7 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
                           goToPlaylistDetail(item.id, item.title, item.cover_url)
                         }
                       }}
-                      className="w-36 shrink-0 space-y-2 cursor-pointer group active:scale-95 transition-all"
+                      className="w-40 shrink-0 space-y-2 cursor-pointer group active:scale-95 transition-all"
                     >
                       <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-zinc-900 shadow-md">
                         <img
@@ -207,28 +207,28 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
               </section>
             )}
 
-            {/* ─── 2. SEUS DAILY MIXES (5 Mixes Segmentados da Luci) ─── */}
+            {/* ─── 02 (PRINCIPAL): SEUS 5 DAILY MIXES (Cards 180x180 com --gradient-luci) ─── */}
             {feed.daily_mixes && feed.daily_mixes.length > 0 && (
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="size-4 text-[var(--accent-pink)]" />
                     <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                      Seus Daily Mixes
+                      Seus 5 Daily Mixes
                     </h2>
                   </div>
                   <span className="text-[10px] font-bold text-[var(--accent-pink)]">Atualizado hoje</span>
                 </div>
 
-                <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1">
+                <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
                   {feed.daily_mixes.map((mix) => (
                     <div
                       key={`mix-${mix.mix_id}`}
                       onClick={() => goToPlaylistDetail(`daily_mix_${mix.mix_id}`, mix.title, mix.cover_url)}
-                      className="w-40 shrink-0 space-y-2.5 cursor-pointer group active:scale-95 transition-all"
+                      className="w-44 shrink-0 space-y-2.5 cursor-pointer group active:scale-95 transition-all"
                     >
                       <div
-                        className="relative aspect-square w-full rounded-2xl overflow-hidden p-3 flex flex-col justify-between shadow-lg"
+                        className="relative aspect-square w-full rounded-2xl overflow-hidden p-3.5 flex flex-col justify-between shadow-xl"
                         style={{ background: mix.gradient }}
                       >
                         <div className="size-7 rounded-lg bg-black/30 backdrop-blur-md flex items-center justify-center text-[11px] font-black text-white">
@@ -249,11 +249,11 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
               </section>
             )}
 
-            {/* ─── 3. SEUS ARTISTAS FAVORITOS (Avatares Circulares) ─── */}
+            {/* ─── 03 (AFINIDADE): SEUS ARTISTAS FAVORITOS (Avatares 80x80) ─── */}
             {feed.favorite_artists && feed.favorite_artists.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                  Seus Artistas Favoritos
+                  Artistas Favoritos
                 </h2>
 
                 <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
@@ -263,7 +263,7 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
                       onClick={() => goToArtist(art.id || art.name)}
                       className="flex flex-col items-center gap-1.5 w-20 shrink-0 cursor-pointer active:scale-95 transition-all group"
                     >
-                      <div className="size-16 rounded-full p-[2px] bg-gradient-to-tr from-[#0033ff] to-[#977dff] shadow-md">
+                      <div className="size-18 rounded-full p-[2px] bg-gradient-to-tr from-[#0033ff] to-[#977dff] shadow-md">
                         <img
                           src={art.thumbnail || art.avatar || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200"}
                           alt={art.name}
@@ -279,13 +279,13 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
               </section>
             )}
 
-            {/* ─── 4. ARTISTAS RECOMENDADOS PELA LUCI (Pontes de Descoberta) ─── */}
+            {/* ─── 04 (DESCOBERTA): PONTES DA LUCI (Artistas com Badge Porque você ouve X) ─── */}
             {feed.recommended_artists && feed.recommended_artists.length > 0 && (
               <section className="space-y-3">
                 <div className="flex items-center gap-1.5">
                   <Sparkles className="size-4 text-[var(--accent-pink)]" />
                   <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                    Descobertas Recomendadas
+                    Pontes de Descoberta
                   </h2>
                 </div>
 
@@ -315,7 +315,118 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
               </section>
             )}
 
-            {/* ─── 5. EM ALTA NO BRASIL (Trending Top 50) ─── */}
+            {/* ─── 05 (CONTEXTUAL 1): RADAR DE ALTA ENERGIA & TREINO (BPM > 125) ─── */}
+            {feed.custom_workout && feed.custom_workout.tracks.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center gap-1.5">
+                  <Zap className="size-4 text-yellow-400" />
+                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                    {feed.custom_workout.title}
+                  </h2>
+                </div>
+
+                <div className="space-y-2">
+                  {feed.custom_workout.tracks.slice(0, 4).map((trk) => (
+                    <div
+                      key={`work-${trk.id}`}
+                      onClick={() => handlePlaySingle(trk, feed.custom_workout?.tracks || [])}
+                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-[#0033ff]/20 to-[#06003d] border border-[var(--border)] hover:border-[var(--accent-purple)]/40 cursor-pointer active:scale-[0.99] transition-all"
+                    >
+                      <TrackImage
+                        src={trk.thumbnail}
+                        trackId={trk.id}
+                        alt={trk.title}
+                        className="size-11 rounded-xl object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs font-black text-white truncate">{trk.title}</h4>
+                        <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate">{trk.artist}</p>
+                      </div>
+                      <div className="size-8 rounded-full bg-white/10 flex items-center justify-center text-white">
+                        <Play className="size-3.5 fill-white translate-x-0.5" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ─── 06 (CONTEXTUAL 2): SESSÃO FOCO & MADRUGADA (BPM 60-95) ─── */}
+            {feed.custom_focus && feed.custom_focus.tracks.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center gap-1.5">
+                  <Moon className="size-4 text-[var(--accent-purple)]" />
+                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                    {feed.custom_focus.title}
+                  </h2>
+                </div>
+
+                <div className="space-y-2">
+                  {feed.custom_focus.tracks.slice(0, 4).map((trk) => (
+                    <div
+                      key={`focus-${trk.id}`}
+                      onClick={() => handlePlaySingle(trk, feed.custom_focus?.tracks || [])}
+                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent-purple)]/40 cursor-pointer active:scale-[0.99] transition-all"
+                    >
+                      <TrackImage
+                        src={trk.thumbnail}
+                        trackId={trk.id}
+                        alt={trk.title}
+                        className="size-11 rounded-xl object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs font-black text-white truncate">{trk.title}</h4>
+                        <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate">{trk.artist}</p>
+                      </div>
+                      <div className="size-8 rounded-full bg-white/10 flex items-center justify-center text-white">
+                        <Play className="size-3.5 fill-white translate-x-0.5" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ─── 07 (MERCADO): LANÇAMENTOS RELEVANTES ─── */}
+            {feed.new_releases && feed.new_releases.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                  Lançamentos Relevantes
+                </h2>
+
+                <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1">
+                  {feed.new_releases.map((rel) => (
+                    <div
+                      key={`rel-${rel.id}`}
+                      onClick={() => handlePlaySingle(rel, feed.new_releases || [])}
+                      className="w-36 shrink-0 space-y-2 cursor-pointer group active:scale-95 transition-all"
+                    >
+                      <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-zinc-900 shadow-md">
+                        <TrackImage
+                          src={rel.thumbnail}
+                          trackId={rel.id}
+                          alt={rel.title}
+                          className="size-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[9px] font-black text-[var(--accent-pink)] border border-white/10">
+                          Novo
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-white truncate group-hover:text-[var(--accent-pink)]">
+                          {rel.title}
+                        </h4>
+                        <p className="text-[10px] font-semibold text-[var(--text-secondary)] truncate">
+                          {rel.artist}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ─── 08 (GLOBAL): EM ALTA NO BRASIL (Charts Top 50) ─── */}
             {feed.trending_brasil && feed.trending_brasil.length > 0 && (
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -372,117 +483,6 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
                       </div>
                     )
                   })}
-                </div>
-              </section>
-            )}
-
-            {/* ─── 6. LANÇAMENTOS RELEVANTES (Novidades) ─── */}
-            {feed.new_releases && feed.new_releases.length > 0 && (
-              <section className="space-y-3">
-                <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                  Lançamentos Recentes
-                </h2>
-
-                <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1">
-                  {feed.new_releases.map((rel) => (
-                    <div
-                      key={`rel-${rel.id}`}
-                      onClick={() => handlePlaySingle(rel, feed.new_releases || [])}
-                      className="w-36 shrink-0 space-y-2 cursor-pointer group active:scale-95 transition-all"
-                    >
-                      <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-zinc-900 shadow-md">
-                        <TrackImage
-                          src={rel.thumbnail}
-                          trackId={rel.id}
-                          alt={rel.title}
-                          className="size-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[9px] font-black text-[var(--accent-pink)] border border-white/10">
-                          Novo
-                        </span>
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-black text-white truncate group-hover:text-[var(--accent-pink)]">
-                          {rel.title}
-                        </h4>
-                        <p className="text-[10px] font-semibold text-[var(--text-secondary)] truncate">
-                          {rel.artist}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* ─── 7. RADAR DE ALTA ENERGIA & TREINO ─── */}
-            {feed.custom_workout && feed.custom_workout.tracks.length > 0 && (
-              <section className="space-y-3">
-                <div className="flex items-center gap-1.5">
-                  <Zap className="size-4 text-yellow-400" />
-                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                    {feed.custom_workout.title}
-                  </h2>
-                </div>
-
-                <div className="space-y-2">
-                  {feed.custom_workout.tracks.slice(0, 4).map((trk) => (
-                    <div
-                      key={`work-${trk.id}`}
-                      onClick={() => handlePlaySingle(trk, feed.custom_workout?.tracks || [])}
-                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-gradient-to-r from-[#0033ff]/20 to-[#06003d] border border-[var(--border)] hover:border-[var(--accent-purple)]/40 cursor-pointer active:scale-[0.99] transition-all"
-                    >
-                      <TrackImage
-                        src={trk.thumbnail}
-                        trackId={trk.id}
-                        alt={trk.title}
-                        className="size-11 rounded-xl object-cover"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-xs font-black text-white truncate">{trk.title}</h4>
-                        <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate">{trk.artist}</p>
-                      </div>
-                      <div className="size-8 rounded-full bg-white/10 flex items-center justify-center text-white">
-                        <Play className="size-3.5 fill-white translate-x-0.5" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* ─── 8. SESSÃO FOCO & DESCOMPRESSÃO ─── */}
-            {feed.custom_focus && feed.custom_focus.tracks.length > 0 && (
-              <section className="space-y-3">
-                <div className="flex items-center gap-1.5">
-                  <Moon className="size-4 text-[var(--accent-purple)]" />
-                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                    {feed.custom_focus.title}
-                  </h2>
-                </div>
-
-                <div className="space-y-2">
-                  {feed.custom_focus.tracks.slice(0, 4).map((trk) => (
-                    <div
-                      key={`focus-${trk.id}`}
-                      onClick={() => handlePlaySingle(trk, feed.custom_focus?.tracks || [])}
-                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent-purple)]/40 cursor-pointer active:scale-[0.99] transition-all"
-                    >
-                      <TrackImage
-                        src={trk.thumbnail}
-                        trackId={trk.id}
-                        alt={trk.title}
-                        className="size-11 rounded-xl object-cover"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-xs font-black text-white truncate">{trk.title}</h4>
-                        <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate">{trk.artist}</p>
-                      </div>
-                      <div className="size-8 rounded-full bg-white/10 flex items-center justify-center text-white">
-                        <Play className="size-3.5 fill-white translate-x-0.5" />
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </section>
             )}
