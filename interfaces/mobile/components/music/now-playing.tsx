@@ -246,37 +246,32 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
       ref={containerRef}
       className="relative flex h-full flex-col overflow-y-auto bg-[var(--bg-app)] text-[var(--text-primary)] select-none pb-20 no-scrollbar"
     >
-      {/* ─── CAMADA 0 & 1: Dynamic Background Apple Music Mesh Glow ─── */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Glow Blobs Mesh Dinâmicos */}
-        <div className="absolute -top-24 -left-24 size-[420px] rounded-full bg-[#0033ff] opacity-40 blur-[100px] animate-liquid-glow" />
-        <div className="absolute top-1/3 -right-20 size-[380px] rounded-full bg-[#977dff] opacity-35 blur-[90px] animate-liquid-glow [animation-delay:-4s]" />
-        <div className="absolute -bottom-20 left-1/4 size-[440px] rounded-full bg-[#06003d] opacity-90 blur-[110px]" />
-        <div className="absolute top-1/2 left-1/3 size-[280px] rounded-full bg-[#ffccf2] opacity-15 blur-[80px] animate-liquid-glow [animation-delay:-8s]" />
-
-        {/* Overlay Escuro com Gradiente de Proteção de Contraste */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#00001f]/40 via-[#00001f]/75 to-[#00001f]/95" />
+      {/* ─── Fundo Limpo Soft-UI ─── */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[var(--bg-app)]">
+        {/* Glow Ambiente Sutil */}
+        <div className="absolute -top-32 -left-20 size-[360px] rounded-full bg-[var(--accent-primary)] opacity-10 blur-[120px]" />
+        <div className="absolute -bottom-32 -right-20 size-[360px] rounded-full bg-[var(--accent-surface)] opacity-20 blur-[120px]" />
       </div>
 
-      {/* ─── CONTEÚDO PRINCIPAL (Z-INDEX 10) ─── */}
-      <div className="relative z-10 flex min-h-full flex-col justify-between p-6">
+      {/* ─── CONTEÚDO PRINCIPAL ─── */}
+      <div className="relative z-10 flex min-h-full flex-col justify-between px-6 py-8">
         {/* ─── A. Header do Player ─── */}
-        <header className="flex items-center justify-between pt-2">
+        <header className="flex items-center justify-between">
           <button
             type="button"
             onClick={pop}
             aria-label="Recolher Player"
-            className="size-10 flex items-center justify-center rounded-full bg-[var(--bg-surface-glass)] backdrop-blur-xl border border-[var(--border)] text-[var(--text-primary)] hover:text-white active:scale-90 transition-all shadow-md"
+            className="size-10 flex items-center justify-center rounded-full bg-[var(--bg-surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] active:scale-90 transition-all shadow-sm"
           >
             <ChevronDown className="size-6" />
           </button>
 
           <div className="flex flex-col items-center text-center max-w-[65%]">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)]">
+            <span className="text-[11px] uppercase tracking-widest text-[var(--text-secondary)] font-semibold">
               Tocando Agora
             </span>
-            <span className="text-xs font-bold text-[var(--text-primary)] truncate">
-              {currentTrack.album || "Luci Stream"}
+            <span className="text-xs font-medium text-[var(--text-primary)] truncate">
+              {currentTrack.album || "Luci Music"}
             </span>
           </div>
 
@@ -284,15 +279,15 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
             type="button"
             onClick={() => setShowActionSheet(true)}
             aria-label="Opções"
-            className="size-10 flex items-center justify-center rounded-full bg-[var(--bg-surface-glass)] backdrop-blur-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-white active:scale-90 transition-all shadow-md"
+            className="size-10 flex items-center justify-center rounded-full bg-[var(--bg-surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] active:scale-90 transition-all shadow-sm"
           >
             <MoreVertical className="size-5" />
           </button>
         </header>
 
-        {/* ─── B. Carrossel Central de Mídia (Capa 1:1 vs. Vídeo Stream) ─── */}
+        {/* ─── B. Hero Cover (Card 1:1 com cantos 28px e sombra difusa) ─── */}
         <div className="my-auto py-6 flex flex-col items-center">
-          <div className="relative w-full max-w-[340px] aspect-square rounded-3xl overflow-hidden shadow-[0_24px_50px_rgba(0,0,0,0.85)] border border-white/10 bg-zinc-950 group">
+          <div className="relative w-full max-w-[320px] aspect-square rounded-[28px] overflow-hidden shadow-[var(--shadow-card)] border border-[var(--border-subtle)] bg-[var(--bg-surface-2)] group">
             {isVideoMode ? (
               <div className="size-full flex flex-col items-center justify-center bg-black relative">
                 <iframe
@@ -304,7 +299,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
                 <button
                   type="button"
                   onClick={() => setIsVideoMode(false)}
-                  className="absolute top-3 right-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md text-[10px] font-black text-white border border-white/20"
+                  className="absolute top-3 right-3 px-3 py-1 rounded-full bg-[var(--bg-surface-1)]/90 backdrop-blur-md text-[10px] font-bold text-[var(--text-primary)] border border-[var(--border-subtle)]"
                 >
                   Modo Áudio
                 </button>
@@ -314,45 +309,33 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
                 <img
                   src={currentTrack.thumbnail || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600"}
                   alt={currentTrack.title}
-                  className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="size-full object-cover transition-transform duration-500 group-hover:scale-102"
                 />
 
                 {/* Badge de Alternância para Vídeo */}
                 <button
                   type="button"
                   onClick={() => setIsVideoMode(true)}
-                  className="absolute top-3 right-3 flex items-center gap-1 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[10px] font-black text-[var(--accent-pink)] hover:bg-black/80 active:scale-95 transition-all"
+                  className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--bg-surface-1)]/80 backdrop-blur-md border border-[var(--border-subtle)] text-[10px] font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-surface-1)] active:scale-95 transition-all shadow-sm"
                 >
-                  <Video className="size-3" />
+                  <Video className="size-3 text-[var(--accent-primary)]" />
                   <span>Ver Clipe</span>
                 </button>
-
-                {/* Indicador de Letras Sincronizadas Disponíveis */}
-                {lyrics?.has_synced && (
-                  <button
-                    type="button"
-                    onClick={handleScrollToLyrics}
-                    className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-surface-glass)] backdrop-blur-md border border-[var(--accent-purple)]/40 text-[10px] font-black text-[var(--accent-pink)] shadow-md"
-                  >
-                    <Mic2 className="size-3 text-[var(--accent-pink)] animate-pulse" />
-                    <span>Letra Sincronizada</span>
-                  </button>
-                )}
               </>
             )}
           </div>
         </div>
 
         {/* ─── C. Informações da Faixa & Like ─── */}
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0 flex-1 space-y-0.5">
-              <h1 className="text-xl sm:text-2xl font-black text-white truncate leading-tight drop-shadow-md">
+              <h1 className="text-2xl font-bold text-[var(--text-primary)] truncate leading-tight">
                 {currentTrack.title}
               </h1>
               <p
                 onClick={() => goToArtist(currentTrack.artistId || currentTrack.artist)}
-                className="text-sm font-bold text-[var(--accent-purple)] hover:text-white truncate cursor-pointer transition-colors"
+                className="text-sm font-normal text-[var(--text-secondary)] hover:text-[var(--text-primary)] truncate cursor-pointer transition-colors"
               >
                 {currentTrack.artist}
               </p>
@@ -363,60 +346,59 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
                 type="button"
                 onClick={() => setShowAddToPlaylistModal(true)}
                 aria-label="Adicionar à Playlist"
-                className="p-2 text-[var(--text-secondary)] hover:text-white active:scale-90 transition-transform"
+                className="p-2.5 rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] active:scale-90 transition-transform"
               >
-                <Plus className="size-6 text-white/80" />
+                <Plus className="size-5" />
               </button>
 
               <button
                 type="button"
                 onClick={() => toggleLike(currentTrack)}
                 aria-label="Favoritar"
-                className="p-2 text-[var(--text-secondary)] hover:text-white active:scale-90 transition-transform"
+                className={`p-2.5 rounded-full transition-transform active:scale-90 ${
+                  liked ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                }`}
               >
                 <Heart
-                  className={`size-6 transition-colors ${
-                    liked ? "fill-[var(--accent-purple)] text-[var(--accent-purple)] drop-shadow-[0_0_12px_rgba(151,125,255,0.6)]" : "text-white/70"
-                  }`}
+                  className="size-6 transition-colors"
+                  fill={liked ? "currentColor" : "none"}
                 />
               </button>
             </div>
           </div>
 
-          {/* ─── D. Barra de Progresso (Seek Bar) ─── */}
-          <div className="space-y-1.5">
-            <div className="relative flex items-center group">
-              <input
-                type="range"
-                min={0}
-                max={totalSec}
-                value={currentSec}
-                onChange={handleSeekChange}
-                onMouseDown={handleSeekStart}
-                onTouchStart={handleSeekStart}
-                onMouseUp={handleSeekEnd}
-                onTouchEnd={handleSeekEnd}
-                className="w-full h-1.5 rounded-full appearance-none bg-white/20 accent-[var(--accent-blue)] cursor-pointer focus:outline-none"
-                style={{
-                  background: `linear-gradient(to right, #0033ff 0%, #977dff ${progressPercent}%, rgba(242, 230, 238, 0.25) ${progressPercent}%)`,
-                }}
-              />
+          {/* ─── D. Barra de Progresso (Seek Bar Soft UI) ─── */}
+          <div className="space-y-2">
+            <div
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect()
+                const clickPos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+                seek(clickPos * totalSec)
+              }}
+              className="relative w-full h-1.5 bg-[var(--bg-surface-2)] rounded-full cursor-pointer overflow-visible"
+            >
+              <div
+                className="h-full bg-[var(--accent-primary)] rounded-full relative"
+                style={{ width: `${progressPercent}%` }}
+              >
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md pointer-events-none" />
+              </div>
             </div>
-            <div className="flex items-center justify-between text-[11px] font-bold text-[var(--text-muted)]">
+            <div className="flex justify-between text-xs text-[var(--text-muted)] font-medium">
               <span>{formatTime(currentSec)}</span>
               <span>{formatTime(totalSec)}</span>
             </div>
           </div>
 
           {/* ─── E. Controles Principais de Reprodução ─── */}
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center justify-between px-2 pt-1">
             {/* Shuffle */}
             <button
               type="button"
               onClick={toggleShuffle}
               aria-label="Aleatório"
               className={`p-2 transition-all active:scale-90 ${
-                shuffle ? "text-[var(--accent-pink)] drop-shadow-[0_0_8px_rgba(255,204,242,0.8)]" : "text-[var(--text-muted)] hover:text-white"
+                shuffle ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               }`}
             >
               <Shuffle className="size-5" />
@@ -427,24 +409,24 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
               type="button"
               onClick={handlePrevButton}
               aria-label="Anterior"
-              className="p-2 text-[var(--text-primary)] hover:text-white active:scale-90 transition-transform"
+              className="p-2 text-[var(--text-primary)] active:scale-95 transition-transform"
             >
-              <SkipBack className="size-7 fill-current" />
+              <SkipBack className="size-6.5 fill-current" />
             </button>
 
-            {/* Play / Pause Principal */}
+            {/* Play / Pause Principal (64x64 Solid Accent) */}
             <button
               type="button"
               onClick={togglePlay}
               aria-label={isPlaying ? "Pausar" : "Reproduzir"}
-              className="size-16 rounded-full bg-white text-black flex items-center justify-center shadow-[0_8px_25px_rgba(255,255,255,0.3)] active:scale-90 transition-transform"
+              className="size-16 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center shadow-[0_8px_24px_var(--accent-glow)] active:scale-95 transition-transform"
             >
               {isLoading ? (
-                <Loader2 className="size-7 animate-spin text-black" />
+                <Loader2 className="size-7 animate-spin text-white" />
               ) : isPlaying ? (
-                <Pause className="size-7 fill-black text-black" />
+                <Pause className="size-7 fill-white text-white" />
               ) : (
-                <Play className="size-7 fill-black text-black translate-x-0.5" />
+                <Play className="size-7 fill-white text-white translate-x-0.5" />
               )}
             </button>
 
@@ -453,9 +435,9 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
               type="button"
               onClick={next}
               aria-label="Próximo"
-              className="p-2 text-[var(--text-primary)] hover:text-white active:scale-90 transition-transform"
+              className="p-2 text-[var(--text-primary)] active:scale-95 transition-transform"
             >
-              <SkipForward className="size-7 fill-current" />
+              <SkipForward className="size-6.5 fill-current" />
             </button>
 
             {/* Repeat */}
@@ -464,52 +446,39 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
               onClick={toggleRepeat}
               aria-label="Repetir"
               className={`p-2 transition-all active:scale-90 ${
-                repeat !== "off" ? "text-[var(--accent-pink)] drop-shadow-[0_0_8px_rgba(255,204,242,0.8)]" : "text-[var(--text-muted)] hover:text-white"
+                repeat !== "off" ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               }`}
             >
               {repeat === "one" ? <Repeat1 className="size-5" /> : <Repeat className="size-5" />}
             </button>
           </div>
 
-          {/* ─── F. Barra de Ferramentas Secundária ─── */}
-          <div className="flex items-center justify-around pt-4 border-t border-white/10 text-[var(--text-secondary)]">
-            {/* Info / Créditos */}
+          {/* ─── F. Ação de Letra & Ferramentas ─── */}
+          <div className="flex items-center justify-between pt-4 border-t border-[var(--border-subtle)] text-[var(--text-secondary)]">
             <button
               type="button"
               onClick={() => setShowInfoModal(true)}
-              className="flex flex-col items-center gap-1 text-[10.5px] font-bold hover:text-white active:scale-90 transition-all"
+              className="flex items-center gap-1.5 text-xs font-medium hover:text-[var(--text-primary)] active:scale-95 transition-all"
             >
-              <Info className="size-4.5" />
+              <Info className="size-4" />
               <span>Info</span>
             </button>
 
-            {/* Prompt Cognitivo Luci */}
-            <button
-              type="button"
-              onClick={() => setShowPromptModal(true)}
-              className="flex flex-col items-center gap-1 text-[10.5px] font-bold text-[var(--accent-pink)] hover:text-white active:scale-90 transition-all"
-            >
-              <Sparkles className="size-4.5 animate-pulse" />
-              <span>Pedir à Luci</span>
-            </button>
-
-            {/* Letras */}
             <button
               type="button"
               onClick={handleScrollToLyrics}
-              className="flex flex-col items-center gap-1 text-[10.5px] font-bold hover:text-white active:scale-90 transition-all"
+              className="flex items-center gap-1.5 text-xs font-semibold text-[var(--accent-primary)] hover:underline active:scale-95 transition-all"
             >
-              <Mic2 className="size-4.5" />
-              <span>Letras</span>
+              <Mic2 className="size-4" />
+              <span>Exibir Letra</span>
             </button>
 
-            {/* Fila / Up Next */}
             <button
               type="button"
               onClick={() => setShowQueueModal(true)}
-              className="flex flex-col items-center gap-1 text-[10.5px] font-bold hover:text-white active:scale-90 transition-all"
+              className="flex items-center gap-1.5 text-xs font-medium hover:text-[var(--text-primary)] active:scale-95 transition-all"
             >
-              <ListMusic className="size-4.5" />
+              <ListMusic className="size-4" />
               <span>Fila ({queue.length})</span>
             </button>
           </div>
