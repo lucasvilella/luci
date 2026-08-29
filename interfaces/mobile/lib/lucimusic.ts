@@ -453,8 +453,38 @@ export async function createPlaylist(
 export async function addTrackToPlaylist(playlistId: string, track: LuciTrack): Promise<void> {
   await luciApiFetch(`/api/v1/music/playlists/${encodeURIComponent(playlistId)}/tracks`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(track)
   })
+}
+
+export async function createPlaylistWithTrack(title: string, track: LuciTrack, description = ""): Promise<UserPlaylist> {
+  const res = await luciApiFetch("/api/v1/music/playlist/create-with-track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title,
+      description,
+      initial_track: track
+    })
+  })
+  if (!res.ok) throw new Error("Erro ao criar playlist")
+  return res.json()
+}
+
+export async function syncQueueReorder(currentTrackId: string, orderedTrackIds: string[]): Promise<void> {
+  try {
+    await luciApiFetch("/api/v1/music/queue/reorder", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        current_track_id: currentTrackId,
+        ordered_track_ids: orderedTrackIds
+      })
+    })
+  } catch {
+    // Falha silenciosa
+  }
 }
 
 export interface AlbumDetails {

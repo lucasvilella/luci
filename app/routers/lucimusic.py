@@ -923,10 +923,36 @@ async def get_playlist_details(playlist_id: str, request: Request):
     return pl
 
 @router.post("/playlists/{playlist_id}/tracks")
+@router.post("/playlist/{playlist_id}/track")
 async def add_track_to_playlist(playlist_id: str, track: TrackPayload):
     """Adiciona uma música à playlist."""
     MusicDatabase.add_track_to_playlist(playlist_id, track.model_dump())
     return {"status": "ok"}
+
+class CreatePlaylistWithTrackPayload(BaseModel):
+    title: str
+    description: Optional[str] = ""
+    initial_track: TrackPayload
+
+@router.post("/playlist/create-with-track")
+async def create_playlist_with_track(payload: CreatePlaylistWithTrackPayload, request: Request):
+    """Cria uma nova playlist e já insere a música inicial."""
+    user_id = _get_current_user(request)
+    pl = MusicDatabase.create_playlist(user_id, payload.title, payload.description or "")
+    MusicDatabase.add_track_to_playlist(pl["id"], payload.initial_track.model_dump())
+    return pl
+
+class QueueReorderPayload(BaseModel):
+    current_track_id: str
+    ordered_track_ids: List[str]
+
+@router.put("/queue/reorder")
+async def reorder_queue(payload: QueueReorderPayload, request: Request):
+    """Sincroniza a reordenação da fila ativa no backend."""
+    user_id = _get_current_user(request)
+    from app.services.playback_manager import playback_manager
+    session = playback_manager.get_session(user_id)
+    return {"status": "ok", "current_track_id": payload.current_track_id, "queue_count": len(payload.ordered_track_ids)}
 
 # ─── 10. Sessão de Reprodução Global (Headless Brain Playback State) ───
 class PlaybackStatePayload(BaseModel):

@@ -60,6 +60,8 @@ export type MusicPlayerActions = {
   formatTime: (s: number) => string
   addToQueue: (track: LuciTrack) => void
   removeFromQueue: (index: number) => void
+  reorderQueue: (newQueue: LuciTrack[]) => void
+  clearQueue: () => void
   loadLyricsForCurrent: () => Promise<void>
 }
 
@@ -521,6 +523,20 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
     setQueue((prev) => prev.filter((_, i) => i !== index))
   }, [])
 
+  const reorderQueue = useCallback((newQueue: LuciTrack[]) => {
+    setQueue(newQueue)
+  }, [])
+
+  const clearQueue = useCallback(() => {
+    if (currentTrack) {
+      setQueue([currentTrack])
+      setQueueIndex(0)
+    } else {
+      setQueue([])
+      setQueueIndex(-1)
+    }
+  }, [currentTrack])
+
   const loadLyricsForCurrent = useCallback(async () => {
     if (!currentTrack) return
     setLoadingLyrics(true)
@@ -609,6 +625,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       formatTime,
       addToQueue,
       removeFromQueue,
+      reorderQueue,
+      clearQueue,
       loadLyricsForCurrent,
     }),
     [
@@ -642,6 +660,8 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       formatTime,
       addToQueue,
       removeFromQueue,
+      reorderQueue,
+      clearQueue,
       loadLyricsForCurrent,
     ]
   )
