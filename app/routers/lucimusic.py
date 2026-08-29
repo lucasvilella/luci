@@ -791,17 +791,120 @@ async def get_liked_songs(request: Request, limit: int = Query(100, le=200)):
     liked = MusicDatabase.get_liked_songs(user_id, limit=limit)
     return {"liked_songs": liked}
 
-# ─── 9. Playlists do Usuário ───
+# ─── 9. Playlists do Usuário & Resumo da Biblioteca ───
+@router.get("/library")
+async def get_library_summary(
+    filter: Optional[str] = Query("all", description="Filtro: all, playlists, tracks, albums, artists, downloads"),
+    view: Optional[str] = Query("list", description="Visão: list ou grid"),
+    request: Request = None
+):
+    """Retorna o resumo completo da biblioteca do usuário com curtidas, playlists, artistas seguidos e álbuns."""
+    user_id = _get_current_user(request) if request else "lucas"
+
+    liked_songs = MusicDatabase.get_liked_songs(user_id, limit=50)
+    playlists = MusicDatabase.get_playlists(user_id)
+    saved_playlists = MusicDatabase.get_saved_playlists(user_id, limit=50)
+    artists = MusicDatabase.get_followed_artists(user_id, limit=50)
+    albums = MusicDatabase.get_saved_albums(user_id, limit=50)
+
+    # Mescla playlists locais e playlists salvas
+    all_playlists = list(playlists)
+    for sp in saved_playlists:
+        if not any(p["id"] == sp["id"] for p in all_playlists):
+            all_playlists.append({
+                "id": sp["id"],
+                "title": sp["title"],
+                "author": sp.get("artist") or "YouTube Music",
+                "count": 0,
+                "thumbnail": sp.get("cover_url")
+            })
+
+    liked_summary = {
+        "total_tracks": len(liked_songs),
+        "preview_tracks": [
+            {
+                "id": t["id"],
+                "title": t["title"],
+                "artist": t["artist"],
+                "cover": t.get("thumbnail") or ""
+            }
+            for t in liked_songs[:3]
+        ]
+    }
+
+    formatted_artists = [
+        {
+            "id": a["id"],
+            "name": a["name"],
+            "avatar": a.get("thumbnail") or "",
+            "is_followed": True
+        }
+        for a in artists
+    ]
+
+    formatted_albums = [
+        {
+            "id": alb["id"],
+            "title": alb["title"],
+            "artist": alb.get("artist") or "Artista",
+            "cover": alb.get("cover_url") or ""
+        }
+        for alb in albums
+    ]
+
+    return {
+        "liked_summary": liked_summary,
+        "tracks": liked_songs,
+        "playlists": all_playlists,
+        "artists": formatted_artists,
+        "albums": formatted_albums,
+        "downloads": []
+    }
+
 class CreatePlaylistPayload(BaseModel):
     title: str
     description: Optional[str] = ""
+    is_smart_ai: Optional[bool] = False
+    prompt: Optional[str] = ""
 
+@router.post("/library/playlist")
 @router.post("/playlists")
 async def create_playlist(payload: CreatePlaylistPayload, request: Request):
-    """Cria uma nova playlist para o usuário."""
+    """Cria uma nova playlist (manual ou gerada com IA pela Luci)."""
     user_id = _get_current_user(request)
-    pl = MusicDatabase.create_playlist(user_id, payload.title, payload.description or "")
+    pl = MusicDatabase.create_playlist(
+        user_id=user_id,
+        title=payload.title,
+        description=payload.description or "",
+        is_smart_ai=bool(payload.is_smart_ai)
+    )
+
+    # Se for Smart AI, busca faixas coerentes com o prompt da Luci
+    if payload.is_smart_ai and payload.prompt:
+        try:
+            ai_tracks_res = await lucimusic_service.search(payload.prompt, filter_type="songs", limit=15)
+            for t in ai_tracks_res.get("songs", []):
+                MusicDatabase.add_track_to_playlist(pl["id"], t)
+        except Exception:
+            pass
+
     return pl
+
+class TrackLikePayload(BaseModel):
+    liked: bool = True
+
+@router.post("/track/{track_id}/like")
+async def toggle_track_like_by_id(track_id: str, payload: TrackLikePayload, request: Request):
+    """Alterna curtida de faixa diretamente pelo ID."""
+    user_id = _get_current_user(request)
+    track_meta = await lucimusic_service.get_stream_url(track_id)
+    is_liked = MusicDatabase.toggle_like(user_id, {
+        "id": track_id,
+        "title": track_meta.get("title") or "Música",
+        "artist": track_meta.get("artist") or "Artista",
+        "thumbnail": track_meta.get("thumbnail") or ""
+    })
+    return {"status": "ok", "liked": is_liked}
 
 @router.get("/playlists")
 async def list_playlists(request: Request):

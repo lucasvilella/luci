@@ -394,10 +394,57 @@ export async function fetchDynamicGenres(): Promise<Array<{ name: string; color:
   }
 }
 
-export async function createPlaylist(title: string, description = ""): Promise<UserPlaylist> {
-  const res = await luciApiFetch("/api/v1/music/playlists", {
+export interface LibrarySummary {
+  liked_summary: {
+    total_tracks: number
+    preview_tracks: Array<{
+      id: string
+      title: string
+      artist: string
+      cover: string
+    }>
+  }
+  tracks: LuciTrack[]
+  playlists: Array<{
+    id: string
+    title: string
+    author?: string
+    count?: number
+    track_count?: number
+    thumbnail?: string
+  }>
+  artists: Array<{
+    id: string
+    name: string
+    avatar: string
+    is_followed: boolean
+  }>
+  albums: Array<{
+    id: string
+    title: string
+    artist: string
+    cover: string
+  }>
+  downloads: LuciTrack[]
+}
+
+export async function fetchLibrarySummary(filter = "all", view = "list"): Promise<LibrarySummary> {
+  const params = new URLSearchParams({ filter, view })
+  const res = await luciApiFetch(`/api/v1/music/library?${params.toString()}`)
+  if (!res.ok) throw new Error("Falha ao carregar biblioteca")
+  return res.json()
+}
+
+export async function createPlaylist(
+  title: string,
+  description = "",
+  isSmartAi = false,
+  prompt = ""
+): Promise<UserPlaylist> {
+  const res = await luciApiFetch("/api/v1/music/library/playlist", {
     method: "POST",
-    body: JSON.stringify({ title, description })
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, description, is_smart_ai: isSmartAi, prompt })
   })
   if (!res.ok) throw new Error("Erro ao criar playlist")
   return res.json()

@@ -884,3 +884,59 @@ class MusicDatabase:
         row = cursor.fetchone()
         conn.close()
         return bool(row)
+
+    @staticmethod
+    def get_saved_albums(user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Retorna todos os álbuns favoritados pelo usuário."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_favorite_collections (
+            user_id TEXT NOT NULL,
+            collection_id TEXT NOT NULL,
+            collection_type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            artist TEXT DEFAULT '',
+            cover_url TEXT DEFAULT '',
+            saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, collection_id)
+        )
+        """)
+        cursor.execute("""
+        SELECT collection_id as id, title, artist, cover_url, saved_at
+        FROM user_favorite_collections
+        WHERE user_id = ? AND collection_type = 'album'
+        ORDER BY saved_at DESC
+        LIMIT ?
+        """, (user_id, limit))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    @staticmethod
+    def get_saved_playlists(user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Retorna todas as playlists favoritadas pelo usuário."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_favorite_collections (
+            user_id TEXT NOT NULL,
+            collection_id TEXT NOT NULL,
+            collection_type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            artist TEXT DEFAULT '',
+            cover_url TEXT DEFAULT '',
+            saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, collection_id)
+        )
+        """)
+        cursor.execute("""
+        SELECT collection_id as id, title, artist, cover_url, saved_at
+        FROM user_favorite_collections
+        WHERE user_id = ? AND collection_type = 'playlist'
+        ORDER BY saved_at DESC
+        LIMIT ?
+        """, (user_id, limit))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
