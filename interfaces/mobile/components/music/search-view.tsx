@@ -194,8 +194,8 @@ export function SearchView() {
 
   return (
     <div className="relative flex h-full flex-col bg-[var(--bg-app)] text-[var(--text-primary)] select-none overflow-y-auto pb-32">
-      {/* ─── A. Barra de Busca Inteligente (Sticky Top Bar) ─── */}
-      <header className="sticky top-0 z-20 px-5 pt-4 pb-3 bg-[var(--bg-surface-glass)] backdrop-blur-xl border-b border-[var(--border)]">
+      {/* ─── A. Barra de Busca Inteligente (Sticky Top Bar Soft UI) ─── */}
+      <header className="sticky top-0 z-20 px-5 pt-6 pb-3 bg-[var(--bg-deck)] backdrop-blur-xl border-b border-[var(--border-subtle)]">
         <form
           onSubmit={(e) => {
             e.preventDefault()
@@ -203,75 +203,48 @@ export function SearchView() {
           }}
           className="relative flex items-center w-full"
         >
-          {/* Ícone Lupa Esquerdo */}
-          <Search className="absolute left-4 size-4.5 text-[var(--text-secondary)] pointer-events-none" />
-
-          {/* Input de Texto */}
-          <input
-            ref={inputRef}
-            type="search"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              if (hasSearched) setHasSearched(false)
-            }}
-            onFocus={() => setIsFocused(true)}
-            placeholder="Artistas, músicas, humores ou peça à Luci..."
-            className="w-full h-12 pl-11 pr-12 rounded-full bg-[var(--bg-surface)] border border-[var(--border)] text-sm font-semibold text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-secondary)] focus:ring-2 focus:ring-[var(--accent-secondary)]/20 transition-all"
-          />
-
-          {/* Ícone Direito Dinâmico (Limpar ou Orb/Mic) */}
-          {query ? (
-            <button
-              type="button"
-              onClick={handleClearQuery}
-              aria-label="Limpar texto"
-              className="absolute right-3.5 size-7 flex items-center justify-center rounded-full bg-white/10 text-[var(--text-secondary)] hover:text-white active:scale-90 transition-all"
-            >
-              <X className="size-4" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              aria-label="Identificar Som ou Falar"
-              className="absolute right-3.5 size-7 flex items-center justify-center rounded-full bg-gradient-to-tr from-[#0033ff] to-[#977dff] text-white shadow-md active:scale-90 transition-all"
-            >
-              <Mic className="size-3.5" />
-            </button>
-          )}
+          <div className="flex items-center w-full h-13 bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] rounded-2xl px-4 shadow-[var(--shadow-card)]">
+            <Search className="text-[var(--text-muted)] mr-3 shrink-0" size={20} />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                if (hasSearched) setHasSearched(false)
+              }}
+              onFocus={() => setIsFocused(true)}
+              placeholder="Artistas, músicas, álbuns..."
+              className="w-full bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm font-medium focus:outline-none"
+            />
+            {query.length > 0 ? (
+              <button
+                type="button"
+                onClick={handleClearQuery}
+                className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                <X size={18} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="p-1.5 rounded-full bg-[var(--accent-surface)] text-[var(--accent-primary)]"
+              >
+                <Mic size={16} />
+              </button>
+            )}
+          </div>
         </form>
       </header>
 
       {/* ─── ESTADO 1: INICIAL / DESCOBERTA (Input Vazio) ─── */}
       {isInitialState && (
         <div className="space-y-6 px-5 pt-4">
-          {/* Banner Cognitivo: Reconhecer Som / Identificar com o Orb */}
-          <div
-            onClick={() => executeSearch("Top Brasil Reconhecimento Inteligente")}
-            className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-r from-[#0033ff] via-[#977dff] to-[#ffccf2] text-white shadow-lg shadow-[#0033ff]/20 cursor-pointer active:scale-[0.99] transition-transform flex items-center justify-between"
-          >
-            <div className="space-y-1 z-10 max-w-[70%]">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/25 text-[10px] font-black uppercase tracking-wider text-white backdrop-blur-md">
-                <Sparkles className="size-3 text-[var(--accent-pink)]" />
-                Luci Cognitiva
-              </span>
-              <h3 className="text-sm font-black text-white leading-tight">
-                Ouvir Som / Cantarolar
-              </h3>
-              <p className="text-[11px] text-white/80 font-medium leading-tight">
-                Identifique músicas no ambiente ou busque por vibe
-              </p>
-            </div>
-            <div className="size-11 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner">
-              <Radio className="size-5 text-white animate-pulse" />
-            </div>
-          </div>
-
           {/* Histórico Recente */}
           {historyItems.length > 0 && (
             <section className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                   Buscas Recentes
                 </h2>
                 <button
@@ -279,7 +252,7 @@ export function SearchView() {
                   onClick={() => {
                     clearSearchHistory().then(() => setHistoryItems([]))
                   }}
-                  className="flex items-center gap-1 text-[11px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                  className="flex items-center gap-1 text-[11px] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   <Trash2 className="size-3.5" />
                   <span>Limpar</span>
@@ -291,11 +264,11 @@ export function SearchView() {
                   <div
                     key={`hist-${item.id}`}
                     onClick={() => executeSearch(item.query_text)}
-                    className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent-purple)]/30 cursor-pointer active:scale-95 transition-all group"
+                    className="flex items-center justify-between px-3.5 py-3 rounded-xl bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)]/40 cursor-pointer active:scale-95 transition-all group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <Clock className="size-4 text-[var(--text-secondary)] shrink-0" />
-                      <span className="text-xs font-bold text-[var(--text-primary)] truncate">
+                      <Clock className="size-4 text-[var(--text-muted)] shrink-0" />
+                      <span className="text-xs font-medium text-[var(--text-primary)] truncate">
                         {item.query_text}
                       </span>
                     </div>
@@ -307,7 +280,7 @@ export function SearchView() {
                           setHistoryItems((prev) => prev.filter((h) => h.id !== item.id))
                         })
                       }}
-                      className="p-1 text-[var(--text-muted)] hover:text-white transition-colors"
+                      className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                     >
                       <X className="size-3.5" />
                     </button>
@@ -317,27 +290,28 @@ export function SearchView() {
             </section>
           )}
 
-          {/* Grade de Gêneros & Moods (2 Colunas) */}
+          {/* Grade de Categorias Clean Soft-UI */}
           <section className="space-y-3">
-            <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-              Navegar por Gêneros & Moods
-            </h2>
+            <h2 className="text-base font-bold text-[var(--text-primary)]">Explorar Categorias</h2>
             <div className="grid grid-cols-2 gap-3">
-              {GENRE_CARDS.map((genre) => (
+              {[
+                { label: "Sertanejo", color: "#5c62ec", query: "Sertanejo Sucessos" },
+                { label: "Rock Clássico", color: "#3a3e98", query: "Rock Classico Anos 70 80" },
+                { label: "MPB & Acústico", color: "#2b2e59", query: "MPB Acustico Clássicos" },
+                { label: "Foco & Instrumental", color: "#4e53db", query: "Lofi Beats Foco Estudo" },
+                { label: "Alta Energia / Treino", color: "#6c7084", query: "Eletronica Treino Academia" },
+                { label: "Lançamentos 2026", color: "#23252e", query: "Lançamentos Musicais 2026" }
+              ].map((cat, i) => (
                 <div
-                  key={genre.name}
-                  onClick={() => executeSearch(genre.query)}
-                  className={`relative overflow-hidden h-24 rounded-2xl p-3.5 bg-gradient-to-br ${genre.gradient} text-white shadow-md cursor-pointer active:scale-95 transition-transform flex flex-col justify-between group`}
+                  key={i}
+                  onClick={() => {
+                    setQuery(cat.label)
+                    executeSearch(cat.query)
+                  }}
+                  className="h-24 p-4 rounded-2xl bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-[var(--shadow-card)] flex flex-col justify-between cursor-pointer active:scale-95 transition-transform"
                 >
-                  <div className="absolute -right-4 -bottom-4 size-16 rounded-full bg-white/10 blur-md group-hover:scale-125 transition-transform" />
-                  <span className="text-xs font-black text-white leading-tight drop-shadow-sm">
-                    {genre.name}
-                  </span>
-                  <div className="flex justify-end">
-                    <div className="size-6 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center">
-                      <Play className="size-3 fill-white text-white translate-x-0.5" />
-                    </div>
-                  </div>
+                  <span className="font-bold text-sm text-[var(--text-primary)]">{cat.label}</span>
+                  <div className="w-4 h-1.5 rounded-full" style={{ backgroundColor: cat.color }} />
                 </div>
               ))}
             </div>
@@ -345,20 +319,20 @@ export function SearchView() {
         </div>
       )}
 
-      {/* ─── ESTADO 2: AUTOCOMPLETE / TYPING (Enquanto Digita) ─── */}
+      {/* ─── ESTADO 2: AUTOCOMPLETE / TYPING ─── */}
       {isTypingState && (
         <div className="space-y-4 px-5 pt-3">
           {loadingSuggestions ? (
             <div className="flex items-center justify-center py-16 gap-2 text-[var(--text-secondary)]">
-              <Loader2 className="size-5 animate-spin" />
-              <span className="text-xs font-bold">Buscando sugestões...</span>
+              <Loader2 className="size-5 animate-spin text-[var(--accent-primary)]" />
+              <span className="text-xs font-medium">Buscando sugestões...</span>
             </div>
           ) : (
             <>
               {/* Entidades Diretas (Artistas / Álbuns) */}
               {suggestions.entities && suggestions.entities.length > 0 && (
                 <section className="space-y-2">
-                  <h3 className="text-[11px] font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                     Acesso Direto
                   </h3>
                   <div className="space-y-1.5">
@@ -370,20 +344,20 @@ export function SearchView() {
                           else if (entity.type === "album") goToAlbumDetail(entity.id, entity.name)
                           else executeSearch(entity.name)
                         }}
-                        className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent-purple)]/40 cursor-pointer active:scale-95 transition-all"
+                        className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)]/40 cursor-pointer active:scale-95 transition-all shadow-sm"
                       >
                         <img
                           src={entity.avatar || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200"}
                           alt={entity.name}
-                          className={`size-11 object-cover bg-zinc-900 ${
-                            entity.type === "artist" ? "rounded-full" : "rounded-lg"
+                          className={`size-11 object-cover bg-[var(--bg-surface-2)] ${
+                            entity.type === "artist" ? "rounded-full" : "rounded-xl"
                           }`}
                         />
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-xs font-bold text-[var(--text-primary)] truncate">
+                          <h4 className="text-sm font-semibold text-[var(--text-primary)] truncate">
                             {entity.name}
                           </h4>
-                          <span className="text-[10px] font-semibold text-[var(--text-secondary)]">
+                          <span className="text-xs text-[var(--text-secondary)]">
                             {entity.subtitle}
                           </span>
                         </div>
@@ -393,34 +367,23 @@ export function SearchView() {
                 </section>
               )}
 
-              {/* Lista de Termos Sugeridos com botão (↗) */}
+              {/* Lista de Termos Sugeridos com seta ↗ */}
               {suggestions.queries && suggestions.queries.length > 0 && (
                 <section className="space-y-1">
-                  <h3 className="text-[11px] font-black uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                     Sugestões
                   </h3>
                   {suggestions.queries.map((qText, idx) => (
                     <div
                       key={`sug-${idx}`}
                       onClick={() => executeSearch(qText)}
-                      className="flex items-center justify-between px-3 py-3 rounded-xl bg-[var(--bg-surface)]/60 hover:bg-[var(--bg-surface)] border border-[var(--border)] cursor-pointer active:scale-95 transition-all group"
+                      className="flex items-center justify-between p-3.5 rounded-xl hover:bg-[var(--bg-surface-1)] cursor-pointer transition-colors"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Search className="size-4 text-[var(--text-secondary)] shrink-0" />
-                        <span className="text-xs font-semibold text-[var(--text-primary)] truncate">
-                          {qText}
-                        </span>
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <Search className="text-[var(--text-muted)] shrink-0" size={16} />
+                        <span className="text-sm font-medium text-[var(--text-primary)] truncate">{qText}</span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setQuery(qText)
-                        }}
-                        className="p-1 text-[var(--text-secondary)] hover:text-white"
-                      >
-                        <ArrowUpRight className="size-4" />
-                      </button>
+                      <ArrowUpRight className="text-[var(--text-muted)] shrink-0" size={16} />
                     </div>
                   ))}
                 </section>
@@ -430,10 +393,10 @@ export function SearchView() {
         </div>
       )}
 
-      {/* ─── ESTADO 3: RESULTADOS ESTRUTURADOS (Submissão) ─── */}
+      {/* ─── ESTADO 3: RESULTADOS ESTRUTURADOS ─── */}
       {isResultsState && (
         <div className="space-y-6 px-5 pt-3">
-          {/* Pílulas de Filtro (Sticky Horizontal Tabs) */}
+          {/* Pílulas de Filtro */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
             {SEARCH_TABS.map((tab) => {
               const isActive = activeTab === tab.id
@@ -442,10 +405,10 @@ export function SearchView() {
                   key={tab.id}
                   type="button"
                   onClick={() => handleTabChange(tab.id)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
                     isActive
-                      ? "bg-[var(--accent-blue)] text-white shadow-md shadow-[#0033ff]/30"
-                      : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-white border border-[var(--border)]"
+                      ? "bg-[var(--accent-primary)] text-white shadow-sm font-bold"
+                      : "bg-[var(--bg-surface-1)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)]"
                   }`}
                 >
                   {tab.label}
@@ -474,54 +437,37 @@ export function SearchView() {
               {/* Card "Melhor Resultado" (Top Result) */}
               {results.top_result && activeTab === "all" && (
                 <section className="space-y-2">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                  <span className="text-xs uppercase tracking-wider text-[var(--text-secondary)] font-bold mb-3 block">
                     Melhor Resultado
-                  </h3>
-                  <div className="relative overflow-hidden rounded-2xl p-4 bg-[var(--bg-surface-glass)] border border-[var(--border)] backdrop-blur-xl shadow-xl space-y-4">
-                    <div className="flex items-center gap-4">
+                  </span>
+                  <div
+                    onClick={() => {
+                      if (results.top_result?.id) goToArtist(results.top_result.id)
+                    }}
+                    className="p-4 rounded-2xl bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-[var(--shadow-card)] flex items-center justify-between cursor-pointer active:scale-[0.99] transition-transform"
+                  >
+                    <div className="flex items-center space-x-4 min-w-0 pr-2">
                       <img
                         src={results.top_result.avatar}
                         alt={results.top_result.name}
-                        className="size-16 rounded-2xl object-cover bg-zinc-900 shadow-md"
+                        className="size-16 rounded-full object-cover shadow-md bg-[var(--bg-surface-2)] shrink-0"
                       />
-                      <div className="min-w-0 flex-1">
-                        <span className="inline-block px-2 py-0.5 rounded-full bg-[var(--accent-purple)]/20 text-[10px] font-bold text-[var(--accent-pink)] uppercase">
-                          {results.top_result.type === "artist" ? "Artista Principal" : "Faixa Principal"}
-                        </span>
-                        <h4 className="text-base font-black text-[var(--text-primary)] truncate mt-1">
-                          {results.top_result.name}
-                        </h4>
-                        <p className="text-xs font-medium text-[var(--text-secondary)] truncate">
-                          {results.top_result.followers}
-                        </p>
+                      <div className="min-w-0">
+                        <h3 className="text-base font-bold text-[var(--text-primary)] truncate">{results.top_result.name}</h3>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">{results.top_result.followers}</p>
                       </div>
                     </div>
-
-                    {/* Botões de Ação do Top Result */}
-                    <div className="flex items-center gap-2.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const firstSong = results.tracks[0] || results.songs[0]
-                          if (firstSong) handlePlaySingle(firstSong, results.tracks)
-                        }}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[var(--accent-blue)] text-white text-xs font-black shadow-lg shadow-[#0033ff]/30 active:scale-95 transition-transform"
-                      >
-                        <Play className="size-3.5 fill-white" />
-                        <span>Top Músicas</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (results.top_result?.id) goToArtist(results.top_result.id)
-                        }}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--accent-purple)] text-[var(--accent-pink)] text-xs font-bold active:scale-95 transition-transform"
-                      >
-                        <Shuffle className="size-3.5" />
-                        <span>Mix do Artista</span>
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const firstSong = results.tracks[0] || results.songs[0]
+                        if (firstSong) handlePlaySingle(firstSong, results.tracks)
+                      }}
+                      className="size-11 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center shadow-[0_4px_14px_var(--accent-glow)] shrink-0 active:scale-90 transition-transform"
+                    >
+                      <Play fill="currentColor" size={18} className="translate-x-0.5" />
+                    </button>
                   </div>
                 </section>
               )}
@@ -529,9 +475,9 @@ export function SearchView() {
               {/* Seção de Músicas (Lista Vertical) */}
               {results.tracks && results.tracks.length > 0 && (
                 <section className="space-y-3">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                  <span className="text-xs uppercase tracking-wider text-[var(--text-secondary)] font-bold mb-2 block">
                     Músicas
-                  </h3>
+                  </span>
                   <div className="space-y-2">
                     {results.tracks.slice(0, activeTab === "songs" ? 50 : 6).map((track) => {
                       const isCurrent = currentTrack?.id === track.id
@@ -543,52 +489,55 @@ export function SearchView() {
                           onClick={() => handlePlaySingle(track, results.tracks)}
                           onTouchStart={() => handleTouchStart(track)}
                           onTouchEnd={handleTouchEnd}
-                          className={`flex items-center gap-3 p-2 rounded-xl bg-[var(--bg-surface)] border transition-all active:scale-[0.99] cursor-pointer group ${
+                          className={`flex items-center justify-between p-2.5 rounded-2xl cursor-pointer transition-all duration-200 ${
                             isCurrent
-                              ? "border-[var(--accent-purple)] bg-[var(--bg-surface)]/90 shadow-md shadow-[#977dff]/15"
-                              : "border-[var(--border)] hover:border-[var(--accent-purple)]/30"
+                              ? "bg-[var(--accent-surface)] border border-[var(--border-subtle)] shadow-sm"
+                              : "hover:bg-[var(--bg-surface-1)] active:scale-[0.99]"
                           }`}
                         >
-                          <TrackImage
-                            src={track.thumbnail}
-                            trackId={track.id}
-                            alt={track.title}
-                            className="size-12 rounded-lg object-cover bg-zinc-900 shrink-0"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <h4 className={`text-xs font-black truncate leading-tight ${
-                              isCurrent ? "text-[var(--accent-pink)]" : "text-[var(--text-primary)]"
-                            }`}>
-                              {track.title}
-                            </h4>
-                            <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate mt-0.5">
-                              {track.artist}
-                            </p>
+                          <div className="flex items-center space-x-3 min-w-0 pr-2">
+                            <TrackImage
+                              src={track.thumbnail}
+                              trackId={track.id}
+                              alt={track.title}
+                              className="size-11 rounded-xl object-cover bg-[var(--bg-surface-2)] shrink-0"
+                            />
+                            <div className="truncate">
+                              <p
+                                className={`text-sm font-semibold truncate ${
+                                  isCurrent ? "text-[var(--accent-primary)]" : "text-[var(--text-primary)]"
+                                }`}
+                              >
+                                {track.title}
+                              </p>
+                              <p className="text-xs text-[var(--text-secondary)] truncate mt-0.5">{track.artist}</p>
+                            </div>
                           </div>
 
-                          {/* Curtir */}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              toggleLike(track)
-                            }}
-                            className="p-2 text-[var(--text-secondary)] hover:text-white active:scale-90 transition-transform"
-                          >
-                            <Heart className={`size-4 ${liked ? "fill-[var(--accent-purple)] text-[var(--accent-purple)]" : ""}`} />
-                          </button>
-
-                          {/* Menu 3 Pontos */}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setActionSheetTrack(track)
-                            }}
-                            className="p-2 text-[var(--text-muted)] hover:text-white active:scale-90 transition-transform"
-                          >
-                            <MoreVertical className="size-4" />
-                          </button>
+                          <div className="flex items-center space-x-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleLike(track)
+                              }}
+                              className={`p-2 rounded-full transition-colors ${
+                                liked ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                              }`}
+                            >
+                              <Heart fill={liked ? "currentColor" : "none"} size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setActionSheetTrack(track)
+                              }}
+                              className="p-2 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                            >
+                              <MoreVertical size={16} />
+                            </button>
+                          </div>
                         </div>
                       )
                     })}

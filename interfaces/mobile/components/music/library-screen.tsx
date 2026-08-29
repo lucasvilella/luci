@@ -139,27 +139,20 @@ export function LibraryScreen() {
 
   return (
     <div className="relative flex h-full flex-col bg-[var(--bg-app)] text-[var(--text-primary)] select-none overflow-y-auto pb-32">
-      {/* ─── A. Header Principal da Biblioteca ─── */}
-      <header className="sticky top-0 z-20 px-5 pt-5 pb-3 bg-[var(--bg-surface-glass)] backdrop-blur-2xl border-b border-[var(--border)] space-y-3">
+      {/* ─── A. Header Principal da Biblioteca (Clean Soft-UI) ─── */}
+      <header className="sticky top-0 z-20 px-5 pt-6 pb-3 bg-[var(--bg-deck)] backdrop-blur-xl border-b border-[var(--border-subtle)] space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="size-9 rounded-full bg-gradient-to-tr from-[#0033ff] to-[#977dff] p-[2px] shadow-md">
-              <div className="size-full rounded-full bg-[var(--bg-surface)] flex items-center justify-center text-[10px] font-black text-white">
-                LV
-              </div>
-            </div>
-            <h1 className="text-xl font-black text-white">Sua Biblioteca</h1>
-          </div>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Biblioteca</h1>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center space-x-2">
             {/* Criar Nova */}
             <button
               type="button"
               onClick={() => setShowCreateModal(true)}
               aria-label="Criar Playlist"
-              className="size-9 flex items-center justify-center rounded-full bg-[var(--accent-blue)] text-white shadow-md active:scale-90 transition-transform"
+              className="p-2.5 rounded-full bg-[var(--accent-primary)] text-white shadow-[0_4px_14px_var(--accent-glow)] active:scale-95 transition-transform"
             >
-              <Plus className="size-4.5" />
+              <Plus size={18} />
             </button>
 
             {/* Alternador de Visualização List / Grid */}
@@ -167,9 +160,9 @@ export function LibraryScreen() {
               type="button"
               onClick={() => setViewMode(viewMode === "list" ? "grid" : "list")}
               aria-label="Alternar Visualização"
-              className="size-9 flex items-center justify-center rounded-full bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-white active:scale-90 transition-all shadow-md"
+              className="p-2.5 rounded-full bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
             >
-              {viewMode === "list" ? <LayoutGrid className="size-4" /> : <List className="size-4" />}
+              {viewMode === "grid" ? <List size={18} /> : <LayoutGrid size={18} />}
             </button>
 
             {/* Shuffle Geral da Biblioteca */}
@@ -177,15 +170,15 @@ export function LibraryScreen() {
               type="button"
               onClick={handleShuffleLibrary}
               aria-label="Shuffle Geral"
-              className="size-9 flex items-center justify-center rounded-full bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-white active:scale-90 transition-all shadow-md"
+              className="p-2.5 rounded-full bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] active:scale-95 transition-transform"
             >
-              <Shuffle className="size-4" />
+              <Shuffle size={18} />
             </button>
           </div>
         </div>
 
         {/* ─── B. Barra de Filtros (Horizontal Pills) ─── */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+        <div className="flex space-x-2 overflow-x-auto no-scrollbar pb-1">
           {FILTERS.map((f) => {
             const isActive = filter === f.id
             return (
@@ -193,10 +186,10 @@ export function LibraryScreen() {
                 key={f.id}
                 type="button"
                 onClick={() => setFilter(f.id)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${
+                className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                   isActive
-                    ? "bg-[var(--accent-blue)] text-white shadow-md shadow-[#0033ff]/30"
-                    : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-white border border-[var(--border)]"
+                    ? "bg-[var(--accent-primary)] text-white shadow-sm"
+                    : "bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 {f.label}
@@ -210,31 +203,28 @@ export function LibraryScreen() {
       <div className="p-5 space-y-6">
         {loading && !data ? (
           <div className="flex flex-col items-center justify-center py-36 gap-3 text-[var(--text-secondary)]">
-            <Loader2 className="size-8 animate-spin text-[var(--accent-purple)]" />
-            <p className="text-xs font-bold">Carregando coleções...</p>
+            <Loader2 className="size-8 animate-spin text-[var(--accent-primary)]" />
+            <p className="text-xs font-medium">Carregando coleções...</p>
           </div>
         ) : data ? (
           <>
-            {/* ─── 1. CARD HERO: "MAIS QUERIDAS / CURTIDAS" (Destaque Fixo) ─── */}
+            {/* ─── 1. CARD HERO: "MAIS QUERIDAS / CURTIDAS" ─── */}
             {(filter === "all" || filter === "tracks") && data.liked_summary.total_tracks > 0 && (
               <section className="space-y-3">
                 <div
-                  onClick={() => goToPlaylistDetail("liked_songs", "Músicas Curtidas", data.liked_summary.preview_tracks[0]?.cover)}
-                  className="relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-[#0600ab] to-[#977dff] text-white shadow-xl shadow-[#0033ff]/20 cursor-pointer active:scale-[0.99] transition-transform flex items-center justify-between"
+                  onClick={() => goToPlaylistDetail("liked_songs", "Mais Queridas", data.liked_summary.preview_tracks[0]?.cover)}
+                  className="w-full p-4 rounded-3xl bg-[var(--accent-surface)] border border-[var(--border-subtle)] shadow-[var(--shadow-card)] flex items-center justify-between cursor-pointer active:scale-[0.99] transition-transform"
                 >
-                  <div className="space-y-1.5 z-10 max-w-[70%]">
-                    <div className="flex items-center gap-2">
-                      <Heart className="size-5 fill-[var(--accent-pink)] text-[var(--accent-pink)]" />
-                      <span className="text-[11px] font-black uppercase tracking-wider text-[var(--accent-pink)]">
-                        Coleção Principal
-                      </span>
+                  <div className="flex items-center space-x-4 min-w-0 pr-2">
+                    <div className="size-14 rounded-2xl bg-[var(--accent-primary)] text-white flex items-center justify-center shadow-md shrink-0">
+                      <Heart fill="currentColor" size={24} />
                     </div>
-                    <h2 className="text-lg font-black text-white leading-tight">
-                      Músicas Curtidas
-                    </h2>
-                    <p className="text-xs font-semibold text-white/80">
-                      {data.liked_summary.total_tracks} faixas favoritadas
-                    </p>
+                    <div className="min-w-0">
+                      <h3 className="text-base font-bold text-[var(--text-primary)] truncate">Mais Queridas</h3>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">
+                        {data.liked_summary.total_tracks} faixas favoritadas
+                      </p>
+                    </div>
                   </div>
 
                   {/* Botão Play Direto */}
@@ -244,12 +234,10 @@ export function LibraryScreen() {
                       e.stopPropagation()
                       handlePlayLiked()
                     }}
-                    className="size-13 rounded-full bg-white text-black flex items-center justify-center shadow-2xl active:scale-90 transition-transform z-10"
+                    className="size-10 rounded-full bg-[var(--bg-surface-1)] text-[var(--accent-primary)] flex items-center justify-center shadow-sm shrink-0 active:scale-90 transition-transform"
                   >
-                    <Play className="size-6 fill-black translate-x-0.5" />
+                    <Play className="ml-0.5" fill="currentColor" size={16} />
                   </button>
-
-                  <div className="absolute -right-6 -bottom-6 size-32 rounded-full bg-white/10 blur-xl pointer-events-none" />
                 </div>
 
                 {/* 3 Últimas Músicas Favoritadas (Acesso Rápido) */}
@@ -270,27 +258,27 @@ export function LibraryScreen() {
                           onClick={() => handlePlaySingle(fullTrack, data.tracks)}
                           onTouchStart={() => handleTouchStart(fullTrack)}
                           onTouchEnd={handleTouchEnd}
-                          className={`flex items-center gap-3 p-2 rounded-2xl bg-[var(--bg-surface)] border transition-all active:scale-[0.99] cursor-pointer ${
+                          className={`flex items-center gap-3 p-2 rounded-2xl bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] transition-all active:scale-[0.99] cursor-pointer ${
                             isCurrent
-                              ? "border-[var(--accent-purple)] shadow-md"
-                              : "border-[var(--border)] hover:border-[var(--accent-purple)]/30"
+                              ? "bg-[var(--accent-surface)]"
+                              : "hover:bg-[var(--bg-surface-2)]"
                           }`}
                         >
                           <TrackImage
                             src={preview.cover}
                             trackId={preview.id}
                             alt={preview.title}
-                            className="size-11 rounded-xl object-cover bg-zinc-900 shrink-0"
+                            className="size-11 rounded-xl object-cover bg-[var(--bg-surface-2)] shrink-0"
                           />
                           <div className="min-w-0 flex-1">
-                            <h4 className={`text-xs font-black truncate ${isCurrent ? "text-[var(--accent-pink)]" : "text-white"}`}>
+                            <h4 className={`text-xs font-semibold truncate ${isCurrent ? "text-[var(--accent-primary)]" : "text-[var(--text-primary)]"}`}>
                               {preview.title}
                             </h4>
-                            <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate">
+                            <p className="text-[11px] font-normal text-[var(--text-secondary)] truncate">
                               {preview.artist}
                             </p>
                           </div>
-                          <Heart className="size-4 fill-[var(--accent-purple)] text-[var(--accent-purple)] shrink-0 mr-2" />
+                          <Heart className="size-4 fill-[var(--accent-primary)] text-[var(--accent-primary)] shrink-0 mr-2" />
                         </div>
                       )
                     })}
