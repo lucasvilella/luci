@@ -1,25 +1,30 @@
 /**
- * Configuração de API da Luci.
- * Detecta automaticamente o URL do backend baseado na origem da página.
- * Em produção (servido pelo FastAPI), o backend está no mesmo host.
+ * Cliente de API Unificado e Resiliente da Luci.
+ * Conforme Milestone 0: Detecção automática de ambiente, timeout, offline graceful fallback e health-check.
  */
 
-function getApiBaseUrl(): string {
-  if (typeof window === "undefined") return ""
-  
-  // Se estiver rodando dentro do Capacitor WebView (capacitor://localhost ou http://localhost)
-  const isCapacitor = window.location.protocol === "capacitor:" || window.location.hostname === "localhost"
+import { SystemStatus } from "./contracts/common"
+
+const DEFAULT_SERVER_URL = "http://192.168.15.90:8000"
+
+export function getApiBaseUrl(): string {
+  if (typeof window === "undefined") return DEFAULT_SERVER_URL
+
   const storedServer = localStorage.getItem("luci.server_url")
   if (storedServer) {
     return storedServer.replace(/\/$/, "")
   }
 
+  // No Capacitor ou Webview Android (ou dev em localhost)
+  const isCapacitor =
+    window.location.protocol === "capacitor:" ||
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+
   if (isCapacitor) {
-    // Endereço IP do Servidor Termux Dedicado
-    return "http://192.168.15.90:8000"
+    return DEFAULT_SERVER_URL
   }
 
-  // Quando servido pelo FastAPI na web, o backend está na mesma origem
   return window.location.origin
 }
 
@@ -27,11 +32,10 @@ export const API_BASE_URL = getApiBaseUrl()
 
 export function setServerUrl(url: string): void {
   if (typeof window !== "undefined") {
-    localStorage.setItem("luci.server_url", url)
+    localStorage.setItem("luci.server_url", url.replace(/\/$/, ""))
   }
 }
 
-// Token de autenticação (armazenado no localStorage após login)
 export function getAuthToken(): string {
   if (typeof window === "undefined") return ""
   return localStorage.getItem("luci.api_token") || ""
@@ -44,21 +48,70 @@ export function setAuthToken(token: string): void {
 }
 
 /**
- * Fetch autenticado para o backend FastAPI da Luci.
+ * Executa requisição HTTP autenticada com suporte a timeout e captura de falhas de rede.
  */
-export async function luciApiFetch(path: string, options: RequestInit = {}): Promise<Response> {
+export async function luciApiFetch(
+  path: string,
+  options: RequestInit = {},
+  timeoutMs = 8000
+): Promise<Response> {
   const token = getAuthToken()
   const headers = new Headers(options.headers || {})
 
   if (token) {
     headers.set("Authorization", `Bearer ${token}`)
   }
-  if (!headers.has("Content-Type") && options.method !== "GET") {
+  if (!headers.has("Content-Type") && options.method && options.method !== "GET") {
     headers.set("Content-Type", "application/json")
   }
 
-  return fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  const url = `${getApiBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    })
+    return response
+  } catch (error: any) {
+    if (error.name === "AbortError") {
+      console.warn(`[LuciAPI] Timeout de ${timeoutMs}ms ao acessar: ${url}`)
+    } else {
+      console.warn(`[LuciAPI] Falha de conexão ao acessar: ${url}`, error)
+    }
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+/**
+ * Checa a saúde e latência da conexão com o servidor Termux.
+ */
+export async function checkServerHealth(): Promise<SystemStatus> {
+  const serverUrl = getApiBaseUrl()
+  const start = Date.now()
+
+  try {
+    const res = await luciApiFetch("/api/v1/health", { method: "GET" }, 4000)
+    const latencyMs = Date.now() - start
+    const online = res.ok
+    return {
+      online,
+      serverUrl,
+      latencyMs,
+      lastChecked: Date.now(),
+    }
+  } catch {
+    return {
+      online: false,
+      serverUrl,
+      latencyMs: undefined,
+      lastChecked: Date.now(),
+    }
+  }
 }

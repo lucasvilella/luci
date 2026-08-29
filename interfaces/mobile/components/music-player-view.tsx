@@ -17,34 +17,33 @@ import { SettingsScreen } from "@/components/music/settings-screen"
 import { MiniPlayer } from "@/components/music/mini-player"
 import { MusicDocker } from "@/components/music/music-docker"
 
+import { useAppNavigationStore } from "@/stores/useAppNavigationStore"
+
 function MusicScreenRouter({
   onOpenMenu,
   onSwitchToLuci,
-  initialTab,
 }: {
   onOpenMenu?: () => void
   onSwitchToLuci?: () => void
-  initialTab?: "home" | "explore" | "library" | "luci" | "notifications"
 }) {
-  const { screen, reset, goToSearch, goToLibrary } = useMusicNavigation()
+  const { screen, reset, goToSearch, goToLibrary, goToProfile } = useMusicNavigation()
+  const { activeTabByModule } = useAppNavigationStore()
+  const currentTab = activeTabByModule.music || "home"
 
   useEffect(() => {
-    if (initialTab === "home") {
+    if (currentTab === "home") {
       reset()
-    } else if (initialTab === "explore") {
+    } else if (currentTab === "search") {
       goToSearch()
-    } else if (initialTab === "library") {
+    } else if (currentTab === "library") {
       goToLibrary()
+    } else if (currentTab === "profile") {
+      goToProfile()
     }
-  }, [initialTab, reset, goToSearch, goToLibrary])
+  }, [currentTab, reset, goToSearch, goToLibrary, goToProfile])
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-[var(--bg-app)] text-[var(--text-primary)]">
-      {/* Sub-navegação Topo LuciMusic (Início, Explorar, Biblioteca) */}
-      <div className="flex-none">
-        <MusicDocker />
-      </div>
-
       <div className="flex-1 overflow-hidden">
         {screen.type === "home" && <MusicHome onOpenMenu={onOpenMenu} />}
         {screen.type === "now-playing" && <NowPlaying onSwitchToLuci={onSwitchToLuci} />}
