@@ -250,15 +250,10 @@ export function MediaCollectionScreen({
         </div>
       ) : collection ? (
         <div className="space-y-6">
-          {/* ─── Hero Header com Glow Backdrop Blur Dinâmico ─── */}
-          <div className="relative flex flex-col items-center px-6 pt-6 pb-2 text-center overflow-hidden">
-            {/* Glow Dinâmico de Fundo */}
-            <div
-              className="absolute -top-10 size-64 rounded-full bg-gradient-to-tr from-[#0033ff] to-[#977dff] opacity-40 blur-[90px] pointer-events-none"
-            />
-
-            {/* Capa Centralizada 1:1 com Acabamento Premium */}
-            <div className="relative z-10 size-56 sm:size-64 rounded-3xl overflow-hidden shadow-2xl shadow-black/80 border border-white/15 bg-zinc-900 shrink-0">
+          {/* ─── Hero Header (Clean Style) ─── */}
+          <div className="w-full flex flex-col items-center pt-8 pb-4 px-6 text-center">
+            {/* Capa com Sombra Soft-UI */}
+            <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-[28px] overflow-hidden shadow-[var(--shadow-card)] border border-[var(--border-subtle)] bg-[var(--bg-surface-2)] mb-5">
               <img
                 src={collection.cover_url || initialThumbnail || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500"}
                 alt={collection.title}
@@ -266,168 +261,133 @@ export function MediaCollectionScreen({
               />
               {/* Badge Contextual */}
               <div className="absolute top-3 left-3">
-                <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-black uppercase tracking-wider text-[var(--accent-pink)] border border-white/10">
+                <span className="px-2.5 py-1 rounded-full bg-[var(--bg-surface-1)]/90 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider text-[var(--accent-primary)] border border-[var(--border-subtle)] shadow-sm">
                   {isAlbum ? "Álbum Oficial" : collection.is_smart_ai ? "Curadoria Luci" : "Playlist"}
                 </span>
               </div>
             </div>
 
-            {/* Metadados Centrais */}
-            <div className="relative z-10 mt-5 space-y-1 max-w-sm">
-              <h1 className="text-xl sm:text-2xl font-black text-white leading-tight drop-shadow-sm line-clamp-2">
-                {collection.title}
-              </h1>
+            {/* Metadados */}
+            <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] leading-snug max-w-sm">
+              {collection.title}
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 font-medium">
+              {isAlbum ? (
+                <button
+                  type="button"
+                  onClick={() => goToArtist(collection.artist_id || collection.artist)}
+                  className="hover:text-[var(--text-primary)] transition-colors underline-offset-2 hover:underline"
+                >
+                  {collection.artist}
+                </button>
+              ) : (
+                collection.artist
+              )}{" "}
+              • {collection.total_tracks} faixas ({collection.total_duration})
+            </p>
 
-              <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[var(--text-secondary)]">
-                {isAlbum ? (
-                  <button
-                    type="button"
-                    onClick={() => goToArtist(collection.artist_id || collection.artist)}
-                    className="hover:text-white transition-colors underline-offset-2 hover:underline"
-                  >
-                    {collection.artist}
-                  </button>
-                ) : (
-                  <span>{collection.artist}</span>
-                )}
-                <span>•</span>
-                <span>{collection.release_year}</span>
-              </div>
-
-              <p className="text-[11px] font-semibold text-[var(--text-muted)]">
-                {collection.total_tracks} faixas • {collection.total_duration}
-              </p>
-            </div>
-
-            {/* ─── Barra de Ações Rápidas (Salvar, Aleatório, Play Principal, Baixar) ─── */}
-            <div className="relative z-10 flex items-center justify-center gap-4 mt-6">
-              {/* Favoritar / Salvar */}
+            {/* Botões de Ação Principais (Clean Style) */}
+            <div className="flex items-center justify-center space-x-3 mt-6">
               <button
                 type="button"
-                onClick={handleToggleFavorite}
-                aria-label="Salvar"
-                className={`size-11 flex items-center justify-center rounded-full border transition-all active:scale-90 shadow-md ${
-                  isSaved
-                    ? "bg-[var(--accent-purple)] border-[var(--accent-pink)]/40 text-white"
-                    : "bg-[var(--bg-surface)] border-[var(--border)] text-[var(--text-secondary)] hover:text-white"
-                }`}
+                onClick={handlePlayAll}
+                className="flex items-center space-x-2 px-6 py-3 rounded-full bg-[var(--accent-primary)] text-white font-semibold text-sm shadow-[0_6px_20px_var(--accent-glow)] active:scale-95 transition-transform"
               >
-                <Heart className={`size-5 ${isSaved ? "fill-white" : ""}`} />
+                <Play fill="currentColor" size={18} />
+                <span>Reproduzir</span>
               </button>
 
-              {/* Aleatório / Shuffle */}
               <button
                 type="button"
                 onClick={handleShufflePlay}
                 aria-label="Tocar Aleatório"
-                className="size-11 flex items-center justify-center rounded-full bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-white active:scale-90 transition-all shadow-md"
+                className="p-3 rounded-full bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] active:scale-95 transition-all shadow-sm"
               >
-                <Shuffle className="size-5" />
+                <Shuffle size={18} />
               </button>
 
-              {/* Play Principal com Gradiente Luci */}
               <button
                 type="button"
-                onClick={handlePlayAll}
-                aria-label="Reproduzir Coleção"
-                className="size-14 flex items-center justify-center rounded-full bg-gradient-to-tr from-[#0033ff] via-[#977dff] to-[#ffccf2] text-white shadow-xl shadow-[#0033ff]/50 active:scale-90 transition-transform"
-              >
-                <Play className="size-6 fill-white translate-x-0.5" />
-              </button>
-
-              {/* Baixar / Offline */}
-              <button
-                type="button"
-                onClick={handleDownload}
-                disabled={downloading}
-                aria-label="Baixar Offline"
-                className={`size-11 flex items-center justify-center rounded-full border transition-all active:scale-90 shadow-md ${
-                  isDownloaded
-                    ? "bg-[#10B981] border-[#10B981] text-white"
-                    : "bg-[var(--bg-surface)] border-[var(--border)] text-[var(--text-secondary)] hover:text-white"
+                onClick={handleToggleFavorite}
+                aria-label="Favoritar"
+                className={`p-3 rounded-full bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] active:scale-95 transition-all shadow-sm ${
+                  isSaved ? "text-[var(--accent-primary)]" : "text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)]"
                 }`}
               >
-                {downloading ? (
-                  <Loader2 className="size-5 animate-spin" />
-                ) : isDownloaded ? (
-                  <Check className="size-5" />
-                ) : (
-                  <Download className="size-5" />
-                )}
+                <Heart fill={isSaved ? "currentColor" : "none"} size={18} />
               </button>
             </div>
           </div>
 
-          {/* ─── Tracklist (Lista Vertical de Músicas) ─── */}
-          <div className="space-y-3 px-5">
-            <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+          {/* ─── Tracklist (Clean Style) ─── */}
+          <div className="w-full flex flex-col space-y-1.5 px-4 pb-32">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] px-2 mb-1">
               Faixas
             </h2>
 
-            <div className="space-y-1.5">
-              {collection.tracks.map((track, idx) => {
-                const isCurrent = currentTrack?.id === track.id
-                const liked = isLiked(track.id)
+            {collection.tracks.map((track, idx) => {
+              const isCurrent = currentTrack?.id === track.id
+              const liked = isLiked(track.id)
 
-                return (
-                  <div
-                    key={`col-trk-${track.id || idx}`}
-                    onClick={() => handlePlaySingle(track, collection.tracks)}
-                    onTouchStart={() => handleTouchStart(track)}
-                    onTouchEnd={handleTouchEnd}
-                    className={`flex items-center gap-3 p-2.5 rounded-2xl bg-[var(--bg-surface)] border transition-all active:scale-[0.99] cursor-pointer group ${
-                      isCurrent
-                        ? "border-[var(--accent-purple)] bg-[var(--bg-surface)]/90 shadow-md shadow-[#977dff]/20"
-                        : "border-[var(--border)] hover:border-[var(--accent-purple)]/30"
-                    }`}
-                  >
-                    {/* Numeração / Equalizador Gráfico de Faixa Ativa */}
-                    <div className="w-6 flex items-center justify-center shrink-0">
-                      {isCurrent && isPlaying ? (
-                        <div className="flex items-end gap-[2px] h-3.5">
-                          <span className="w-[3px] h-3.5 bg-[var(--accent-blue)] animate-pulse rounded-full" />
-                          <span className="w-[3px] h-2 bg-[var(--accent-purple)] animate-bounce rounded-full" />
-                          <span className="w-[3px] h-3 bg-[var(--accent-pink)] animate-pulse rounded-full" />
-                        </div>
-                      ) : (
-                        <span
-                          className={`text-xs font-black ${
-                            isCurrent ? "text-[var(--accent-pink)]" : "text-[var(--text-muted)]"
-                          }`}
-                        >
-                          {String(track.track_number).padStart(2, "0")}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Mini-capa quando for playlist mista */}
-                    {!isAlbum && track.thumbnail && (
-                      <TrackImage
-                        src={track.thumbnail}
-                        trackId={track.id}
-                        alt={track.title}
-                        className="size-10 rounded-lg object-cover bg-zinc-900 shrink-0"
-                      />
+              return (
+                <div
+                  key={`col-trk-${track.id || idx}`}
+                  onClick={() => handlePlaySingle(track, collection.tracks)}
+                  onTouchStart={() => handleTouchStart(track)}
+                  onTouchEnd={handleTouchEnd}
+                  className={`group w-full flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all duration-200 ${
+                    isCurrent
+                      ? "bg-[var(--accent-surface)] border border-[var(--border-subtle)] shadow-sm"
+                      : "hover:bg-[var(--bg-surface-1)] active:scale-[0.99]"
+                  }`}
+                >
+                  {/* Lado Esquerdo: Capa/Número e Nomes */}
+                  <div className="flex items-center space-x-3.5 min-w-0 pr-2">
+                    {!isAlbum && track.thumbnail ? (
+                      <div className="relative size-11 rounded-xl overflow-hidden shrink-0 bg-[var(--bg-surface-2)] border border-[var(--border-subtle)]">
+                        <img src={track.thumbnail} alt={track.title} className="size-full object-cover" />
+                        {isCurrent && isPlaying && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <Volume2 className="text-[var(--accent-primary)] animate-pulse" size={16} />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-7 text-center shrink-0">
+                        {isCurrent && isPlaying ? (
+                          <Volume2 className="text-[var(--accent-primary)] mx-auto animate-pulse" size={16} />
+                        ) : (
+                          <span
+                            className={`text-xs font-semibold ${
+                              isCurrent ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)]"
+                            }`}
+                          >
+                            {track.track_number || String(idx + 1).padStart(2, "0")}
+                          </span>
+                        )}
+                      </div>
                     )}
 
-                    <div className="min-w-0 flex-1">
-                      <h4
-                        className={`text-xs font-black truncate leading-tight ${
-                          isCurrent ? "text-[var(--accent-pink)]" : "text-[var(--text-primary)]"
+                    <div className="flex flex-col min-w-0">
+                      <span
+                        className={`text-sm font-semibold truncate ${
+                          isCurrent ? "text-[var(--accent-primary)]" : "text-[var(--text-primary)]"
                         }`}
                       >
                         {track.title}
-                      </h4>
-                      <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate mt-0.5">
+                      </span>
+                      <span className="text-xs text-[var(--text-secondary)] truncate">
                         {track.artist}
-                      </p>
+                      </span>
                     </div>
+                  </div>
 
-                    <span className="text-[11px] font-medium text-[var(--text-muted)] shrink-0">
+                  {/* Lado Direito: Duração, Curtida e Menu */}
+                  <div className="flex items-center space-x-2 shrink-0">
+                    <span className="text-xs text-[var(--text-muted)] font-medium mr-1 hidden sm:inline">
                       {formatSeconds(track.duration)}
                     </span>
 
-                    {/* Curtir */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -440,12 +400,13 @@ export function MediaCollectionScreen({
                         }
                         toggleLike(lTrack)
                       }}
-                      className="p-1.5 text-[var(--text-secondary)] hover:text-white active:scale-90 transition-transform"
+                      className={`p-2 rounded-full transition-colors ${
+                        liked ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      }`}
                     >
-                      <Heart className={`size-4 ${liked ? "fill-[var(--accent-purple)] text-[var(--accent-purple)]" : ""}`} />
+                      <Heart fill={liked ? "currentColor" : "none"} size={16} />
                     </button>
 
-                    {/* Menu 3 Pontos */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -454,20 +415,18 @@ export function MediaCollectionScreen({
                           id: track.id,
                           title: track.title,
                           artist: track.artist,
-                          album: track.album || collection.title,
                           thumbnail: track.thumbnail || collection.cover_url,
-                          duration: track.duration,
                         }
                         setActionSheetTrack(lTrack)
                       }}
-                      className="p-1.5 text-[var(--text-muted)] hover:text-white active:scale-90 transition-transform"
+                      className="p-2 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                     >
-                      <MoreVertical className="size-4" />
+                      <MoreVertical size={16} />
                     </button>
                   </div>
-                )
-              })}
-            </div>
+                </div>
+              )
+            })}
           </div>
 
           {/* ─── Metadados de Copyright & Direitos (Somente Álbuns) ─── */}

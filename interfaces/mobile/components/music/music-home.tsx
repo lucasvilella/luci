@@ -101,34 +101,27 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
 
   return (
     <div className="relative flex h-full flex-col bg-[var(--bg-app)] text-[var(--text-primary)] select-none overflow-y-auto pb-32">
-      {/* ─── HEADER CONTEXTUAL ─── */}
-      <header className="sticky top-0 z-20 px-5 pt-4 pb-3 bg-[var(--bg-surface-glass)] backdrop-blur-2xl border-b border-[var(--border)]">
+      {/* ─── HEADER SUPERIOR CONTEXTUAL (CLEAN STYLE) ─── */}
+      <header className="sticky top-0 z-20 px-5 pt-6 pb-3 bg-[var(--bg-deck)] backdrop-blur-xl border-b border-[var(--border-subtle)]">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="size-9 rounded-full bg-gradient-to-tr from-[#0033ff] to-[#977dff] p-[2px] shadow-md">
-              <div className="size-full rounded-full bg-[var(--bg-surface)] flex items-center justify-center text-[10px] font-black text-white">
-                LV
-              </div>
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] block">
-                {feed?.greeting || "Olá, Lucas"}
-              </span>
-              <h1 className="text-base font-black text-white leading-none">
-                LuciMusic
-              </h1>
-            </div>
+          <div>
+            <span className="text-xs font-medium text-[var(--text-secondary)] block">
+              {feed?.greeting || "Boa tarde"}
+            </span>
+            <h1 className="text-xl font-bold text-[var(--text-primary)] leading-tight">
+              Lucas
+            </h1>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--bg-surface)] border border-[var(--border)] shadow-sm">
-              <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-black text-white">Online</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-sm">
+              <span className="size-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
+              <span className="text-[11px] font-semibold text-[var(--text-primary)]">Luci Hub</span>
             </div>
           </div>
         </div>
 
-        {/* ─── PÍLULAS DE MOOD / FILTROS RÁPIDOS ─── */}
+        {/* ─── PÍLULAS DE MOOD / FILTROS RÁPIDOS (CLEAN SOFT-UI) ─── */}
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-3 pb-1">
           {MOOD_PILLS.map((pill) => {
             const Icon = pill.icon
@@ -138,10 +131,10 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
                 key={pill.id}
                 type="button"
                 onClick={() => setActiveMood(pill.id)}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all active:scale-95 ${
                   isActive
-                    ? "bg-[var(--accent-blue)] text-white shadow-md shadow-[#0033ff]/30"
-                    : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-white border border-[var(--border)]"
+                    ? "bg-[var(--accent-primary)] text-white shadow-sm shadow-[var(--accent-glow)] font-semibold"
+                    : "bg-[var(--bg-surface-1)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)]"
                 }`}
               >
                 {Icon && <Icon className="size-3" />}
@@ -156,21 +149,21 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
       <div className="p-5 space-y-8">
         {loading && !feed ? (
           <div className="flex flex-col items-center justify-center py-36 gap-3 text-[var(--text-secondary)]">
-            <Loader2 className="size-8 animate-spin text-[var(--accent-purple)]" />
-            <p className="text-xs font-bold">Calibrando seu fluxo musical...</p>
+            <Loader2 className="size-8 animate-spin text-[var(--accent-primary)]" />
+            <p className="text-xs font-medium">Calibrando seu fluxo musical...</p>
           </div>
         ) : feed ? (
           <>
-            {/* ─── 01 (IMEDIATO): CONTINUAR OUVINDO (Cards 160x160 - Apenas Álbuns e Playlists) ─── */}
+            {/* ─── 01 (IMEDIATO): CONTINUAR OUVINDO (Cards 140x140 com border-radius: 20px) ─── */}
             {feed.continue_listening && feed.continue_listening.length > 0 && (
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                     Continuar Ouvindo
                   </h2>
                 </div>
 
-                <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
+                <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1">
                   {feed.continue_listening.map((item) => (
                     <div
                       key={`cont-${item.id}`}
@@ -181,23 +174,23 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
                           goToPlaylistDetail(item.id, item.title, item.cover_url)
                         }
                       }}
-                      className="w-40 shrink-0 space-y-2 cursor-pointer group active:scale-95 transition-all"
+                      className="w-[140px] shrink-0 space-y-2 cursor-pointer group active:scale-95 transition-all"
                     >
-                      <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-zinc-900 shadow-md">
+                      <div className="relative size-[140px] rounded-[20px] overflow-hidden bg-[var(--bg-surface-2)] border border-[var(--border-subtle)] shadow-[var(--shadow-card)]">
                         <img
                           src={item.cover_url || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300"}
                           alt={item.title}
                           className="size-full object-cover group-hover:scale-105 transition-transform"
                         />
-                        <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20">
-                          <div className="h-full bg-[var(--accent-blue)] w-1/2 rounded-full" />
+                        <div className="absolute inset-x-0 bottom-0 h-1 bg-black/20">
+                          <div className="h-full bg-[var(--accent-primary)] w-1/2 rounded-full" />
                         </div>
                       </div>
                       <div>
-                        <h4 className="text-xs font-black text-white truncate group-hover:text-[var(--accent-pink)]">
+                        <h4 className="text-[13px] font-semibold text-[var(--text-primary)] truncate group-hover:text-[var(--accent-primary)]">
                           {item.title}
                         </h4>
-                        <p className="text-[10px] font-semibold text-[var(--text-secondary)] truncate">
+                        <p className="text-[11px] font-normal text-[var(--text-secondary)] truncate">
                           {item.subtitle}
                         </p>
                       </div>
@@ -207,40 +200,39 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
               </section>
             )}
 
-            {/* ─── 02 (PRINCIPAL): SEUS 5 DAILY MIXES (Cards 180x180 com --gradient-luci) ─── */}
+            {/* ─── 02 (PRINCIPAL): SEUS 5 DAILY MIXES (Cards Clean) ─── */}
             {feed.daily_mixes && feed.daily_mixes.length > 0 && (
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Sparkles className="size-4 text-[var(--accent-pink)]" />
-                    <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                    <Sparkles className="size-4 text-[var(--accent-primary)]" />
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                       Seus 5 Daily Mixes
                     </h2>
                   </div>
-                  <span className="text-[10px] font-bold text-[var(--accent-pink)]">Atualizado hoje</span>
+                  <span className="text-[11px] font-medium text-[var(--accent-primary)]">Atualizado hoje</span>
                 </div>
 
-                <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
+                <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1">
                   {feed.daily_mixes.map((mix) => (
                     <div
                       key={`mix-${mix.mix_id}`}
                       onClick={() => goToPlaylistDetail(`daily_mix_${mix.mix_id}`, mix.title, mix.cover_url)}
-                      className="w-44 shrink-0 space-y-2.5 cursor-pointer group active:scale-95 transition-all"
+                      className="w-40 shrink-0 space-y-2 cursor-pointer group active:scale-95 transition-all"
                     >
                       <div
-                        className="relative aspect-square w-full rounded-2xl overflow-hidden p-3.5 flex flex-col justify-between shadow-xl"
-                        style={{ background: mix.gradient }}
+                        className="relative aspect-square w-full rounded-[20px] overflow-hidden p-3.5 flex flex-col justify-between shadow-[var(--shadow-card)] border border-[var(--border-subtle)] group-hover:border-[var(--accent-primary)] transition-colors bg-[var(--bg-surface-1)]"
                       >
-                        <div className="size-7 rounded-lg bg-black/30 backdrop-blur-md flex items-center justify-center text-[11px] font-black text-white">
+                        <div className="size-7 rounded-lg bg-[var(--bg-surface-2)] flex items-center justify-center text-[11px] font-bold text-[var(--accent-primary)] border border-[var(--border-subtle)]">
                           #{mix.mix_id}
                         </div>
                         <div>
-                          <h4 className="text-xs font-black text-white drop-shadow-md leading-tight">
+                          <h4 className="text-xs font-bold text-[var(--text-primary)] leading-tight">
                             {mix.title}
                           </h4>
                         </div>
                       </div>
-                      <p className="text-[10.5px] font-medium text-[var(--text-secondary)] line-clamp-2 leading-tight">
+                      <p className="text-[11px] font-normal text-[var(--text-secondary)] line-clamp-2 leading-tight">
                         {mix.subtitle}
                       </p>
                     </div>
