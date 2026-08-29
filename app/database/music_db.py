@@ -1008,3 +1008,105 @@ class MusicDatabase:
         rows = cursor.fetchall()
         conn.close()
         return [dict(r) for r in rows]
+
+    @staticmethod
+    def update_playlist_metadata(
+        playlist_id: str,
+        title: str,
+        description: str = "",
+        cover_mode: str = "custom",
+        custom_cover_url: str = ""
+    ) -> bool:
+        """Atualiza os metadados de uma playlist do usuário."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        UPDATE user_custom_playlists
+        SET title = ?, description = ?, cover_mode = ?, custom_cover_url = ?
+        WHERE id = ?
+        """, (title, description, cover_mode, custom_cover_url, playlist_id))
+        conn.commit()
+        updated = cursor.rowcount > 0
+        conn.close()
+        return updated
+
+    @staticmethod
+    def delete_custom_playlist(playlist_id: str) -> bool:
+        """Exclui uma playlist e todas as suas faixas vinculadas."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM playlist_tracks WHERE playlist_id = ?", (playlist_id,))
+        cursor.execute("DELETE FROM user_custom_playlists WHERE id = ?", (playlist_id,))
+        conn.commit()
+        deleted = cursor.rowcount > 0
+        conn.close()
+        return deleted
+
+    @staticmethod
+    def get_audio_settings(user_id: str) -> Dict[str, Any]:
+        """Obtém as preferências de áudio do usuário."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_audio_settings (
+            user_id TEXT PRIMARY KEY,
+            audio_quality TEXT DEFAULT 'high_256k',
+            autoplay_similar BOOLEAN DEFAULT 1,
+            crossfade_seconds INTEGER DEFAULT 0,
+            ducking_volume_percentage INTEGER DEFAULT 15,
+            offline_download_on_wifi_only BOOLEAN DEFAULT 1,
+            sleep_timer_default_min INTEGER DEFAULT 30,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        cursor.execute("SELECT * FROM user_audio_settings WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        if not row:
+            cursor.execute("INSERT INTO user_audio_settings (user_id) VALUES (?)", (user_id,))
+            conn.commit()
+            cursor.execute("SELECT * FROM user_audio_settings WHERE user_id = ?", (user_id,))
+            row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else {}
+
+    @staticmethod
+    def update_audio_settings(user_id: str, settings: Dict[str, Any]) -> Dict[str, Any]:
+        """Atualiza as preferências de áudio do usuário."""
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_audio_settings (
+            user_id TEXT PRIMARY KEY,
+            audio_quality TEXT DEFAULT 'high_256k',
+            autoplay_similar BOOLEAN DEFAULT 1,
+            crossfade_seconds INTEGER DEFAULT 0,
+            ducking_volume_percentage INTEGER DEFAULT 15,
+            offline_download_on_wifi_only BOOLEAN DEFAULT 1,
+            sleep_timer_default_min INTEGER DEFAULT 30,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        cursor.execute("""
+        UPDATE user_audio_settings
+        SET audio_quality = COALESCE(?, audio_quality),
+            autoplay_similar = COALESCE(?, autoplay_similar),
+            crossfade_seconds = COALESCE(?, crossfade_seconds),
+            ducking_volume_percentage = COALESCE(?, ducking_volume_percentage),
+            offline_download_on_wifi_only = COALESCE(?, offline_download_on_wifi_only),
+            sleep_timer_default_min = COALESCE(?, sleep_timer_default_min),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = ?
+        """, (
+            settings.get("audio_quality"),
+            settings.get("autoplay_similar"),
+            settings.get("crossfade_seconds"),
+            settings.get("ducking_volume_percentage"),
+            settings.get("offline_download_on_wifi_only"),
+            settings.get("sleep_timer_default_min"),
+            user_id
+        ))
+        conn.commit()
+        cursor.execute("SELECT * FROM user_audio_settings WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        conn.close()
+        return dict(row) if row else {}

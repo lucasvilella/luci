@@ -31,6 +31,7 @@ import {
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { TrackImage } from "./track-image"
+import { EditPlaylistModal } from "./edit-playlist-modal"
 
 export function MediaCollectionScreen({
   collectionType,
@@ -55,6 +56,7 @@ export function MediaCollectionScreen({
   const [isSaved, setIsSaved] = useState(false)
   const [isDownloaded, setIsDownloaded] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   // Action Sheet
   const [actionSheetTrack, setActionSheetTrack] = useState<LuciTrack | null>(null)
@@ -215,6 +217,15 @@ export function MediaCollectionScreen({
         </button>
 
         <div className="flex items-center gap-2">
+          {!isAlbum && (
+            <button
+              type="button"
+              onClick={() => setShowEditModal(true)}
+              className="px-3 py-1 rounded-full bg-[var(--bg-surface)] border border-[var(--border)] text-xs font-bold text-[var(--accent-purple)] hover:text-white active:scale-90 transition-all shadow-md"
+            >
+              Editar
+            </button>
+          )}
           <button
             type="button"
             aria-label="Transmitir"
@@ -604,6 +615,30 @@ export function MediaCollectionScreen({
           )}
         </div>
       ) : null}
+
+      {/* ─── MODAL DE EDIÇÃO DE PLAYLIST ─── */}
+      <EditPlaylistModal
+        playlist={
+          collection
+            ? {
+                id: collection.id,
+                title: collection.title,
+                description: collection.subtitle,
+                thumbnail: collection.cover_url,
+              }
+            : null
+        }
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onUpdated={() => {
+          fetchCollectionDetails(collectionType, collectionId || "default", initialTitle, initialArtist).then((data) =>
+            setCollection(data)
+          )
+        }}
+        onDeleted={() => {
+          pop()
+        }}
+      />
     </div>
   )
 }

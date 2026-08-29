@@ -37,6 +37,7 @@ import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { TrackImage } from "./track-image"
 import { AddToPlaylistModal } from "./add-to-playlist-modal"
 import { QueueScreen } from "./queue-screen"
+import { SleepTimerSheet } from "./sleep-timer-sheet"
 import {
   fetchPlaylists,
   addTrackToPlaylist,
@@ -71,6 +72,9 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     playTrack,
     lyrics,
     loadLyricsForCurrent,
+    duckPlayerVolume,
+    restorePlayerVolume,
+    addToQueue,
   } = useMusicPlayer()
 
   const { pop, goToLyrics, goToArtist, goToAlbumDetail } = useMusicNavigation()
@@ -82,6 +86,28 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
   const [showPromptModal, setShowPromptModal] = useState(false)
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false)
   const [showActionSheet, setShowActionSheet] = useState(false)
+  const [showSleepTimerSheet, setShowSleepTimerSheet] = useState(false)
+  const [activeSleepTimer, setActiveSleepTimer] = useState<number | null>(null)
+  const sleepTimerTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handleSetSleepTimer = (minutes: number | null) => {
+    if (sleepTimerTimeoutRef.current) {
+      clearTimeout(sleepTimerTimeoutRef.current)
+      sleepTimerTimeoutRef.current = null
+    }
+    setActiveSleepTimer(minutes)
+    if (minutes !== null && minutes > 0) {
+      const ms = minutes * 60 * 1000
+      sleepTimerTimeoutRef.current = setTimeout(() => {
+        duckPlayerVolume(0, 10000)
+        setTimeout(() => {
+          togglePlay()
+          setActiveSleepTimer(null)
+          restorePlayerVolume(500)
+        }, 10000)
+      }, ms - 10000 > 0 ? ms - 10000 : 1000)
+    }
+  }
 
   // Dados Adicionais
   const [artistDetails, setArtistDetails] = useState<ArtistDetails | null>(null)
@@ -788,6 +814,18 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
               <button
                 type="button"
                 onClick={() => {
+                  setShowSleepTimerSheet(true)
+                  setShowActionSheet(false)
+                }}
+                className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
+              >
+                <Clock className="size-5 text-[var(--accent-purple)]" />
+                <span>Temporizador de Sono {activeSleepTimer ? `(${activeSleepTimer}m)` : ""}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
                   if (navigator.share) {
                     navigator.share({
                       title: currentTrack.title,
@@ -818,6 +856,14 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
         track={currentTrack}
         isOpen={showAddToPlaylistModal}
         onClose={() => setShowAddToPlaylistModal(false)}
+      />
+
+      {/* ─── MODAL TEMPORIZADOR DE SONO (SLEEP TIMER SHEET) ─── */}
+      <SleepTimerSheet
+        isOpen={showSleepTimerSheet}
+        onClose={() => setShowSleepTimerSheet(false)}
+        onSetTimer={handleSetSleepTimer}
+        activeMinutes={activeSleepTimer}
       />
     </div>
   )

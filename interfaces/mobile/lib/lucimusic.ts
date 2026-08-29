@@ -621,4 +621,39 @@ export async function recordTasteSignal(
   } catch {}
 }
 
+export async function updatePlaylistMetadata(
+  playlistId: string,
+  data: { title: string; description?: string; cover_mode?: string; custom_cover_url?: string }
+): Promise<boolean> {
+  const res = await luciApiFetch(`/api/v1/music/playlist/${encodeURIComponent(playlistId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  })
+  return res.ok
+}
+
+export async function deletePlaylistById(playlistId: string): Promise<boolean> {
+  const res = await luciApiFetch(`/api/v1/music/playlist/${encodeURIComponent(playlistId)}`, {
+    method: "DELETE",
+  })
+  return res.ok
+}
+
+export async function fetchAudioSettings(): Promise<any> {
+  const res = await luciApiFetch("/api/v1/music/settings/audio")
+  if (!res.ok) return null
+  return res.json()
+}
+
+export async function updateAudioSettings(data: any): Promise<any> {
+  const res = await luciApiFetch("/api/v1/music/settings/audio", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) return null
+  return res.json()
+}
+
 

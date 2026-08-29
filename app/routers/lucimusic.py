@@ -986,6 +986,55 @@ async def get_playlist_details(playlist_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Playlist não encontrada.")
     return pl
 
+class UpdatePlaylistPayload(BaseModel):
+    title: str
+    description: Optional[str] = ""
+    cover_mode: Optional[str] = "custom"
+    custom_cover_url: Optional[str] = ""
+
+@router.put("/playlist/{playlist_id}")
+async def update_playlist(playlist_id: str, payload: UpdatePlaylistPayload):
+    """Atualiza título, descrição e capa da playlist."""
+    success = MusicDatabase.update_playlist_metadata(
+        playlist_id=playlist_id,
+        title=payload.title,
+        description=payload.description or "",
+        cover_mode=payload.cover_mode or "custom",
+        custom_cover_url=payload.custom_cover_url or ""
+    )
+    if not success:
+        raise HTTPException(status_code=404, detail="Playlist não encontrada para edição.")
+    return {"status": "ok", "message": "Playlist atualizada com sucesso."}
+
+@router.delete("/playlist/{playlist_id}")
+async def delete_playlist(playlist_id: str):
+    """Exclui uma playlist do usuário."""
+    success = MusicDatabase.delete_custom_playlist(playlist_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Playlist não encontrada para exclusão.")
+    return {"success": True, "deleted_id": playlist_id}
+
+# ─── 10. Configurações de Áudio & Comportamento ───
+class AudioSettingsPayload(BaseModel):
+    audio_quality: Optional[str] = None
+    autoplay_similar: Optional[bool] = None
+    crossfade_seconds: Optional[int] = None
+    ducking_volume_percentage: Optional[int] = None
+    offline_download_on_wifi_only: Optional[bool] = None
+    sleep_timer_default_min: Optional[int] = None
+
+@router.get("/settings/audio")
+async def get_audio_settings(request: Request):
+    """Obtém as preferências de áudio do usuário."""
+    user_id = _get_current_user(request)
+    return MusicDatabase.get_audio_settings(user_id)
+
+@router.put("/settings/audio")
+async def update_audio_settings(payload: AudioSettingsPayload, request: Request):
+    """Atualiza as preferências de áudio do usuário."""
+    user_id = _get_current_user(request)
+    return MusicDatabase.update_audio_settings(user_id, payload.model_dump(exclude_unset=True))
+
 class AddTrackPayload(BaseModel):
     track_id: str
     title: str

@@ -2,6 +2,7 @@
 
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { Home, Compass, Library } from "lucide-react"
+import { OfflineStateBanner } from "./offline-state-banner"
 
 export function MusicDocker() {
   const { screen, reset, goToSearch, goToLibrary } = useMusicNavigation()
@@ -14,10 +15,12 @@ export function MusicDocker() {
   const isLibrary = screen.type === "library" || screen.type === "playlists"
 
   return (
-    <div
-      aria-label="Sub-Navegação Topo LuciMusic"
-      className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--bg-app)]/80 backdrop-blur-md border-b border-[var(--border)] z-10 shrink-0"
-    >
+    <div className="flex flex-col z-10 shrink-0">
+      <OfflineStateBanner />
+      <div
+        aria-label="Sub-Navegação Topo LuciMusic"
+        className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--bg-app)]/80 backdrop-blur-md border-b border-[var(--border)]"
+      >
       <button
         type="button"
         onClick={reset}
@@ -56,6 +59,7 @@ export function MusicDocker() {
         <Library className="size-3.5" />
         <span>Biblioteca</span>
       </button>
+      </div>
     </div>
   )
 }
