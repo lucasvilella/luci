@@ -35,9 +35,7 @@ async def get_music_home(
     """
     import datetime
     user_id = _get_current_user(request)
-    curation = await music_intelligence_engine.get_home_curation(user_id)
-    feed = await lucimusic_service.resolve_home_curation(curation, user_id)
-
+    
     # Saudação dinâmica pelo horário
     hour = datetime.datetime.now().hour
     if 5 <= hour < 12:
@@ -47,32 +45,58 @@ async def get_music_home(
     else:
         greeting = f"Boa noite, {user_id.capitalize()}"
 
-    # 1. Continuar Ouvindo (Coleções: Álbuns e Playlists)
-    continue_listening = MusicDatabase.get_collection_history(user_id, limit=6)
-    if not continue_listening:
-        # Fallback para álbuns/playlists favoritados
-        saved_albums = MusicDatabase.get_saved_albums(user_id, limit=3)
-        saved_pls = MusicDatabase.get_saved_playlists(user_id, limit=3)
-        for alb in saved_albums:
-            continue_listening.append({
-                "id": alb["id"],
-                "type": "album",
-                "title": alb["title"],
-                "subtitle": alb.get("artist", "Álbum"),
-                "cover_url": alb.get("cover_url", ""),
-                "last_track_index": 0
-            })
-        for pl in saved_pls:
-            continue_listening.append({
-                "id": pl["id"],
-                "type": "playlist",
-                "title": pl["title"],
-                "subtitle": pl.get("artist", "Playlist"),
-                "cover_url": pl.get("cover_url", ""),
-                "last_track_index": 0
-            })
+    try:
+        curation = await music_intelligence_engine.get_home_curation(user_id)
+        feed = await lucimusic_service.resolve_home_curation(curation, user_id)
+    except Exception as e:
+        print(f"[MusicHome] Warning: Engine curation fallback due to: {e}")
+        curation = None
+        feed = None
 
-    # 2. Daily Mixes (5 Mixes Estruturados da Luci)
+    continue_listening = []
+    try:
+        continue_listening = MusicDatabase.get_collection_history(user_id, limit=6)
+        if not continue_listening:
+            saved_albums = MusicDatabase.get_saved_albums(user_id, limit=3)
+            saved_pls = MusicDatabase.get_saved_playlists(user_id, limit=3)
+            for alb in saved_albums:
+                continue_listening.append({
+                    "id": alb["id"],
+                    "type": "album",
+                    "title": alb["title"],
+                    "subtitle": alb["artist"],
+                    "cover_url": alb["cover_url"]
+                })
+            for pl in saved_pls:
+                continue_listening.append({
+                    "id": pl["id"],
+                    "type": "playlist",
+                    "title": pl["title"],
+                    "subtitle": f"{pl['track_count']} faixas",
+                    "cover_url": pl["cover_url"]
+                })
+    except Exception as e:
+        print(f"[MusicHome] Warning: Continue listening fallback: {e}")
+
+    # Fallback garantido se o banco ou engine estiverem vazios no Termux
+    if not continue_listening:
+        continue_listening = [
+            {
+                "id": "MPREb_95vF8Xw4tC0",
+                "type": "album",
+                "title": "Top Hits Brasil",
+                "subtitle": "Os maiores sucessos do momento",
+                "cover_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300"
+            },
+            {
+                "id": "liked_songs",
+                "type": "playlist",
+                "title": "Mais Queridas",
+                "subtitle": "Suas músicas favoritas",
+                "cover_url": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300"
+            }
+        ]
+
     daily_mixes = []
     gradient_themes = [
         "linear-gradient(135deg, #0600AB 0%, #977DFF 100%)",
@@ -81,7 +105,7 @@ async def get_music_home(
         "linear-gradient(135deg, #06003D 0%, #977DFF 100%)",
         "linear-gradient(135deg, #977DFF 0%, #FFCCF2 100%)"
     ]
-    raw_mixes = feed.get("daily_mixes", [])
+    raw_mixes = feed.get("daily_mixes", []) if feed else []
     for idx in range(5):
         if idx < len(raw_mixes):
             m = raw_mixes[idx]
@@ -104,24 +128,25 @@ async def get_music_home(
             })
 
     # 3. Artistas Favoritos (Afinidade)
-    favorite_artists = feed.get("recommended_artists", [])[:8]
+    favorite_artists = feed.get("recommended_artists", [])[:8] if feed else []
 
     # 4. Artistas Recomendados pela Luci (Pontes de Descoberta com Razão)
     recommended_artists = []
-    for art in feed.get("recommended_artists", [])[2:8]:
-        fav_name = favorite_artists[0]["name"] if favorite_artists else "seus artistas favoritos"
-        recommended_artists.append({
-            "id": art.get("id"),
-            "name": art.get("name"),
-            "avatar": art.get("thumbnail") or art.get("avatar") or "",
-            "reason": f"Porque você curte {fav_name}"
-        })
+    if feed:
+        for art in feed.get("recommended_artists", [])[2:8]:
+            fav_name = favorite_artists[0]["name"] if favorite_artists else "seus artistas favoritos"
+            recommended_artists.append({
+                "id": art.get("id"),
+                "name": art.get("name"),
+                "avatar": art.get("thumbnail") or art.get("avatar") or "",
+                "reason": f"Porque você curte {fav_name}"
+            })
 
     # 5. Em Alta no Brasil (Trending & Charts)
-    trending_brasil = feed.get("trending_brasil", [])[:10]
+    trending_brasil = feed.get("trending_brasil", [])[:10] if feed else []
 
     # 6. Lançamentos Relevantes
-    new_releases = feed.get("new_releases", [])[:10]
+    new_releases = feed.get("new_releases", [])[:10] if feed else []
 
     # 7. Radar de Alta Energia (Treino) & 8. Foco/Descompressão
     custom_workout = {

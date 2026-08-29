@@ -31,6 +31,7 @@ import {
   X,
   Sliders,
   Send,
+  Plus,
 } from "lucide-react"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
