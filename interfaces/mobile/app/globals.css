@@ -49,53 +49,130 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
+:root,
+[data-theme="dark"],
+.dark {
   color-scheme: dark;
-  /* ─── Superfícies & Fundos Oficiais da Luci ─── */
-  --bg-app: #00001f;             /* Fundo absoluto do app (Dark profundo) */
-  --bg-surface: #06003d;         /* Containers, cards e headers */
-  --bg-surface-glass: rgba(6, 0, 61, 0.65); /* Efeito vidro fosco */
-  
-  /* ─── Acentos & Gradientes ─── */
-  --accent-blue: #0033ff;        /* Ações primárias, botões ativos */
-  --accent-purple: #977dff;      /* Realces secundários, sliders, ícones */
-  --accent-pink: #ffccf2;        /* Destaques sutis, badges, estado do Orb */
-  --gradient-luci: linear-gradient(135deg, #0033ff 0%, #977dff 50%, #ffccf2 100%);
-  
-  /* ─── Textos & Tipografia ─── */
-  --text-primary: #f2e6ee;       /* Título e textos principais */
-  --text-secondary: #977dff;     /* Subtítulos e metadados */
-  --text-muted: rgba(242, 230, 238, 0.5); /* Letras inativas, placeholders */
+  /* ─── Superfícies & Elevações ─── */
+  --bg-app: #121318;              /* Fundo absoluto (Grafite escuro neutro) */
+  --bg-surface: #1a1b22;          /* Cards de primeiro nível, containers */
+  --bg-surface-1: #1a1b22;        /* Cards de primeiro nível, containers */
+  --bg-surface-2: #23252e;        /* Cards secundários, inputs, pílulas */
+  --bg-surface-glass: rgba(22, 23, 29, 0.88); /* Efeito vidro fosco */
+  --bg-deck: rgba(22, 23, 29, 0.88); /* Fundo do Deck Flutuante com blur */
+  --border-subtle: rgba(255, 255, 255, 0.06); /* Divisórias discretas */
+  --border: rgba(255, 255, 255, 0.06);
 
-  /* Compatibilidade com Tailwind e Componentes Base */
+  /* ─── Acentos de Ação (Azul Índigo Periwinkle) ─── */
+  --accent-primary: #5c62ec;      /* Botões de destaque, play, ações principais */
+  --accent-primary-hover: #4e53db;
+  --accent-surface: #2b2e59;      /* Fundo de cards de destaque/ativos */
+  --accent-glow: rgba(92, 98, 236, 0.25);
+  --accent-blue: #5c62ec;
+  --accent-purple: #7c82ff;
+  --accent-pink: #ffccf2;
+  --gradient-luci: linear-gradient(135deg, #5c62ec 0%, #7c82ff 50%, #ffccf2 100%);
+  --gradient-daily-mix: linear-gradient(135deg, #2b2e59 0%, #5c62ec 50%, #7c82ff 100%);
+
+  /* ─── Tipografia & Textos ─── */
+  --text-primary: #f5f6fa;        /* Títulos e valores principais */
+  --text-secondary: #9295a5;      /* Subtítulos, metadados e contadores */
+  --text-muted: #5e6275;          /* Placeholders, ícones inativos */
+
+  /* ─── Sombras Estruturais ─── */
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-deck: 0 8px 32px rgba(0, 0, 0, 0.45);
+
+  /* Compatibilidade com Tailwind & Componentes Base */
   --background: var(--bg-app);
   --foreground: var(--text-primary);
-  --card: var(--bg-surface);
+  --card: var(--bg-surface-1);
   --card-foreground: var(--text-primary);
-  --popover: var(--bg-surface);
+  --popover: var(--bg-surface-1);
   --popover-foreground: var(--text-primary);
-  --primary: var(--accent-blue);
+  --primary: var(--accent-primary);
   --primary-foreground: #FFFFFF;
-  --secondary: var(--bg-surface);
+  --secondary: var(--bg-surface-2);
   --secondary-foreground: var(--text-secondary);
-  --muted: rgba(6, 0, 61, 0.5);
+  --muted: var(--bg-surface-2);
   --muted-foreground: var(--text-muted);
-  --accent: var(--accent-purple);
+  --accent: var(--accent-primary);
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
-  --border: rgba(151, 125, 255, 0.15);
-  --input: rgba(151, 125, 255, 0.2);
-  --ring: var(--accent-blue);
+  --input: var(--bg-surface-2);
+  --ring: var(--accent-primary);
   --radius: 1rem;
   --sidebar: var(--bg-app);
   --sidebar-foreground: var(--text-primary);
-  --sidebar-primary: var(--accent-blue);
+  --sidebar-primary: var(--accent-primary);
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: var(--bg-surface);
+  --sidebar-accent: var(--bg-surface-1);
   --sidebar-accent-foreground: var(--text-secondary);
-  --sidebar-border: rgba(151, 125, 255, 0.15);
-  --sidebar-ring: var(--accent-blue);
-  --music-accent: var(--accent-purple);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--accent-primary);
+  --music-accent: var(--accent-primary);
+  --music-accent-foreground: #FFFFFF;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  /* ─── Superfícies & Elevações ─── */
+  --bg-app: #f4f5f8;              /* Fundo claro cinza-neve */
+  --bg-surface: #ffffff;        /* Cards principais e modais */
+  --bg-surface-1: #ffffff;        /* Cards principais e modais */
+  --bg-surface-2: #e9ecf2;        /* Inputs, pílulas inativas */
+  --bg-surface-glass: rgba(255, 255, 255, 0.92);
+  --bg-deck: rgba(255, 255, 255, 0.92); /* Deck translúcido claro */
+  --border-subtle: rgba(0, 0, 0, 0.05); /* Divisórias sutis */
+  --border: rgba(0, 0, 0, 0.05);
+
+  /* ─── Acentos de Ação ─── */
+  --accent-primary: #5c62ec;      /* Mantém a mesma assinatura de cor */
+  --accent-primary-hover: #4e53db;
+  --accent-surface: #eef0fd;      /* Fundo suave para cards destacados */
+  --accent-glow: rgba(92, 98, 236, 0.15);
+  --accent-blue: #5c62ec;
+  --accent-purple: #7c82ff;
+  --accent-pink: #eef0fd;
+  --gradient-luci: linear-gradient(135deg, #5c62ec 0%, #7c82ff 50%, #9295a5 100%);
+  --gradient-daily-mix: linear-gradient(135deg, #eef0fd 0%, #5c62ec 50%, #7c82ff 100%);
+
+  /* ─── Tipografia & Textos ─── */
+  --text-primary: #121318;        /* Títulos e dados em preto/carvão */
+  --text-secondary: #6c7084;      /* Subtítulos legíveis */
+  --text-muted: #a2a6b8;          /* Ícones inativos e dicas */
+
+  /* ─── Sombras Estruturais Táteis ─── */
+  --shadow-card: 0 6px 18px rgba(90, 97, 120, 0.06);
+  --shadow-deck: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+  /* Compatibilidade */
+  --background: var(--bg-app);
+  --foreground: var(--text-primary);
+  --card: var(--bg-surface-1);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-surface-1);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent-primary);
+  --primary-foreground: #FFFFFF;
+  --secondary: var(--bg-surface-2);
+  --secondary-foreground: var(--text-secondary);
+  --muted: var(--bg-surface-2);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--accent-primary);
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --input: var(--bg-surface-2);
+  --ring: var(--accent-primary);
+  --sidebar: var(--bg-app);
+  --sidebar-foreground: var(--text-primary);
+  --sidebar-primary: var(--accent-primary);
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: var(--bg-surface-1);
+  --sidebar-accent-foreground: var(--text-secondary);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--accent-primary);
+  --music-accent: var(--accent-primary);
   --music-accent-foreground: #FFFFFF;
 }
 

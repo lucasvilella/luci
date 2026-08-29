@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { MusicPlayerProvider } from "@/hooks/use-music-player"
 import { MusicNavigationProvider, useMusicNavigation } from "@/hooks/use-music-navigation"
 import { MusicHome } from "@/components/music/music-home"
@@ -19,11 +20,23 @@ import { MusicDocker } from "@/components/music/music-docker"
 function MusicScreenRouter({
   onOpenMenu,
   onSwitchToLuci,
+  initialTab,
 }: {
   onOpenMenu?: () => void
   onSwitchToLuci?: () => void
+  initialTab?: "home" | "explore" | "library" | "luci" | "notifications"
 }) {
-  const { screen } = useMusicNavigation()
+  const { screen, reset, goToSearch, goToLibrary } = useMusicNavigation()
+
+  useEffect(() => {
+    if (initialTab === "home") {
+      reset()
+    } else if (initialTab === "explore") {
+      goToSearch()
+    } else if (initialTab === "library") {
+      goToLibrary()
+    }
+  }, [initialTab, reset, goToSearch, goToLibrary])
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-[var(--bg-app)] text-[var(--text-primary)]">
@@ -74,14 +87,16 @@ function MusicScreenRouter({
 export function MusicPlayerView({
   onOpenMenu,
   onSwitchToLuci,
+  initialTab,
 }: {
   onOpenMenu?: () => void
   onSwitchToLuci?: () => void
+  initialTab?: "home" | "explore" | "library" | "luci" | "notifications"
 }) {
   return (
     <MusicPlayerProvider>
       <MusicNavigationProvider>
-        <MusicScreenRouter onOpenMenu={onOpenMenu} onSwitchToLuci={onSwitchToLuci} />
+        <MusicScreenRouter onOpenMenu={onOpenMenu} onSwitchToLuci={onSwitchToLuci} initialTab={initialTab} />
       </MusicNavigationProvider>
     </MusicPlayerProvider>
   )
