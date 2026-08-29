@@ -1,9 +1,7 @@
-"use client"
-
 import React from "react"
-import { Home, Compass, Sparkles, Bell, User } from "lucide-react"
+import { Music, Film, Sparkles, House, User } from "lucide-react"
 
-export type FloatingDeckTab = "home" | "explore" | "luci" | "notifications" | "library"
+export type FloatingDeckTab = "music" | "films" | "luci" | "home-assistant" | "profile"
 
 interface FloatingDeckProps {
   activeTab: FloatingDeckTab
@@ -14,7 +12,7 @@ interface FloatingDeckProps {
 export function FloatingDeck({ activeTab, onTabChange, unreadCount = 0 }: FloatingDeckProps) {
   return (
     <nav
-      aria-label="Deck Principal de Navegação"
+      aria-label="Deck Principal de Módulos"
       className="pointer-events-none fixed inset-x-0 bottom-5 z-40 flex justify-center px-4"
     >
       <div
@@ -25,57 +23,57 @@ export function FloatingDeck({ activeTab, onTabChange, unreadCount = 0 }: Floati
           boxShadow: "var(--shadow-deck)",
         }}
       >
-        {/* 1. Início (Home) */}
+        {/* 1. Módulo Música */}
         <button
           type="button"
-          onClick={() => onTabChange("home")}
-          aria-label="Início"
+          onClick={() => onTabChange("music")}
+          aria-label="Música"
           className="relative flex flex-1 flex-col items-center justify-center py-2 transition-transform active:scale-90"
         >
           <div
             className={`flex size-10 items-center justify-center rounded-full transition-all duration-200 ${
-              activeTab === "home"
+              activeTab === "music"
                 ? "bg-[var(--accent-surface)] text-[var(--accent-primary)] shadow-sm"
                 : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
-            <Home className="size-5" />
+            <Music className="size-5" />
           </div>
           <span
             className={`text-[10px] font-medium tracking-tight transition-colors ${
-              activeTab === "home" ? "font-bold text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+              activeTab === "music" ? "font-bold text-[var(--text-primary)]" : "text-[var(--text-muted)]"
             }`}
           >
-            Início
+            Música
           </span>
         </button>
 
-        {/* 2. Buscar / Explorar */}
+        {/* 2. Módulo Filmes & Séries */}
         <button
           type="button"
-          onClick={() => onTabChange("explore")}
-          aria-label="Buscar"
+          onClick={() => onTabChange("films")}
+          aria-label="Filmes"
           className="relative flex flex-1 flex-col items-center justify-center py-2 transition-transform active:scale-90"
         >
           <div
             className={`flex size-10 items-center justify-center rounded-full transition-all duration-200 ${
-              activeTab === "explore"
+              activeTab === "films"
                 ? "bg-[var(--accent-surface)] text-[var(--accent-primary)] shadow-sm"
                 : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
-            <Compass className="size-5" />
+            <Film className="size-5" />
           </div>
           <span
             className={`text-[10px] font-medium tracking-tight transition-colors ${
-              activeTab === "explore" ? "font-bold text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+              activeTab === "films" ? "font-bold text-[var(--text-primary)]" : "text-[var(--text-muted)]"
             }`}
           >
-            Buscar
+            Cinema
           </span>
         </button>
 
-        {/* 3. Orb Luci (Botão Central em Destaque) */}
+        {/* 3. Orb Luci (Módulo Central de IA) */}
         <div className="relative flex flex-1 justify-center">
           <button
             type="button"
@@ -99,44 +97,41 @@ export function FloatingDeck({ activeTab, onTabChange, unreadCount = 0 }: Floati
           </button>
         </div>
 
-        {/* 4. Alertas / Notificações */}
+        {/* 4. Módulo Home Assistant */}
         <button
           type="button"
-          onClick={() => onTabChange("notifications")}
-          aria-label="Alertas"
+          onClick={() => onTabChange("home-assistant")}
+          aria-label="Casa Inteligente"
           className="relative flex flex-1 flex-col items-center justify-center py-2 transition-transform active:scale-90"
         >
           <div
             className={`relative flex size-10 items-center justify-center rounded-full transition-all duration-200 ${
-              activeTab === "notifications"
+              activeTab === "home-assistant"
                 ? "bg-[var(--accent-surface)] text-[var(--accent-primary)] shadow-sm"
                 : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
-            <Bell className="size-5" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 flex size-2 items-center justify-center rounded-full bg-[var(--accent-primary)] ring-2 ring-[var(--bg-deck)]" />
-            )}
+            <House className="size-5" />
           </div>
           <span
             className={`text-[10px] font-medium tracking-tight transition-colors ${
-              activeTab === "notifications" ? "font-bold text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+              activeTab === "home-assistant" ? "font-bold text-[var(--text-primary)]" : "text-[var(--text-muted)]"
             }`}
           >
-            Alertas
+            Casa
           </span>
         </button>
 
-        {/* 5. Conta / Biblioteca */}
+        {/* 5. Módulo Perfil / Configurações */}
         <button
           type="button"
-          onClick={() => onTabChange("library")}
-          aria-label="Biblioteca e Conta"
+          onClick={() => onTabChange("profile")}
+          aria-label="Perfil e Configurações"
           className="relative flex flex-1 flex-col items-center justify-center py-2 transition-transform active:scale-90"
         >
           <div
             className={`flex size-10 items-center justify-center rounded-full transition-all duration-200 ${
-              activeTab === "library"
+              activeTab === "profile"
                 ? "bg-[var(--accent-surface)] text-[var(--accent-primary)] shadow-sm"
                 : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
@@ -145,10 +140,10 @@ export function FloatingDeck({ activeTab, onTabChange, unreadCount = 0 }: Floati
           </div>
           <span
             className={`text-[10px] font-medium tracking-tight transition-colors ${
-              activeTab === "library" ? "font-bold text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+              activeTab === "profile" ? "font-bold text-[var(--text-primary)]" : "text-[var(--text-muted)]"
             }`}
           >
-            Biblioteca
+            Perfil
           </span>
         </button>
       </div>
