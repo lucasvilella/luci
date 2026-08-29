@@ -15,8 +15,8 @@ function getApiBaseUrl(): string {
   }
 
   if (isCapacitor) {
-    // Endereço IP atual do host ou fallback para porta padrão 8000
-    return "http://192.168.15.69:8000"
+    // Endereço IP do Servidor Termux Dedicado
+    return "http://192.168.15.90:8000"
   }
 
   // Quando servido pelo FastAPI na web, o backend está na mesma origem

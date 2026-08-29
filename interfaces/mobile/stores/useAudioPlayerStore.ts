@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { API_BASE_URL } from "@/lib/api"
 import {
   type LuciTrack,
   type LyricsData,
@@ -157,7 +158,7 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => ({
 
     if (primaryAudio) {
       isPreloaded = false
-      const streamUrl = track.audioUrl || `/api/v1/music/play/${track.id}`
+      const streamUrl = track.audioUrl || `${API_BASE_URL}/api/v1/music/play/${track.id}`
       primaryAudio.src = streamUrl
       primaryAudio.load()
 
@@ -182,7 +183,7 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => ({
           const { queue: currentQ, currentIndex: currentIdx } = get()
           const nextTrack = currentQ[currentIdx + 1]
           if (nextTrack && preloadAudio) {
-            preloadAudio.src = nextTrack.audioUrl || `/api/v1/music/play/${nextTrack.id}`
+            preloadAudio.src = nextTrack.audioUrl || `${API_BASE_URL}/api/v1/music/play/${nextTrack.id}`
             preloadAudio.load()
             isPreloaded = true
           }
