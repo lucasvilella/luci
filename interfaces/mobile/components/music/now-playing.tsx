@@ -35,6 +35,8 @@ import {
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { TrackImage } from "./track-image"
+import { AddToPlaylistModal } from "./add-to-playlist-modal"
+import { QueueScreen } from "./queue-screen"
 import {
   fetchPlaylists,
   addTrackToPlaylist,
@@ -45,8 +47,6 @@ import {
   formatSeconds,
   recordTrackEvent,
 } from "@/lib/lucimusic"
-import { QueueScreen } from "./queue-screen"
-import { AddToPlaylistModal } from "./add-to-playlist-modal"
 
 export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) {
   const {
@@ -332,18 +332,29 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => toggleLike(currentTrack)}
-              aria-label="Favoritar"
-              className="p-2 text-[var(--text-secondary)] hover:text-white active:scale-90 transition-transform"
-            >
-              <Heart
-                className={`size-7 transition-colors ${
-                  liked ? "fill-[var(--accent-purple)] text-[var(--accent-purple)] drop-shadow-[0_0_12px_rgba(151,125,255,0.6)]" : "text-white/70"
-                }`}
-              />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setShowAddToPlaylistModal(true)}
+                aria-label="Adicionar à Playlist"
+                className="p-2 text-[var(--text-secondary)] hover:text-white active:scale-90 transition-transform"
+              >
+                <Plus className="size-6 text-white/80" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleLike(currentTrack)}
+                aria-label="Favoritar"
+                className="p-2 text-[var(--text-secondary)] hover:text-white active:scale-90 transition-transform"
+              >
+                <Heart
+                  className={`size-6 transition-colors ${
+                    liked ? "fill-[var(--accent-purple)] text-[var(--accent-purple)] drop-shadow-[0_0_12px_rgba(151,125,255,0.6)]" : "text-white/70"
+                  }`}
+                />
+              </button>
+            </div>
           </div>
 
           {/* ─── D. Barra de Progresso (Seek Bar) ─── */}
@@ -434,50 +445,8 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
             </button>
           </div>
 
-          {/* ─── BARRA DE AÇÕES RÁPIDAS (Compartilhar, + Playlist, Like) ─── */}
-          <div className="flex items-center justify-around py-3 px-4 rounded-2xl bg-[var(--bg-surface-glass)] backdrop-blur-xl border border-[var(--border)] text-[var(--text-secondary)]">
-            <button
-              type="button"
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({
-                    title: currentTrack.title,
-                    text: `Ouvindo ${currentTrack.title} na Luci`,
-                    url: window.location.href,
-                  })
-                }
-              }}
-              className="flex items-center gap-2 text-xs font-black hover:text-white active:scale-95 transition-all"
-            >
-              <Share2 className="size-4 text-[var(--accent-purple)]" />
-              <span>Compartilhar</span>
-            </button>
-
-            <div className="w-[1px] h-4 bg-white/10" />
-
-            <button
-              type="button"
-              onClick={() => setShowAddToPlaylistModal(true)}
-              className="flex items-center gap-2 text-xs font-black text-white hover:text-[var(--accent-pink)] active:scale-95 transition-all"
-            >
-              <ListPlus className="size-4.5 text-[var(--accent-pink)] animate-pulse" />
-              <span>＋ Playlist</span>
-            </button>
-
-            <div className="w-[1px] h-4 bg-white/10" />
-
-            <button
-              type="button"
-              onClick={() => toggleLike(currentTrack)}
-              className="flex items-center gap-2 text-xs font-black hover:text-white active:scale-95 transition-all"
-            >
-              <Heart className={`size-4 ${liked ? "fill-[var(--accent-purple)] text-[var(--accent-purple)]" : "text-white/70"}`} />
-              <span>{liked ? "Curtida" : "Curtir"}</span>
-            </button>
-          </div>
-
           {/* ─── F. Barra de Ferramentas Secundária ─── */}
-          <div className="flex items-center justify-around pt-3 border-t border-white/10 text-[var(--text-secondary)]">
+          <div className="flex items-center justify-around pt-4 border-t border-white/10 text-[var(--text-secondary)]">
             {/* Info / Créditos */}
             <button
               type="button"
@@ -603,18 +572,70 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
       </div>
 
       {/* ─── MODAL 1: GAVETA DE FILA / UP NEXT ─── */}
-      <QueueScreen
-        isOpen={showQueueModal}
-        onClose={() => setShowQueueModal(false)}
-      />
+      {showQueueModal && (
+        <div
+          onClick={() => setShowQueueModal(false)}
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-md animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-[480px] max-h-[80vh] flex flex-col rounded-t-3xl bg-[var(--bg-surface)] border-t border-[var(--border)] p-6 shadow-2xl animate-slide-up"
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-2">
+                <ListMusic className="size-5 text-[var(--accent-pink)]" />
+                <h3 className="text-base font-black text-white">Fila de Reprodução ({queue.length})</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowQueueModal(false)}
+                className="size-8 flex items-center justify-center rounded-full bg-white/10 text-[var(--text-secondary)] hover:text-white"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
 
-      {/* ─── MODAL 0: ADICIONAR À PLAYLIST ─── */}
-      {currentTrack && (
-        <AddToPlaylistModal
-          track={currentTrack}
-          isOpen={showAddToPlaylistModal}
-          onClose={() => setShowAddToPlaylistModal(false)}
-        />
+            <div className="flex-1 overflow-y-auto space-y-2 py-4 no-scrollbar">
+              {queue.map((track, idx) => {
+                const isItemCurrent = idx === queueIndex
+                return (
+                  <div
+                    key={`queue-item-${track.id}-${idx}`}
+                    onClick={() => {
+                      playTrack(track, queue)
+                      setShowQueueModal(false)
+                    }}
+                    className={`flex items-center gap-3 p-2.5 rounded-2xl border transition-all cursor-pointer ${
+                      isItemCurrent
+                        ? "bg-[var(--accent-blue)]/20 border-[var(--accent-purple)] shadow-md"
+                        : "bg-[var(--bg-surface)]/60 border-[var(--border)] hover:bg-white/5"
+                    }`}
+                  >
+                    <TrackImage
+                      src={track.thumbnail}
+                      trackId={track.id}
+                      alt={track.title}
+                      className="size-11 rounded-xl object-cover bg-zinc-900 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h4 className={`text-xs font-black truncate ${isItemCurrent ? "text-[var(--accent-pink)]" : "text-white"}`}>
+                        {track.title}
+                      </h4>
+                      <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate">
+                        {track.artist}
+                      </p>
+                    </div>
+                    {isItemCurrent && (
+                      <span className="text-[10px] font-black uppercase text-[var(--accent-pink)] bg-[var(--accent-pink)]/20 px-2 py-0.5 rounded-full">
+                        Tocando
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ─── MODAL 2: INFO & DETALHES TÉCNICOS ─── */}
@@ -785,6 +806,19 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
           </div>
         </div>
       )}
+
+      {/* ─── MODAL DE FILA (QUEUE SCREEN) ─── */}
+      <QueueScreen
+        isOpen={showQueueModal}
+        onClose={() => setShowQueueModal(false)}
+      />
+
+      {/* ─── MODAL ADICIONAR À PLAYLIST (BOTTOM SHEET) ─── */}
+      <AddToPlaylistModal
+        track={currentTrack}
+        isOpen={showAddToPlaylistModal}
+        onClose={() => setShowAddToPlaylistModal(false)}
+      />
     </div>
   )
 }

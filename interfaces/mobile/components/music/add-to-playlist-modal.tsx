@@ -1,25 +1,27 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useRef, useEffect } from "react"
 import {
   X,
   Plus,
-  ListMusic,
   Check,
-  Loader2,
+  ListMusic,
   FolderPlus,
   Sparkles,
+  Loader2,
+  Lock,
 } from "lucide-react"
+import { useMusicPlayer } from "@/hooks/use-music-player"
 import {
   fetchPlaylists,
-  addTrackToPlaylist,
+  addTrackToPlaylistById,
   createPlaylistWithTrack,
   type UserPlaylist,
   type LuciTrack,
 } from "@/lib/lucimusic"
 
 interface AddToPlaylistModalProps {
-  track: LuciTrack
+  track: LuciTrack | null
   isOpen: boolean
   onClose: () => void
 }
@@ -27,40 +29,56 @@ interface AddToPlaylistModalProps {
 export function AddToPlaylistModal({ track, isOpen, onClose }: AddToPlaylistModalProps) {
   const [playlists, setPlaylists] = useState<UserPlaylist[]>([])
   const [loading, setLoading] = useState(true)
-  const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
-  const [showCreateInline, setShowCreateInline] = useState(false)
+  const [addingId, setAddingId] = useState<string | null>(null)
+  const [addedSuccessId, setAddedSuccessId] = useState<string | null>(null)
+
+  // Criar Nova Playlist inline
+  const [isCreatingNew, setIsCreatingNew] = useState(false)
   const [newTitle, setNewTitle] = useState("")
   const [creating, setCreating] = useState(false)
-  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  const loadUserPlaylists = async () => {
+    setLoading(true)
+    try {
+      const pl = await fetchPlaylists()
+      setPlaylists(pl)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (isOpen) {
-      setLoading(true)
-      fetchPlaylists()
-        .then((data) => setPlaylists(data))
-        .catch(console.error)
-        .finally(() => setLoading(false))
+      loadUserPlaylists()
+      setIsCreatingNew(false)
+      setNewTitle("")
+      setAddedSuccessId(null)
     }
   }, [isOpen])
 
-  const triggerFeedback = (message: string) => {
-    setToastMessage(message)
-    if (typeof window !== "undefined" && "vibrate" in navigator) {
-      navigator.vibrate(40)
-    }
-    setTimeout(() => {
-      setToastMessage(null)
-      onClose()
-    }, 1200)
-  }
+  if (!isOpen || !track) return null
 
-  const handleAddToExisting = async (playlist: UserPlaylist) => {
+  const handleSelectPlaylist = async (pl: UserPlaylist) => {
+    setAddingId(pl.id)
     try {
-      await addTrackToPlaylist(playlist.id, track)
-      setAddedIds((prev) => new Set(prev).add(playlist.id))
-      triggerFeedback(`Adicionada à "${playlist.title}"`)
+      // Haptics se disponível
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate(35)
+      }
+
+      await addTrackToPlaylistById(pl.id, track)
+      setAddedSuccessId(pl.id)
+
+      setTimeout(() => {
+        setAddedSuccessId(null)
+        onClose()
+      }, 900)
     } catch (err) {
       console.error(err)
+    } finally {
+      setAddingId(null)
     }
   }
 
@@ -68,19 +86,20 @@ export function AddToPlaylistModal({ track, isOpen, onClose }: AddToPlaylistModa
     if (!newTitle.trim()) return
     setCreating(true)
     try {
-      const pl = await createPlaylistWithTrack(newTitle.trim(), track)
-      setAddedIds((prev) => new Set(prev).add(pl.id))
-      setNewTitle("")
-      setShowCreateInline(false)
-      triggerFeedback(`Playlist "${pl.title}" criada!`)
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate(45)
+      }
+      const newPl = await createPlaylistWithTrack(newTitle.trim(), track)
+      setAddedSuccessId(newPl.id)
+      setTimeout(() => {
+        onClose()
+      }, 900)
     } catch (err) {
       console.error(err)
     } finally {
       setCreating(false)
     }
   }
-
-  if (!isOpen) return null
 
   return (
     <div
@@ -89,15 +108,15 @@ export function AddToPlaylistModal({ track, isOpen, onClose }: AddToPlaylistModa
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[480px] max-h-[85vh] flex flex-col rounded-t-3xl bg-[var(--bg-surface)] border-t border-[var(--border)] p-6 space-y-5 shadow-2xl animate-slide-up"
+        className="w-full max-w-[480px] max-h-[82vh] flex flex-col rounded-t-3xl bg-[var(--bg-surface)] border-t border-[var(--border)] p-6 shadow-2xl animate-slide-up"
       >
-        {/* Drag Handle */}
-        <div className="mx-auto h-1.5 w-12 rounded-full bg-white/20" />
+        {/* Drag Handle Topo */}
+        <div className="w-12 h-1 rounded-full bg-white/20 mx-auto mb-4" />
 
         {/* Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-white/10 shrink-0">
+        <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
           <div>
-            <h3 className="text-base font-black text-white">Adicionar à Playlist</h3>
+            <h3 className="text-base font-black text-white leading-tight">Adicionar à playlist</h3>
             <p className="text-xs text-[var(--text-secondary)] truncate max-w-[280px]">
               {track.title} • {track.artist}
             </p>
@@ -105,97 +124,98 @@ export function AddToPlaylistModal({ track, isOpen, onClose }: AddToPlaylistModa
           <button
             type="button"
             onClick={onClose}
-            className="size-8 flex items-center justify-center rounded-full bg-white/10 text-[var(--text-secondary)] hover:text-white"
+            className="size-8 flex items-center justify-center rounded-full bg-white/10 text-[var(--text-secondary)] hover:text-white active:scale-90 transition-transform"
           >
             <X className="size-4" />
           </button>
         </div>
 
-        {/* Toast Notifier */}
-        {toastMessage && (
-          <div className="p-3 rounded-2xl bg-gradient-to-r from-[#0033ff] to-[#977dff] text-white text-xs font-black flex items-center justify-center gap-2 shadow-lg animate-scale-up">
-            <Check className="size-4" />
-            <span>{toastMessage}</span>
-          </div>
-        )}
-
-        {/* Botão Nova Playlist */}
-        {!showCreateInline ? (
-          <button
-            type="button"
-            onClick={() => setShowCreateInline(true)}
-            className="flex items-center gap-3 p-3.5 rounded-2xl bg-[var(--accent-blue)]/20 border border-[var(--accent-purple)]/50 text-white font-black text-xs hover:bg-[var(--accent-blue)]/30 active:scale-98 transition-all shrink-0"
-          >
-            <div className="size-9 rounded-xl bg-[var(--accent-blue)] flex items-center justify-center text-white shadow-md">
-              <Plus className="size-5" />
+        {/* Formulário Nova Playlist */}
+        <div className="pt-4 pb-2">
+          {isCreatingNew ? (
+            <div className="p-3 rounded-2xl bg-black/40 border border-[var(--accent-purple)]/50 space-y-3 animate-scale-up">
+              <input
+                type="text"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="Nome da nova playlist"
+                className="w-full h-10 px-3.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border)] text-xs font-semibold text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-purple)]"
+                autoFocus
+              />
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCreatingNew(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--text-secondary)] hover:text-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateAndAdd}
+                  disabled={creating || !newTitle.trim()}
+                  className="px-4 py-1.5 rounded-lg bg-[var(--accent-blue)] text-white text-xs font-black shadow-md active:scale-95 transition-transform flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {creating ? <Loader2 className="size-3.5 animate-spin" /> : <span>Criar e Adicionar</span>}
+                </button>
+              </div>
             </div>
-            <span>Nova Playlist</span>
-          </button>
-        ) : (
-          <div className="p-3.5 rounded-2xl bg-black/40 border border-[var(--accent-purple)] space-y-3 animate-scale-up shrink-0">
-            <input
-              type="text"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="Nome da nova playlist"
-              className="w-full h-10 px-3 rounded-xl bg-black/50 border border-white/10 text-xs font-semibold text-white focus:outline-none focus:border-[var(--accent-purple)]"
-              autoFocus
-            />
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowCreateInline(false)}
-                className="px-3 py-1.5 rounded-lg text-xs font-bold text-[var(--text-secondary)] hover:text-white"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleCreateAndAdd}
-                disabled={creating || !newTitle.trim()}
-                className="px-4 py-1.5 rounded-lg bg-[var(--accent-blue)] text-white text-xs font-black shadow-md flex items-center gap-1.5 disabled:opacity-50"
-              >
-                {creating ? <Loader2 className="size-3.5 animate-spin" /> : <span>Criar e Adicionar</span>}
-              </button>
-            </div>
-          </div>
-        )}
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsCreatingNew(true)}
+              className="flex w-full items-center gap-3 p-3 rounded-2xl bg-gradient-to-r from-[#0033ff]/20 to-[#977dff]/20 border border-[var(--accent-purple)]/40 hover:bg-white/10 active:scale-98 transition-all group"
+            >
+              <div className="size-10 rounded-xl bg-[var(--accent-blue)] text-white flex items-center justify-center shadow-md">
+                <Plus className="size-5" />
+              </div>
+              <span className="text-xs font-black text-white group-hover:text-[var(--accent-pink)]">
+                Nova playlist
+              </span>
+            </button>
+          )}
+        </div>
 
         {/* Lista de Playlists */}
         <div className="flex-1 overflow-y-auto space-y-2 py-2 no-scrollbar">
-          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-secondary)] block mb-1">
+          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)] block px-1 pb-1">
             Suas Playlists
           </span>
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-2 text-[var(--text-secondary)]">
               <Loader2 className="size-6 animate-spin text-[var(--accent-purple)]" />
-              <span className="text-xs font-bold">Carregando playlists...</span>
+              <p className="text-xs font-bold">Carregando suas playlists...</p>
             </div>
           ) : playlists.length > 0 ? (
             playlists.map((pl) => {
-              const isAdded = addedIds.has(pl.id)
+              const isAdded = addedSuccessId === pl.id
+              const isProcessing = addingId === pl.id
 
               return (
                 <div
                   key={`pl-add-${pl.id}`}
-                  onClick={() => handleAddToExisting(pl)}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent-purple)]/50 active:scale-[0.99] transition-all cursor-pointer group"
+                  onClick={() => handleSelectPlaylist(pl)}
+                  className={`flex items-center justify-between p-2.5 rounded-2xl border transition-all cursor-pointer ${
+                    isAdded
+                      ? "bg-emerald-950/40 border-emerald-500 shadow-md"
+                      : "bg-[var(--bg-surface)]/70 border-[var(--border)] hover:bg-white/5 hover:border-[var(--accent-purple)]/40"
+                  }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="size-12 rounded-xl bg-zinc-900 overflow-hidden flex items-center justify-center shrink-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="size-11 rounded-xl overflow-hidden bg-zinc-900 flex items-center justify-center shrink-0">
                       {pl.thumbnail ? (
                         <img src={pl.thumbnail} alt={pl.title} className="size-full object-cover" />
                       ) : (
-                        <ListMusic className="size-6 text-[var(--accent-purple)]" />
+                        <ListMusic className="size-5 text-[var(--accent-purple)]" />
                       )}
                     </div>
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-black text-white truncate group-hover:text-[var(--accent-pink)]">
-                        {pl.title}
-                      </h4>
-                      <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
-                        {pl.track_count || 0} faixas • Privada
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs font-black text-white truncate">{pl.title}</h4>
+                      <p className="text-[10.5px] font-semibold text-[var(--text-secondary)] truncate flex items-center gap-1.5">
+                        <span>{pl.track_count || 0} faixas</span>
+                        <span>•</span>
+                        <span>{pl.author || "Privada"}</span>
                       </p>
                     </div>
                   </div>
@@ -204,18 +224,24 @@ export function AddToPlaylistModal({ track, isOpen, onClose }: AddToPlaylistModa
                     type="button"
                     className={`size-8 rounded-full flex items-center justify-center transition-all ${
                       isAdded
-                        ? "bg-green-600 text-white shadow-md"
-                        : "bg-white/10 text-[var(--text-secondary)] hover:bg-[var(--accent-blue)] hover:text-white"
+                        ? "bg-emerald-500 text-white"
+                        : "bg-white/10 text-[var(--text-secondary)] group-hover:text-white"
                     }`}
                   >
-                    {isAdded ? <Check className="size-4" /> : <Plus className="size-4" />}
+                    {isProcessing ? (
+                      <Loader2 className="size-4 animate-spin text-white" />
+                    ) : isAdded ? (
+                      <Check className="size-4 text-white" />
+                    ) : (
+                      <Plus className="size-4" />
+                    )}
                   </button>
                 </div>
               )
             })
           ) : (
-            <p className="text-xs text-[var(--text-muted)] text-center py-8">
-              Você ainda não criou nenhuma playlist.
+            <p className="text-xs font-bold text-[var(--text-muted)] text-center py-8">
+              Você ainda não tem playlists criadas.
             </p>
           )}
         </div>

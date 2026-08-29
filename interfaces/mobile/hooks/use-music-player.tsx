@@ -57,7 +57,6 @@ export type MusicPlayerActions = {
   toggleRepeat: () => void
   toggleLike: (track: LuciTrack) => Promise<void>
   isLiked: (trackId: string) => boolean
-  formatTime: (s: number) => string
   addToQueue: (track: LuciTrack) => void
   removeFromQueue: (index: number) => void
   reorderQueue: (newQueue: LuciTrack[]) => void
@@ -525,7 +524,16 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 
   const reorderQueue = useCallback((newQueue: LuciTrack[]) => {
     setQueue(newQueue)
-  }, [])
+    // Sincroniza com o backend se necessário
+    fetch("/api/v1/music/queue/reorder", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        current_track_id: currentTrack?.id || "",
+        ordered_track_ids: newQueue.map((t) => t.id),
+      }),
+    }).catch(() => {})
+  }, [currentTrack])
 
   const clearQueue = useCallback(() => {
     if (currentTrack) {

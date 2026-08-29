@@ -450,41 +450,50 @@ export async function createPlaylist(
   return res.json()
 }
 
-export async function addTrackToPlaylist(playlistId: string, track: LuciTrack): Promise<void> {
-  await luciApiFetch(`/api/v1/music/playlists/${encodeURIComponent(playlistId)}/tracks`, {
+export async function addTrackToPlaylistById(playlistId: string, track: LuciTrack): Promise<void> {
+  await luciApiFetch(`/api/v1/music/playlist/${encodeURIComponent(playlistId)}/track`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(track)
+    body: JSON.stringify({
+      track_id: track.id,
+      title: track.title,
+      artist: track.artist,
+      duration: track.duration || 0,
+      cover_url: track.thumbnail || "",
+    }),
   })
 }
 
-export async function createPlaylistWithTrack(title: string, track: LuciTrack, description = ""): Promise<UserPlaylist> {
+export async function createPlaylistWithTrack(
+  title: string,
+  track: LuciTrack,
+  description = ""
+): Promise<UserPlaylist> {
   const res = await luciApiFetch("/api/v1/music/playlist/create-with-track", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       title,
       description,
-      initial_track: track
-    })
+      initial_track: {
+        track_id: track.id,
+        title: track.title,
+        artist: track.artist,
+        duration: track.duration || 0,
+        cover_url: track.thumbnail || "",
+      },
+    }),
   })
-  if (!res.ok) throw new Error("Erro ao criar playlist")
-  return res.json()
+  if (!res.ok) throw new Error("Erro ao criar playlist com faixa inicial")
+  const data = await res.json()
+  return data.playlist
 }
 
-export async function syncQueueReorder(currentTrackId: string, orderedTrackIds: string[]): Promise<void> {
-  try {
-    await luciApiFetch("/api/v1/music/queue/reorder", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        current_track_id: currentTrackId,
-        ordered_track_ids: orderedTrackIds
-      })
-    })
-  } catch {
-    // Falha silenciosa
-  }
+export async function addTrackToPlaylist(playlistId: string, track: LuciTrack): Promise<void> {
+  await luciApiFetch(`/api/v1/music/playlists/${encodeURIComponent(playlistId)}/tracks`, {
+    method: "POST",
+    body: JSON.stringify(track)
+  })
 }
 
 export interface AlbumDetails {
