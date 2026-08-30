@@ -71,17 +71,18 @@ class MusicProviderRegistry:
         faz matching tolerante por título + artista com o catálogo do YouTube para obter o stream_url.
         """
         resolved_track_id = track_id
-        if track_id.startswith("mb_"):
+        if track_id.startswith("mb_") or track_id.startswith("pl_") or track_id.startswith("tr_") or track_id.startswith("hero_") or len(track_id) < 10:
             search_q = f"{title or ''} {artist or ''}".strip()
-            if search_q:
-                try:
-                    yt_match = await self.metadata_fallback.search(search_q, limit=1)
-                    songs = yt_match.get("songs", [])
-                    if songs and songs[0].get("id"):
-                        resolved_track_id = songs[0]["id"]
-                        logger.info(f"[MusicProviderRegistry] Matched MusicBrainz track '{search_q}' ({track_id}) -> YouTube Video ID: {resolved_track_id}")
-                except Exception as ex:
-                    logger.warning(f"[MusicProviderRegistry] Falha no matching da faixa MB '{track_id}': {ex}")
+            if not search_q:
+                search_q = track_id
+            try:
+                yt_match = await self.metadata_fallback.search(search_q, limit=1)
+                songs = yt_match.get("songs", [])
+                if songs and songs[0].get("id"):
+                    resolved_track_id = songs[0]["id"]
+                    logger.info(f"[MusicProviderRegistry] Matched track '{search_q}' ({track_id}) -> YouTube Video ID: {resolved_track_id}")
+            except Exception as ex:
+                logger.warning(f"[MusicProviderRegistry] Falha no matching da faixa '{track_id}': {ex}")
 
         return await self.audio_source.resolve_stream(resolved_track_id, title=title, artist=artist)
 

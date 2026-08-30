@@ -232,19 +232,24 @@ class CollectionHistoryPayload(BaseModel):
     cover_url: Optional[str] = ""
     last_track_index: Optional[int] = 0
 
-@router.post("/history/collection")
-async def record_collection_history(payload: CollectionHistoryPayload, request: Request):
-    """Registra a reprodução de um álbum ou playlist para a seção 'Continuar Ouvindo'."""
+class TrackHistoryPayload(BaseModel):
+    id: str
+    title: str
+    artist: Optional[str] = "Artista"
+    thumbnail: Optional[str] = ""
+    duration: Optional[int] = 0
+
+@router.post("/history")
+async def record_track_history(payload: TrackHistoryPayload, request: Request):
+    """Registra a reprodução de uma música individual no histórico."""
     user_id = _get_current_user(request)
-    MusicDatabase.add_collection_history(
-        user_id=user_id,
-        collection_id=payload.collection_id,
-        collection_type=payload.collection_type,
-        title=payload.title,
-        subtitle=payload.subtitle or "",
-        cover_url=payload.cover_url or "",
-        last_track_index=payload.last_track_index or 0
-    )
+    MusicDatabase.add_to_history(user_id, {
+        "id": payload.id,
+        "title": payload.title,
+        "artist": payload.artist,
+        "thumbnail": payload.thumbnail,
+        "duration": payload.duration
+    })
     return {"status": "ok"}
 
 class TrackEventPayload(BaseModel):
@@ -432,17 +437,21 @@ async def search_music(
 
 # ─── 3. Resolução de Stream Direto & Proxy de Áudio ───
 @router.get("/stream/{track_id}")
-async def get_audio_stream(track_id: str):
+async def get_audio_stream(track_id: str, title: Optional[str] = None, artist: Optional[str] = None):
     """Obtém a URL de áudio direta de alta fidelidade para reprodução e dispara normalização LUFS."""
     from app.services.loudness_service import loudness_service
     try:
-        data = await lucimusic_service.get_stream_url(track_id)
+        data = await lucimusic_service.get_stream_url(track_id, title=title, artist=artist)
         stream_url = data.get("stream_url")
         
-        # Obtém do cache ou dispara análise de LUFS em background
-        loudness_info = await loudness_service.get_or_analyze(track_id, stream_url=stream_url)
-        data["gain_adjustment"] = loudness_info.get("gain_adjustment", 1.0)
-        data["lufs_integrated"] = loudness_info.get("lufs", -14.0)
+        try:
+            loudness_info = await loudness_service.get_or_analyze(track_id, stream_url=stream_url)
+            data["gain_adjustment"] = loudness_info.get("gain_adjustment", 1.0)
+            data["lufs_integrated"] = loudness_info.get("lufs", -14.0)
+        except Exception:
+            data["gain_adjustment"] = 1.0
+            data["lufs_integrated"] = -14.0
+
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Falha ao resolver áudio: {str(e)}")
@@ -454,7 +463,7 @@ async def get_track_loudness(track_id: str):
     return await loudness_service.get_or_analyze(track_id)
 
 @router.get("/play/{track_id}")
-async def play_audio_proxy(track_id: str, request: Request):
+async def play_audio_proxy(track_id: str, request: Request, title: Optional[str] = None, artist: Optional[str] = None):
     """
     Streaming proxy direto de áudio com suporte total a HTTP 206 Partial Content
     e Range headers, permitindo reprodução e seek em qualquer navegador mobile e desktop.
@@ -462,7 +471,7 @@ async def play_audio_proxy(track_id: str, request: Request):
     from fastapi.responses import StreamingResponse, Response
     import httpx
     try:
-        data = await lucimusic_service.get_stream_url(track_id)
+        data = await lucimusic_service.get_stream_url(track_id, title=title, artist=artist)
         audio_url = data.get("stream_url")
         if not audio_url:
             raise HTTPException(status_code=404, detail="URL de áudio não encontrada.")

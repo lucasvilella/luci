@@ -60,6 +60,8 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     skipPrevious,
     toggleLike,
     isLiked,
+    lyrics,
+    loadingLyrics,
   } = useMusicPlayer()
 
   const { goBack, goToArtist, goToAlbumDetail } = useMusicNavigation()
@@ -297,7 +299,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
           </button>
         </div>
 
-        {/* ─── SEÇÃO DE LETRAS (Lyrics) ─── */}
+        {/* ─── SEÇÃO DE LETRAS (Lyrics Dinâmicas) ─── */}
         <div className="pt-1">
           <div
             onClick={() => setShowLyricsExpanded(!showLyricsExpanded)}
@@ -324,36 +326,51 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
               showLyricsExpanded ? "max-h-[360px]" : "max-h-[220px]"
             } overflow-y-auto space-y-3 bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-inner`}
           >
-            {SAMPLE_LYRICS.map((line, idx) => {
-              const isCurrent = currentTime >= line.time && currentTime < (SAMPLE_LYRICS[idx + 1]?.time || 999)
-              return (
-                <p
-                  key={idx}
-                  className={`text-base font-extrabold leading-relaxed transition-colors duration-200 ${
-                    isCurrent
-                      ? "text-[var(--accent-primary)] scale-[1.02] origin-left"
-                      : "text-[var(--text-secondary)] opacity-80"
-                  }`}
-                >
-                  {line.text}
-                </p>
-              )
-            })}
+            {loadingLyrics ? (
+              <p className="text-xs text-[var(--text-secondary)] italic animate-pulse">
+                Carregando letra sincronizada...
+              </p>
+            ) : lyrics?.lines && lyrics.lines.length > 0 ? (
+              lyrics.lines.map((line, idx) => {
+                const nextLineTime = lyrics.lines[idx + 1]?.time || 9999
+                const isCurrent = currentTime >= line.time && currentTime < nextLineTime
+                return (
+                  <p
+                    key={idx}
+                    className={`text-base font-extrabold leading-relaxed transition-all duration-200 ${
+                      isCurrent
+                        ? "text-[var(--accent-primary)] scale-[1.02] origin-left"
+                        : "text-[var(--text-secondary)] opacity-75"
+                    }`}
+                  >
+                    {line.text}
+                  </p>
+                )
+              })
+            ) : lyrics?.plain ? (
+              <p className="text-sm font-medium leading-relaxed whitespace-pre-line text-[var(--text-primary)]">
+                {lyrics.plain}
+              </p>
+            ) : (
+              <p className="text-xs text-[var(--text-secondary)] opacity-70">
+                Letra instrumental ou indisponível para esta faixa.
+              </p>
+            )}
           </div>
         </div>
 
-        {/* ─── SOBRE O ARTISTA (About the Artist) ─── */}
+        {/* ─── SOBRE O ARTISTA (Dinâmico com dados reais da faixa) ─── */}
         <div className="pt-4 space-y-3">
           <h3 className="text-base font-black text-[var(--text-primary)]">
             Sobre o artista
           </h3>
 
           <div className="rounded-[20px] overflow-hidden bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-md p-4 space-y-3">
-            {/* Foto Retangular Grande do Artista com Raio de 14px */}
+            {/* Foto Retangular Grande do Artista */}
             <div className="relative w-full h-48 rounded-[14px] overflow-hidden bg-[var(--bg-surface-2)]">
               <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600"
-                alt="Oliver Tree"
+                src={track.thumbnail || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600"}
+                alt={track.artist}
                 className="size-full object-cover"
               />
             </div>
@@ -362,10 +379,10 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-base font-extrabold text-[var(--text-primary)]">
-                  Oliver Tree
+                  {track.artist}
                 </h4>
                 <p className="text-xs text-[var(--text-secondary)]">
-                  24.419.528 ouvintes mensais
+                  Artista no radar da Luci
                 </p>
               </div>
 
@@ -381,11 +398,6 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
                 {isFollowingArtist ? "Seguindo" : "Seguir"}
               </button>
             </div>
-
-            {/* Biografia Resumida */}
-            <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-2">
-              Vocalista, produtor, escritor e diretor performático da Califórnia, conhecido por sua sonoridade única e visual marcante.
-            </p>
           </div>
         </div>
 

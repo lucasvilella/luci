@@ -147,7 +147,11 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => ({
 
       if (!directUrl) {
         try {
-          const streamRes = await fetch(`${API_BASE_URL}/api/v1/music/stream/${track.id}`)
+          const params = new URLSearchParams({
+            title: track.title || "",
+            artist: track.artist || "",
+          })
+          const streamRes = await fetch(`${API_BASE_URL}/api/v1/music/stream/${track.id}?${params.toString()}`)
           if (streamRes.ok) {
             const streamData = await streamRes.json()
             if (streamData?.stream_url) {
@@ -159,7 +163,11 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => ({
         }
       }
 
-      const streamUrl = directUrl || `${API_BASE_URL}/api/v1/music/play/${track.id}`
+      const params = new URLSearchParams({
+        title: track.title || "",
+        artist: track.artist || "",
+      })
+      const streamUrl = directUrl || `${API_BASE_URL}/api/v1/music/play/${track.id}?${params.toString()}`
       primaryAudio.src = streamUrl
       primaryAudio.load()
 

@@ -42,9 +42,11 @@ class YTMusicAudioProvider(AudioSourceProvider):
     async def resolve_stream(self, track_id: str, title: Optional[str] = None, artist: Optional[str] = None) -> Dict[str, Any]:
         """Extrai o melhor stream de áudio Opus/WebM ou AAC para reprodução sem travamentos."""
         clean_id = track_id
-        if clean_id.startswith("mb_") and title:
-            # Caso receba um ID do MusicBrainz, o caller deve ter feito o matching ou faremos busca pelo nome
-            clean_id = f"ytsearch1:{title} {artist or ''}"
+        if (clean_id.startswith("mb_") or clean_id.startswith("pl_") or clean_id.startswith("tr_") or clean_id.startswith("hero_") or len(clean_id) < 6) and (title or artist):
+            clean_id = f"ytsearch1:{title or ''} {artist or ''}".strip()
+        elif not clean_id.startswith("ytsearch") and len(clean_id) < 11:
+            # Caso receba ID sintético sem título explícito
+            clean_id = f"ytsearch1:{clean_id}"
 
         cached = stream_url_cache.get(clean_id)
         if cached:
