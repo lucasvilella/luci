@@ -120,6 +120,20 @@ class ModelRouter:
                     nomes = [f"{f.get('name')} em {f.get('date')}" for f in feriados]
                     return f"Próximos feriados nacionais: {', '.join(nomes)}."
 
+            if action == "app.navigate":
+                from app.services.ws_manager import ws_hub
+                module_name = query_param
+                friendly_names = {
+                    "home-assistant": "Automação Residencial",
+                    "music": "Música",
+                    "chat": "Chat",
+                    "settings": "Configurações",
+                    "orb": "Principal"
+                }
+                label = friendly_names.get(module_name, module_name)
+                asyncio.create_task(ws_hub.emit_to_user(user_id, "NAVIGATE_MODULE", {"module": module_name}))
+                return f"Abrindo o módulo de {label} agora."
+
             if action == "home.device_control":
                 return f"Comando de casa inteligente recebido: {query_param}. Ajustando o dispositivo."
 

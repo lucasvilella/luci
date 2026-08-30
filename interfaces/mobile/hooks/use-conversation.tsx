@@ -11,6 +11,8 @@ import {
 } from "react"
 import { luciApiFetch } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
+import { useAppNavigationStore } from "@/stores/useAppNavigationStore"
+import { useMusicPlayer } from "@/hooks/use-music-player"
 
 export type InputType = "text" | "voice" | "interpreter"
 
@@ -130,6 +132,13 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
         }
 
         setMessages((prev) => [...prev, botMsg])
+
+        // ─── Despacho Automático de Ação no App (Navegação / Música / Automação) ───
+        if (data.intent) {
+          const { appActionDispatcher } = await import("@/lib/app-action-dispatcher")
+          appActionDispatcher.dispatchIntent(data.intent, trimmed)
+        }
+
         return data.reply
       } catch (err) {
         console.error("[ConversationBrain] Erro no chat:", err)
@@ -185,6 +194,13 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
         }
 
         setMessages((prev) => [...prev, botMsg])
+
+        // ─── Despacho Automático de Ação no App (Navegação / Música / Automação) ───
+        if (data.intent) {
+          const { appActionDispatcher } = await import("@/lib/app-action-dispatcher")
+          appActionDispatcher.dispatchIntent(data.intent, trimmed)
+        }
+
         return { reply: data.reply, audioBase64: data.audio_base64 }
       } catch (err) {
         console.error("[ConversationBrain] Erro na voz:", err)

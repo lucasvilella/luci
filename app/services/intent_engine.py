@@ -158,7 +158,35 @@ class IntentEngine:
             latency = (time.perf_counter() - start_time) * 1000
             return IntentClassificationResult("COMMAND", 95, action="info.holidays", latency_ms=latency)
 
-        # D) Comandos de Automação Residencial
+        # D) Comandos de Navegação e Troca de Módulos no App
+        nav_match = re.search(
+            r"\b(?:vamos\s+para|vai\s+para|ir\s+para|navegar\s+para|abre|abrir|mostrar|mostra|acessar|acessa)\s+(?:o\s+|a\s+)?(?:m[oó]dulo\s+de\s+|tela\s+de\s+|aba\s+de\s+|se[cç][aã]o\s+de\s+)?(?P<target>automa[cç][aã]o|casa|home\s*assistant|dispositivos|m[uú]sica|music|player|chat|conversa|chatting|configura[cç][oõ]es|ajustes|settings|orb|voz|assistente)\b",
+            clean_input
+        )
+        if nav_match:
+            target = nav_match.group("target").lower()
+            resolved_module = "home-assistant"
+            if any(k in target for k in ["música", "musica", "music", "player"]):
+                resolved_module = "music"
+            elif any(k in target for k in ["chat", "conversa", "chatting"]):
+                resolved_module = "chat"
+            elif any(k in target for k in ["configurações", "configuracoes", "ajustes", "settings"]):
+                resolved_module = "settings"
+            elif any(k in target for k in ["orb", "voz", "assistente"]):
+                resolved_module = "orb"
+            elif any(k in target for k in ["automação", "automacao", "casa", "home assistant", "dispositivos"]):
+                resolved_module = "home-assistant"
+
+            latency = (time.perf_counter() - start_time) * 1000
+            return IntentClassificationResult(
+                "COMMAND",
+                99,
+                action="app.navigate",
+                query_param=resolved_module,
+                latency_ms=latency
+            )
+
+        # E) Comandos de Automação Residencial
         if re.match(r"^(acenda|apague|ligue|desligue|abra|feche)\s*(.*)", clean_input):
             latency = (time.perf_counter() - start_time) * 1000
             return IntentClassificationResult("COMMAND", 90, action="home.device_control", query_param=clean_input, latency_ms=latency)

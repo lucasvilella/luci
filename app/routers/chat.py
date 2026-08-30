@@ -48,6 +48,7 @@ async def chat_text(req: ChatTextRequest, request: Request):
         "reply": result["reply"],
         "user_message": result["user_message"],
         "assistant_message": result["assistant_message"],
+        "intent": result.get("intent"),
     }
 
 # ─── 2. Endpoint Chat Voz ───
@@ -67,6 +68,7 @@ async def chat_voice(req: ChatVoiceRequest, request: Request):
         "audio_base64": result["audio_base64"],
         "user_message": result["user_message"],
         "assistant_message": result["assistant_message"],
+        "intent": result.get("intent"),
     }
 
 # ─── 3. Endpoint Upload de Arquivo / Multimodal ───

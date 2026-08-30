@@ -1,8 +1,9 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 import { UnifiedLuciView } from "@/components/unified-luci-view"
 import { MusicPlayerView } from "@/components/music-player-view"
+import { SmartHomeView } from "@/components/smart-home-view"
 import { ProfileView } from "@/components/profile-view"
 import { AuthView } from "@/components/auth-view"
 import { ModularDeck } from "@/components/navigation/modular-deck"
@@ -10,11 +11,24 @@ import { ModuleSelectorModal } from "@/components/navigation/module-selector-mod
 import { PushToTalkOverlay } from "@/components/navigation/push-to-talk-overlay"
 import { useAuth } from "@/hooks/use-auth"
 import { useAppNavigationStore } from "@/stores/useAppNavigationStore"
+import { useMusicPlayer } from "@/hooks/use-music-player"
+import { appActionDispatcher } from "@/lib/app-action-dispatcher"
 import { Film, House, Dumbbell, Wallet, Calendar, Menu } from "lucide-react"
 
 export default function Page() {
   const { user, mounted } = useAuth()
   const { activeModuleId, setModuleSelectorOpen } = useAppNavigationStore()
+  const { playTrack, pauseTrack, skipNext, toggleLike } = useMusicPlayer()
+
+  // Registra os controles do player no despachante universal do SuperApp
+  useEffect(() => {
+    appActionDispatcher.registerPlayerControls({
+      playTrack: (track, queue) => playTrack(track, queue),
+      pauseTrack: () => pauseTrack(),
+      nextTrack: () => skipNext(),
+      toggleLike: () => toggleLike(),
+    })
+  }, [playTrack, pauseTrack, skipNext, toggleLike])
 
   return (
     <main className="flex h-dvh w-full justify-center bg-[var(--bg-app)] p-0 select-none">
@@ -62,22 +76,18 @@ export default function Page() {
 
               {/* Módulo 4: Casa Inteligente (Home Assistant) */}
               {activeModuleId === "home" && (
-                <div className="flex flex-col items-center justify-center h-full gap-4 pt-14 px-6 text-center">
-                  <button
-                    type="button"
-                    onClick={() => setModuleSelectorOpen(true)}
-                    className="absolute top-4 left-4 size-10 flex items-center justify-center rounded-full bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-sm text-[var(--text-primary)] active:scale-95 transition-all"
-                  >
-                    <Menu className="size-5" />
-                  </button>
-                  <div className="size-16 rounded-3xl bg-[var(--bg-surface-2)] flex items-center justify-center text-[var(--text-secondary)] shadow-inner">
-                    <House className="size-8 text-[var(--accent-primary)]" />
+                <div className="h-full flex flex-col pt-3">
+                  <div className="px-5 pb-2">
+                    <button
+                      type="button"
+                      onClick={() => setModuleSelectorOpen(true)}
+                      className="size-9 flex items-center justify-center rounded-full bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-sm text-[var(--text-primary)] active:scale-95 transition-all mb-1"
+                    >
+                      <Menu className="size-4" />
+                    </button>
                   </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-[var(--text-primary)]">Casa Inteligente</h2>
-                    <p className="text-xs text-[var(--text-muted)] mt-1 max-w-xs">
-                      Controle seus dispositivos, luzes e sensores com a inteligência da Luci.
-                    </p>
+                  <div className="flex-1 overflow-y-auto">
+                    <SmartHomeView />
                   </div>
                 </div>
               )}
