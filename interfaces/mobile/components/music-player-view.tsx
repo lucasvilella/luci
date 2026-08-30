@@ -11,6 +11,11 @@ import { SearchView } from "@/components/music/search-view"
 import { PlaylistsScreen } from "@/components/music/playlists-screen"
 import { PlaylistDetailView } from "@/components/music/playlist-detail-view"
 import { AlbumDetailView } from "@/components/music/album-detail-view"
+import { AlbumsScreen } from "@/components/music/albums-screen"
+import { SongsScreen } from "@/components/music/songs-screen"
+import { ArtistsScreen } from "@/components/music/artists-screen"
+import { NotificationsScreen } from "@/components/music/notifications-screen"
+import { HistoryScreen } from "@/components/music/history-screen"
 import { LibraryScreen } from "@/components/music/library-screen"
 import { ProfileScreen } from "@/components/music/profile-screen"
 import { SettingsScreen } from "@/components/music/settings-screen"
@@ -70,6 +75,11 @@ function MusicScreenRouter({
             initialTracks={screen.initialTracks}
           />
         )}
+        {screen.type === "albums" && <AlbumsScreen />}
+        {screen.type === "songs" && <SongsScreen />}
+        {screen.type === "artists" && <ArtistsScreen />}
+        {screen.type === "notifications" && <NotificationsScreen />}
+        {screen.type === "history" && <HistoryScreen />}
         {screen.type === "library" && <LibraryScreen />}
         {screen.type === "profile" && <ProfileScreen />}
         {screen.type === "settings" && <SettingsScreen />}

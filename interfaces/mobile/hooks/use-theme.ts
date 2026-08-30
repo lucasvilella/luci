@@ -9,8 +9,17 @@ export function useTheme() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    const current = document.documentElement.classList.contains("dark") ? "dark" : "light"
-    setThemeState(current)
+    const saved = localStorage.getItem("luci-theme") as Theme | null
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+    const initial = saved || (prefersDark ? "dark" : "light")
+
+    const root = document.documentElement
+    root.classList.remove("light", "dark")
+    root.classList.add(initial)
+    root.setAttribute("data-theme", initial)
+    document.body.setAttribute("data-theme", initial)
+
+    setThemeState(initial)
     setMounted(true)
   }, [])
 
@@ -18,8 +27,11 @@ export function useTheme() {
     const root = document.documentElement
     root.classList.remove("light", "dark")
     root.classList.add(next)
+    root.setAttribute("data-theme", next)
+    document.body.setAttribute("data-theme", next)
+
     try {
-      localStorage.setItem("nova-theme", next)
+      localStorage.setItem("luci-theme", next)
     } catch {}
     setThemeState(next)
   }, [])

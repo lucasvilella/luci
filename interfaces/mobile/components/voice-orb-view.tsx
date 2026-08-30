@@ -461,19 +461,25 @@ export function VoiceOrbView({
               ) : (
                 /* Equalizer bars */
                 <div className="flex items-center justify-center gap-1.5">
-                  {[0.5, 0.9, 0.4, 1, 0.65, 0.85, 0.45].map((h, idx) => (
-                    <span
-                      key={idx}
-                      className="w-1.5 rounded-full bg-white/90 transition-all"
-                      style={{
-                        height: `${(orbState === "listening" || orbState === "speaking" ? h : 0.25) * 44}px`,
-                        animation: (orbState === "listening" || orbState === "speaking") ? `eq-bar ${0.6 + idx * 0.1}s ease-in-out infinite` : "none",
-                        animationDelay: `${idx * 0.08}s`,
-                        transformOrigin: "center",
-                      }}
-                      aria-hidden="true"
-                    />
-                  ))}
+                  {[0.5, 0.9, 0.4, 1, 0.65, 0.85, 0.45].map((h, idx) => {
+                    const isAnim = orbState === "listening" || orbState === "speaking"
+                    return (
+                      <span
+                        key={idx}
+                        className="w-1.5 rounded-full bg-white/90 transition-all"
+                        style={{
+                          height: `${(isAnim ? h : 0.25) * 44}px`,
+                          animationName: isAnim ? "eq-bar" : "none",
+                          animationDuration: isAnim ? `${0.6 + idx * 0.1}s` : "0s",
+                          animationTimingFunction: "ease-in-out",
+                          animationIterationCount: isAnim ? "infinite" : "1",
+                          animationDelay: `${idx * 0.08}s`,
+                          transformOrigin: "center",
+                        }}
+                        aria-hidden="true"
+                      />
+                    )
+                  })}
                 </div>
               )}
             </div>

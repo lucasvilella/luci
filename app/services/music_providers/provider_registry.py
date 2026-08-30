@@ -17,9 +17,11 @@ logger = logging.getLogger("LuciMusic.ProviderRegistry")
 
 class MusicProviderRegistry:
     def __init__(self):
-        # YouTube Music direto como provedor primário para busca rica, rápida, com capas reais e playlists
-        self.metadata_primary: MetadataProvider = YTMusicMetadataProvider()
-        self.metadata_fallback: MetadataProvider = MusicBrainzMetadataProvider()
+        # MusicBrainz como Metadata Provider Primário (Open Music Database / Rate Limited)
+        self.metadata_primary: MetadataProvider = MusicBrainzMetadataProvider()
+        # YouTube Music como Metadata Provider Fallback (Catálogo nicho/novo e metadados ricos)
+        self.metadata_fallback: MetadataProvider = YTMusicMetadataProvider()
+        # Audio Source Provider (yt-dlp stream)
         self.audio_source: AudioSourceProvider = YTMusicAudioProvider()
 
     def _normalize_string(self, text: str) -> str:
@@ -29,25 +31,47 @@ class MusicProviderRegistry:
 
     async def search(self, query: str, limit: int = 20, filter_type: Optional[str] = None) -> Dict[str, Any]:
         """
-        Executa busca inteligente rápida com desduplicação de faixas e ranking de relevância.
+        Executa busca inteligente com MusicBrainz como primário e fallback automático para YT Music.
+        Adiciona campo interno de telemetria '_provider' para observabilidade.
         """
+        # Se for filtro específico de playlists ou artistas, usa fallback direto pois MusicBrainz foca em gravações/músicas
+        if filter_type in ["playlists"]:
+            res = await self.metadata_fallback.search(query, limit=limit, filter_type=filter_type)
+            res["_provider"] = self.metadata_fallback.name
+            return res
+
+        # 1. Tentativa com Provedor Primário (MusicBrainz)
         try:
             results = await self.metadata_primary.search(query, limit=limit, filter_type=filter_type)
-            if results and (results.get("songs") or results.get("artists") or results.get("albums") or results.get("playlists")):
+            songs = results.get("songs", [])
+            if songs and len(songs) > 0:
+                logger.info(f"[MusicProviderRegistry] Busca '{query}' atendida com sucesso pelo provedor primário: {self.metadata_primary.name} ({len(songs)} faixas)")
+                results["_provider"] = self.metadata_primary.name
                 return results
         except Exception as e:
-            logger.warning(f"[MusicProviderRegistry] Provedor primário falhou ({e}), tentando secundário...")
+            logger.warning(f"[MusicProviderRegistry] MusicBrainz indisponível ou erro na busca ('{query}'): {e}. Ativando fallback...")
 
-        return await self.metadata_fallback.search(query, limit=limit)
+        # 2. Fallback Automático para YouTube Music
+        logger.info(f"[MusicProviderRegistry] Usando fallback ({self.metadata_fallback.name}) para a busca '{query}'...")
+        fallback_results = await self.metadata_fallback.search(query, limit=limit, filter_type=filter_type)
+        fallback_results["_provider"] = self.metadata_fallback.name
+        return fallback_results
+
+    async def get_track_metadata(self, track_id: str) -> Optional[Dict[str, Any]]:
+        """Busca enriquecimento de metadados respeitando a hierarquia de providers."""
+        if track_id.startswith("mb_"):
+            meta = await self.metadata_primary.get_track_metadata(track_id)
+            if meta:
+                return meta
+        return await self.metadata_fallback.get_track_metadata(track_id)
 
     async def resolve_audio_stream(self, track_id: str, title: Optional[str] = None, artist: Optional[str] = None) -> Dict[str, Any]:
         """
         Resolve o stream de áudio. Se o track_id for do MusicBrainz (mb_...), 
-        faz matching com o catálogo de áudio para encontrar a melhor faixa.
+        faz matching tolerante por título + artista com o catálogo do YouTube para obter o stream_url.
         """
         resolved_track_id = track_id
         if track_id.startswith("mb_"):
-            # Matching por título + artista no YT Music para obter o videoId correspondente
             search_q = f"{title or ''} {artist or ''}".strip()
             if search_q:
                 try:
@@ -55,9 +79,9 @@ class MusicProviderRegistry:
                     songs = yt_match.get("songs", [])
                     if songs and songs[0].get("id"):
                         resolved_track_id = songs[0]["id"]
-                        logger.info(f"[MusicProviderRegistry] Matched MusicBrainz track '{search_q}' -> YouTube ID: {resolved_track_id}")
+                        logger.info(f"[MusicProviderRegistry] Matched MusicBrainz track '{search_q}' ({track_id}) -> YouTube Video ID: {resolved_track_id}")
                 except Exception as ex:
-                    logger.warning(f"[MusicProviderRegistry] Falha no matching do track MB '{track_id}': {ex}")
+                    logger.warning(f"[MusicProviderRegistry] Falha no matching da faixa MB '{track_id}': {ex}")
 
         return await self.audio_source.resolve_stream(resolved_track_id, title=title, artist=artist)
 

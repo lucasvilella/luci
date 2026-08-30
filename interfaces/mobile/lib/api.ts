@@ -8,21 +8,22 @@ import { SystemStatus } from "./contracts/common"
 const DEFAULT_SERVER_URL = "http://192.168.15.90:8000"
 
 export function getApiBaseUrl(): string {
-  if (typeof window === "undefined") return DEFAULT_SERVER_URL
+  if (typeof window === "undefined") return "http://127.0.0.1:8000"
 
   const storedServer = localStorage.getItem("luci.server_url")
   if (storedServer) {
     return storedServer.replace(/\/$/, "")
   }
 
-  // No Capacitor ou Webview Android (ou dev em localhost)
-  const isCapacitor =
-    window.location.protocol === "capacitor:" ||
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1"
+  // Em desenvolvimento web local no PC (localhost:3000)
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    return "http://localhost:8000"
+  }
 
+  // No Capacitor ou Webview Android em rede local
+  const isCapacitor = window.location.protocol === "capacitor:"
   if (isCapacitor) {
-    return DEFAULT_SERVER_URL
+    return "http://192.168.15.90:8000"
   }
 
   return window.location.origin

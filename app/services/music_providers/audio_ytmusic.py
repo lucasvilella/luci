@@ -14,12 +14,25 @@ stream_url_cache = AsyncTTLCache(default_ttl_seconds=3600 * 4)  # 4 horas
 class YTMusicAudioProvider(AudioSourceProvider):
     def __init__(self):
         self.ydl_opts = {
-            'format': 'bestaudio[ext=webm]/bestaudio[ext=m4a]/bestaudio/best',
+            'format': 'bestaudio/best',
             'quiet': True,
             'no_warnings': True,
             'noplaylist': True,
             'extract_flat': False,
             'cachedir': False,
+            'source_address': '0.0.0.0',
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'web'],
+                    'player_skip': ['webpage', 'configs', 'js'],
+                }
+            },
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': '*/*',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Sec-Fetch-Mode': 'navigate',
+            }
         }
 
     @property
@@ -61,6 +74,7 @@ class YTMusicAudioProvider(AudioSourceProvider):
                     "title": info.get("title"),
                     "artist": info.get("uploader"),
                     "duration": info.get("duration"),
+                    "http_headers": info.get("http_headers", {}),
                     "provider": self.name
                 }
 

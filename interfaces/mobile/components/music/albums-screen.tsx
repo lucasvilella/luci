@@ -5,80 +5,90 @@ import {
   ArrowLeft,
   Search,
   MoreHorizontal,
-  Plus,
-  Heart,
   MoreVertical,
   Sun,
   Moon,
   ArrowDownUp,
 } from "lucide-react"
-import { TrackActionMenu } from "@/components/ui/track-action-menu"
-import { NewPlaylistModal } from "@/components/ui/new-playlist-modal"
+import { AlbumActionMenu } from "@/components/ui/album-action-menu"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useTheme } from "@/hooks/use-theme"
 
-// Catálogo com dados oficiais dos mockups de Playlists da Biblioteca
-const INITIAL_PLAYLISTS = [
+// Catálogo com dados oficiais dos mockups de Álbuns Salvos
+const INITIAL_SAVED_ALBUMS = [
   {
-    id: "pl_likes",
-    title: "Músicas Curtidas",
-    songCount: 270,
-    isSpecialLikes: true,
-    coverUrl: "",
-  },
-  {
-    id: "pl_pop",
-    title: "Minhas Favoritas de Pop",
-    songCount: 345,
-    coverUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400",
-  },
-  {
-    id: "pl_90s",
-    title: "Flashback Anos 90",
-    songCount: 127,
+    id: "alb_1",
+    title: "Three Dimensions Deep",
+    artist: "Amber Mark",
+    year: "2022",
     coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
   },
   {
-    id: "pl_rock",
-    title: "Lendas do Rock",
-    songCount: 98,
-    coverUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
+    id: "alb_2",
+    title: "New Road - Ants From Up There",
+    artist: "Black Country",
+    year: "2021",
+    coverUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400",
   },
   {
-    id: "pl_acoustic",
-    title: "Acústico Favorito",
-    songCount: 163,
+    id: "alb_3",
+    title: "We Are The Apocalypse",
+    artist: "Dark Funeral",
+    year: "2019",
     coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
   },
   {
-    id: "pl_memories",
-    title: "Memórias de Amor",
-    songCount: 159,
+    id: "alb_4",
+    title: "Otherness",
+    artist: "Alexisonfire",
+    year: "2022",
+    coverUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
+  },
+  {
+    id: "alb_5",
+    title: "Rouge Carpet Disaster",
+    artist: "Static Dress",
+    year: "2018",
+    coverUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400",
+  },
+  {
+    id: "alb_6",
+    title: "Mr. Morale & The Big Steppers",
+    artist: "Kendrick Lamar",
+    year: "2021",
+    coverUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+  },
+  {
+    id: "alb_7",
+    title: "The Agony & Ecstasy Of Watain",
+    artist: "Watain",
+    year: "2022",
     coverUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
   },
 ]
 
-export function PlaylistsScreen() {
-  const { goBack, goToPlaylistDetail } = useMusicNavigation()
+export function AlbumsScreen() {
+  const { goBack, goToAlbumDetail, goToArtist } = useMusicNavigation()
   const { theme, toggleTheme, mounted } = useTheme()
 
-  const [playlists, setPlaylists] = useState(INITIAL_PLAYLISTS)
-  const [isNewModalOpen, setIsNewModalOpen] = useState(false)
+  const [albums, setAlbums] = useState(INITIAL_SAVED_ALBUMS)
+  const [selectedAlbum, setSelectedAlbum] = useState<typeof INITIAL_SAVED_ALBUMS[0] | null>(null)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [sortOrder, setSortOrder] = useState<"recent" | "alphabetical">("recent")
 
-  const handleCreatePlaylist = (data: { title: string; description: string; isPublic: boolean }) => {
-    const newPl = {
-      id: `pl_custom_${Date.now()}`,
-      title: data.title,
-      songCount: 0,
-      coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
-    }
-    setPlaylists([playlists[0], newPl, ...playlists.slice(1)])
+  const handleOpenMore = (e: React.MouseEvent, album: typeof INITIAL_SAVED_ALBUMS[0]) => {
+    e.stopPropagation()
+    setSelectedAlbum(album)
+    setIsMenuOpen(true)
+  }
+
+  const handleRemoveAlbum = (albumId: string) => {
+    setAlbums(albums.filter((a) => a.id !== albumId))
   }
 
   return (
     <div className="relative flex h-full flex-col bg-[var(--bg-app)] text-[var(--text-primary)] select-none overflow-y-auto pb-32">
-      {/* ─── HEADER DE NAVEGAÇÃO DA TELA DE PLAYLISTS ─── */}
+      {/* ─── HEADER DE NAVEGAÇÃO DA TELA DE ÁLBUNS ─── */}
       <header className="sticky top-0 z-20 px-5 pt-4 pb-3 bg-[var(--bg-app)]/90 backdrop-blur-xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -91,7 +101,7 @@ export function PlaylistsScreen() {
               <ArrowLeft className="size-5" />
             </button>
             <h1 className="text-xl font-extrabold text-[var(--text-primary)] tracking-tight">
-              Playlists
+              Álbuns
             </h1>
           </div>
 
@@ -149,87 +159,38 @@ export function PlaylistsScreen() {
         </div>
       </header>
 
-      {/* ─── LISTA DE PLAYLISTS COM BOTÃO DE CRIAR NOVO E LINHAS DEDICADAS ─── */}
+      {/* ─── LISTAGEM DE ÁLBUNS SALVOS COM CAPAS ARREDONDADAS DE 22PX ─── */}
       <div className="px-5 pt-2 space-y-3">
-        {/* 01. BOTÃO "CRIAR NOVA PLAYLIST" (Círculo 68x68 com ícone + na cor da marca) */}
-        <div
-          onClick={() => setIsNewModalOpen(true)}
-          className="flex items-center gap-4 py-2 px-1 rounded-2xl hover:bg-[var(--bg-surface-1)] transition-colors cursor-pointer group active:scale-[0.99]"
-        >
-          <div className="size-[68px] rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center shadow-lg shadow-[#5c62ec]/35 shrink-0 group-hover:scale-105 transition-transform">
-            <Plus className="size-8 stroke-[2.5]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h4 className="text-base font-extrabold text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors">
-              Criar Nova Playlist
-            </h4>
-          </div>
-        </div>
-
-        {/* 02. PLAYLIST ESPECIAL "MÚSICAS CURTIDAS" (Your Likes - Ícone de Coração em Círculo) */}
-        <div
-          onClick={() =>
-            goToPlaylistDetail(
-              "pl_likes",
-              "Músicas Curtidas",
-              "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400"
-            )
-          }
-          className="flex items-center justify-between py-2 px-1 rounded-2xl hover:bg-[var(--bg-surface-1)] transition-colors cursor-pointer group active:scale-[0.99]"
-        >
-          <div className="flex items-center gap-4 min-w-0 flex-1 pr-2">
-            <div className="size-[68px] rounded-full bg-gradient-to-tr from-[#5c62ec] to-[#7c82ff] text-white flex items-center justify-center shadow-md shadow-[#5c62ec]/30 shrink-0">
-              <Heart className="size-8 fill-white" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h4 className="text-base font-extrabold text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors truncate">
-                Músicas Curtidas
-              </h4>
-              <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                270 músicas
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            aria-label="Opções"
-            className="size-8 rounded-full hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center justify-center active:scale-90"
-          >
-            <MoreVertical className="size-4.5" />
-          </button>
-        </div>
-
-        {/* 03. LISTAGEM DE PLAYLISTS DO USUÁRIO COM CAPAS ARREDONDADAS DE 10PX */}
-        {playlists.slice(1).map((pl) => (
+        {albums.map((album) => (
           <div
-            key={pl.id}
-            onClick={() => goToPlaylistDetail(pl.id, pl.title, pl.coverUrl)}
+            key={album.id}
+            onClick={() => goToAlbumDetail(album.id, album.title, album.coverUrl)}
             className="flex items-center justify-between py-2 px-1 rounded-2xl hover:bg-[var(--bg-surface-1)] transition-colors cursor-pointer group active:scale-[0.99]"
           >
             <div className="flex items-center gap-4 min-w-0 flex-1 pr-2">
               <div className="size-[68px] rounded-[10px] overflow-hidden bg-[var(--bg-surface-2)] border border-[var(--border-subtle)] shadow-sm shrink-0">
                 <img
-                  src={pl.coverUrl}
-                  alt={pl.title}
+                  src={album.coverUrl}
+                  alt={album.title}
                   loading="lazy"
                   className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="text-base font-extrabold text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors truncate">
-                  {pl.title}
+                  {album.title}
                 </h4>
-                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                  {pl.songCount} músicas
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">
+                  {album.artist} &nbsp;|&nbsp; {album.year}
                 </p>
               </div>
             </div>
+
+            {/* Botão Três Pontos (Abre Menu Suspenso do Álbum) */}
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-              }}
-              aria-label="Opções"
+              onClick={(e) => handleOpenMore(e, album)}
+              aria-label="Opções do álbum"
               className="size-8 rounded-full hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center justify-center active:scale-90"
             >
               <MoreVertical className="size-4.5" />
@@ -238,11 +199,16 @@ export function PlaylistsScreen() {
         ))}
       </div>
 
-      {/* ─── MODAL DE CRIAÇÃO DE NOVA PLAYLIST (BOTTOM SHEET) ─── */}
-      <NewPlaylistModal
-        isOpen={isNewModalOpen}
-        onClose={() => setIsNewModalOpen(false)}
-        onCreate={handleCreatePlaylist}
+      {/* ─── MENU SUSPENSO DE AÇÕES DO ÁLBUM (AlbumActionMenu) ─── */}
+      <AlbumActionMenu
+        isOpen={isMenuOpen}
+        album={selectedAlbum}
+        onClose={() => setIsMenuOpen(false)}
+        onShufflePlay={(alb) => {}}
+        onAddToPlaylist={(alb) => {}}
+        onRemoveFromLibrary={handleRemoveAlbum}
+        onViewArtist={(artist) => goToArtist(artist)}
+        onShare={(alb) => {}}
       />
     </div>
   )

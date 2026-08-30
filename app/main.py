@@ -97,11 +97,11 @@ app = FastAPI(
     dependencies=[Depends(verify_api_secret)],
 )
 
-# CORS para React Desktop e Mobile App
+# CORS universal para React Desktop, Next.js e Mobile App
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

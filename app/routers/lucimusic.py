@@ -148,7 +148,48 @@ async def get_music_home(
     # 6. Lançamentos Relevantes
     new_releases = feed.get("new_releases", [])[:10] if feed else []
 
-    # 7. Radar de Alta Energia (Treino) & 8. Foco/Descompressão
+    # 7. Playlists Populares & Seleção da Semana (Coleções Reais com 4 capas para mosaico)
+    based_on_listened = feed.get("based_on_listened", []) if feed else []
+    popular_playlists = []
+    
+    # Adiciona playlists criadas pela Luci / sementes de gêneros com tracks para mosaico
+    for pl in based_on_listened[:6]:
+        pl_tracks = pl.get("tracks", [])
+        pl_covers = [t.get("thumbnail") for t in pl_tracks[:4] if t.get("thumbnail")]
+        popular_playlists.append({
+            "id": pl.get("id"),
+            "title": pl.get("title"),
+            "subtitle": f"{len(pl_tracks)} músicas • {pl.get('subtitle', 'Playlist')}",
+            "covers": pl_covers,
+            "thumbnail": pl_covers[0] if pl_covers else (pl.get("thumbnail") or ""),
+            "tracks": pl_tracks
+        })
+
+    # Seleção da Semana (Mixes com curadoria temática)
+    week_selection = []
+    raw_created = feed.get("created_by_luci", []) if feed else []
+    for cp in raw_created[:6]:
+        week_selection.append({
+            "id": cp.get("id"),
+            "title": cp.get("title"),
+            "subtitle": cp.get("subtitle") or "Curadoria da Semana",
+            "covers": [cp.get("thumbnail")] if cp.get("thumbnail") else [],
+            "thumbnail": cp.get("thumbnail") or "",
+            "tracks": []
+        })
+
+    # Estações de Artistas e Gêneros (Top Estações)
+    top_stations = []
+    for art in favorite_artists[:6]:
+        top_stations.append({
+            "id": f"station_{art.get('name')}",
+            "title": f"Rádio {art.get('name')}",
+            "subtitle": "Estação do Artista",
+            "thumbnail": art.get("thumbnail") or art.get("avatar") or "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400",
+            "artist": art.get("name")
+        })
+
+    # 8. Radar de Alta Energia (Treino) & Foco/Descompressão
     custom_workout = {
         "title": "Radar de Alta Energia & Treino",
         "subtitle": "BPM elevado para manter o ritmo",
@@ -157,8 +198,12 @@ async def get_music_home(
     custom_focus = {
         "title": "Sessão Foco & Descompressão",
         "subtitle": "Frequência calma e relaxante",
-        "tracks": [t for t in (feed.get("based_on_listened", [{}])[0].get("tracks", []) if feed.get("based_on_listened") else trending_brasil[-6:])]
+        "tracks": [t for t in (feed.get("based_on_listened", [{}])[0].get("tracks", []) if feed and feed.get("based_on_listened") else trending_brasil[-6:])]
     }
+
+    # 9. Momentos e Acesso Rápido
+    moments = feed.get("moments", []) if feed else []
+    quick_access = feed.get("quick_access", []) if feed else []
 
     # Resposta estruturada canônica da Home
     return {
@@ -170,6 +215,9 @@ async def get_music_home(
         "recommended_artists": recommended_artists,
         "trending_brasil": trending_brasil,
         "new_releases": new_releases,
+        "popular_playlists": popular_playlists,
+        "week_selection": week_selection,
+        "top_stations": top_stations,
         "custom_workout": custom_workout,
         "custom_focus": custom_focus,
         "moments": moments,
@@ -420,12 +468,12 @@ async def play_audio_proxy(track_id: str, request: Request):
             raise HTTPException(status_code=404, detail="URL de áudio não encontrada.")
 
         range_header = request.headers.get("Range", "bytes=0-")
-        req_headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Range": range_header,
-        }
+        req_headers = dict(data.get("http_headers", {}))
+        req_headers["Range"] = range_header
+        if "User-Agent" not in req_headers:
+            req_headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
-        client = httpx.AsyncClient(timeout=60.0)
+        client = httpx.AsyncClient(timeout=60.0, follow_redirects=True)
         upstream_req = client.build_request("GET", audio_url, headers=req_headers)
         upstream_res = await client.send(upstream_req, stream=True)
 
@@ -445,20 +493,22 @@ async def play_audio_proxy(track_id: str, request: Request):
             "Cache-Control": "public, max-age=14400",
         }
 
-        if "content-range" in upstream_res.headers:
-            response_headers["Content-Range"] = upstream_res.headers["content-range"]
-        if "content-length" in upstream_res.headers:
-            response_headers["Content-Length"] = upstream_res.headers["content-length"]
-        if "content-type" in upstream_res.headers:
-            response_headers["Content-Type"] = upstream_res.headers["content-type"]
-        else:
-            response_headers["Content-Type"] = "audio/mp4" if data.get("ext") == "m4a" else "audio/webm"
+        # Content-Type compatível com elemento HTML5 <audio> do Chrome/Edge/Android
+        resolved_mime = "audio/webm"
+        if data.get("ext") == "m4a" or data.get("ext") == "mp4":
+            resolved_mime = "audio/mp4"
+        elif "webm" in upstream_res.headers.get("content-type", ""):
+            resolved_mime = "audio/webm"
+        elif "mp4" in upstream_res.headers.get("content-type", "") or "m4a" in upstream_res.headers.get("content-type", ""):
+            resolved_mime = "audio/mp4"
+
+        response_headers["Content-Type"] = resolved_mime
 
         return StreamingResponse(
             stream_body(),
             status_code=upstream_res.status_code,
             headers=response_headers,
-            media_type=response_headers["Content-Type"]
+            media_type=resolved_mime
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao transmitir áudio: {str(e)}")

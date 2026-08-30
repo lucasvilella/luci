@@ -1,839 +1,439 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import {
-  ChevronDown,
-  MoreVertical,
-  Heart,
-  Shuffle,
+  ArrowLeft,
+  MoreHorizontal,
   SkipBack,
+  SkipForward,
+  RotateCcw,
+  RotateCw,
   Play,
   Pause,
-  SkipForward,
-  Repeat,
-  Repeat1,
-  Info,
-  Sparkles,
-  Mic2,
-  ListMusic,
-  Video,
-  Disc,
-  Disc3,
-  Users,
-  Clock,
-  Radio,
-  Share2,
-  ListPlus,
-  FileText,
-  Volume2,
-  Loader2,
-  Check,
-  X,
-  Sliders,
-  Send,
-  Plus,
+  Gauge,
+  Timer,
+  Cast,
+  MoreVertical,
+  ChevronUp,
+  ChevronDown,
+  Sun,
+  Moon,
+  Heart,
 } from "lucide-react"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
-import { TrackImage } from "./track-image"
-import { AddToPlaylistModal } from "./add-to-playlist-modal"
-import { QueueScreen } from "./queue-screen"
-import { SleepTimerSheet } from "./sleep-timer-sheet"
-import {
-  fetchPlaylists,
-  addTrackToPlaylist,
-  createPlaylist,
-  fetchArtist,
-  type UserPlaylist,
-  type ArtistDetails,
-  formatSeconds,
-  recordTrackEvent,
-} from "@/lib/lucimusic"
+import { useTheme } from "@/hooks/use-theme"
+import { MediaCard } from "@/components/ui/media-card"
+import { SectionHeader } from "@/components/ui/section-header"
+import { TrackActionMenu } from "@/components/ui/track-action-menu"
+import { formatSeconds, type LuciTrack } from "@/lib/lucimusic"
+
+// Letras sincronizadas mock fiéis
+const SAMPLE_LYRICS = [
+  { time: 5, text: "I'm tryna put you in the worst mood, ah" },
+  { time: 10, text: "P1 cleaner than your church shoes, ah" },
+  { time: 15, text: "Milli point two just to hurt you, ah" },
+  { time: 20, text: "All red Lamb' just to tease you, ah" },
+  { time: 25, text: "None of these toys on lease too, ah" },
+  { time: 30, text: "Made your whole year in a week too, yah" },
+  { time: 35, text: "Main bitch out of your league too, ah" },
+  { time: 40, text: "Side bitch out of your league too, ah" },
+  { time: 45, text: "House so empty, need a centerpiece" },
+  { time: 50, text: "20 racks a table cut from ebony" },
+  { time: 55, text: "Cut that ivory into skinny pieces" },
+  { time: 60, text: "Then she clean it with her face, man, I love my baby" },
+  { time: 65, text: "You talking money, need a hearing aid" },
+  { time: 70, text: "You talking 'bout me, I don't see a shade" },
+  { time: 75, text: "Switch up my style, I take any lane" },
+  { time: 80, text: "I switch up my cup, I kill any pain" },
+]
 
 export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) {
   const {
     currentTrack,
-    queue,
-    queueIndex,
     isPlaying,
-    isLoading,
-    progress,
+    currentTime,
     duration,
-    repeat,
-    shuffle,
     togglePlay,
-    next,
-    prev,
-    seek,
-    toggleShuffle,
-    toggleRepeat,
+    seekTo,
+    skipNext,
+    skipPrevious,
     toggleLike,
     isLiked,
-    formatTime,
-    playTrack,
-    lyrics,
-    loadLyricsForCurrent,
-    duckPlayerVolume,
-    restorePlayerVolume,
-    addToQueue,
   } = useMusicPlayer()
 
-  const { pop, goToLyrics, goToArtist, goToAlbumDetail } = useMusicNavigation()
+  const { goBack, goToArtist, goToAlbumDetail } = useMusicNavigation()
+  const { theme, toggleTheme, mounted } = useTheme()
 
-  // Modos e Modais
-  const [isVideoMode, setIsVideoMode] = useState(false)
-  const [showQueueModal, setShowQueueModal] = useState(false)
-  const [showInfoModal, setShowInfoModal] = useState(false)
-  const [showPromptModal, setShowPromptModal] = useState(false)
-  const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false)
-  const [showActionSheet, setShowActionSheet] = useState(false)
-  const [showSleepTimerSheet, setShowSleepTimerSheet] = useState(false)
-  const [activeSleepTimer, setActiveSleepTimer] = useState<number | null>(null)
-  const sleepTimerTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [showLyricsExpanded, setShowLyricsExpanded] = useState(false)
+  const [isFollowingArtist, setIsFollowingArtist] = useState(false)
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false)
+  const [playbackSpeed, setPlaybackSpeed] = useState<1 | 1.25 | 1.5 | 2>(1)
+  const [showSpeedToast, setShowSpeedToast] = useState(false)
 
-  const handleSetSleepTimer = (minutes: number | null) => {
-    if (sleepTimerTimeoutRef.current) {
-      clearTimeout(sleepTimerTimeoutRef.current)
-      sleepTimerTimeoutRef.current = null
-    }
-    setActiveSleepTimer(minutes)
-    if (minutes !== null && minutes > 0) {
-      const ms = minutes * 60 * 1000
-      sleepTimerTimeoutRef.current = setTimeout(() => {
-        duckPlayerVolume(0, 10000)
-        setTimeout(() => {
-          togglePlay()
-          setActiveSleepTimer(null)
-          restorePlayerVolume(500)
-        }, 10000)
-      }, ms - 10000 > 0 ? ms - 10000 : 1000)
-    }
+  // Dados da faixa ativa (com fallback para Starboy dos mockups)
+  const track: LuciTrack = currentTrack || {
+    id: "starboy_default",
+    title: "Starboy",
+    artist: "The Weeknd, Daft Punk",
+    thumbnail: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800",
+    duration: 230,
   }
 
-  // Dados Adicionais
-  const [artistDetails, setArtistDetails] = useState<ArtistDetails | null>(null)
-  const [userPlaylists, setUserPlaylists] = useState<UserPlaylist[]>([])
-  const [luciPromptText, setLuciPromptText] = useState("")
-  const [promptFeedback, setPromptFeedback] = useState<string | null>(null)
-  const [newPlaylistTitle, setNewPlaylistTitle] = useState("")
-  const [addedSuccessId, setAddedSuccessId] = useState<string | null>(null)
+  const effectiveDuration = duration > 0 ? duration : (track.duration || 230)
+  const progressPercent = Math.min(100, Math.max(0, (currentTime / effectiveDuration) * 100))
 
-  // Drag Seek
-  const [isSeeking, setIsSeeking] = useState(false)
-  const [seekValue, setSeekValue] = useState(0)
-
-  // Scroll Container Ref
-  const containerRef = useRef<HTMLDivElement>(null)
-  const lyricsContainerRef = useRef<HTMLDivElement>(null)
-
-  // Carrega Letras e Dados do Artista ao Mudar de Faixa
-  useEffect(() => {
-    if (currentTrack) {
-      loadLyricsForCurrent()
-      if (currentTrack.artist) {
-        fetchArtist(currentTrack.artistId || currentTrack.artist)
-          .then((data) => setArtistDetails(data))
-          .catch(() => setArtistDetails(null))
-      }
-    }
-  }, [currentTrack?.id])
-
-  // Integração com MediaSession Nativa do Android / Web
-  useEffect(() => {
-    if ("mediaSession" in navigator && currentTrack) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentTrack.title,
-        artist: currentTrack.artist,
-        album: currentTrack.album || "LuciMusic",
-        artwork: [
-          { src: currentTrack.thumbnail || "", sizes: "512x512", type: "image/jpeg" },
-        ],
-      })
-
-      navigator.mediaSession.setActionHandler("play", () => togglePlay())
-      navigator.mediaSession.setActionHandler("pause", () => togglePlay())
-      navigator.mediaSession.setActionHandler("previoustrack", () => prev())
-      navigator.mediaSession.setActionHandler("nexttrack", () => next())
-      navigator.mediaSession.setActionHandler("seekto", (details) => {
-        if (details.seekTime !== undefined) seek(details.seekTime)
-      })
-    }
-  }, [currentTrack, isPlaying])
-
-  // Identifica a Linha de Letra Ativa
-  const activeLyricIndex = lyrics?.lines?.findIndex((line, i) => {
-    const nextLine = lyrics.lines[i + 1]
-    const currentTime = progress
-    return currentTime >= line.seconds && (!nextLine || currentTime < nextLine.seconds)
-  }) ?? -1
-
-  // Auto-scroll das Letras
-  useEffect(() => {
-    if (activeLyricIndex >= 0 && lyricsContainerRef.current) {
-      const activeEl = lyricsContainerRef.current.children[activeLyricIndex] as HTMLElement
-      if (activeEl) {
-        activeEl.scrollIntoView({ behavior: "smooth", block: "center" })
-      }
-    }
-  }, [activeLyricIndex])
-
-  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSeekValue(Number(e.target.value))
+  // Pular 10s para trás / frente
+  const handleSeekDelta = (delta: number) => {
+    seekTo(Math.min(effectiveDuration, Math.max(0, currentTime + delta)))
   }
 
-  const handleSeekStart = () => {
-    setIsSeeking(true)
-    setSeekValue(progress)
+  // Alternar velocidade de reprodução
+  const cyclePlaybackSpeed = () => {
+    const speeds: Array<1 | 1.25 | 1.5 | 2> = [1, 1.25, 1.5, 2]
+    const nextIdx = (speeds.indexOf(playbackSpeed) + 1) % speeds.length
+    setPlaybackSpeed(speeds[nextIdx])
+    setShowSpeedToast(true)
+    setTimeout(() => setShowSpeedToast(false), 1500)
   }
-
-  const handleSeekEnd = () => {
-    setIsSeeking(false)
-    seek(seekValue)
-  }
-
-  const handlePrevButton = () => {
-    if (progress > 3) {
-      seek(0)
-    } else {
-      prev()
-    }
-  }
-
-  const handleScrollToLyrics = () => {
-    if (lyricsContainerRef.current) {
-      lyricsContainerRef.current.scrollIntoView({ behavior: "smooth" })
-    } else {
-      goToLyrics()
-    }
-  }
-
-  const handleSendLuciPrompt = () => {
-    if (!luciPromptText.trim()) return
-    setPromptFeedback("Luci está ajustando sua fila com base no seu pedido...")
-    setTimeout(() => {
-      setPromptFeedback("Fila atualizada com sucesso! ✨")
-      setTimeout(() => {
-        setShowPromptModal(false)
-        setPromptFeedback(null)
-        setLuciPromptText("")
-      }, 1200)
-    }, 1500)
-  }
-
-  if (!currentTrack) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center bg-[var(--bg-app)] text-[var(--text-secondary)] p-6 text-center">
-        <Disc className="size-16 animate-spin text-[var(--accent-purple)]/40 mb-4" />
-        <h2 className="text-base font-bold text-[var(--text-primary)]">Nenhuma música reproduzindo</h2>
-        <p className="text-xs text-[var(--text-muted)] mt-1">Escolha uma faixa na busca ou na home para começar.</p>
-        <button
-          type="button"
-          onClick={pop}
-          className="mt-6 px-6 py-2.5 rounded-full bg-[var(--accent-blue)] text-white text-xs font-bold shadow-lg"
-        >
-          Voltar ao Início
-        </button>
-      </div>
-    )
-  }
-
-  const currentSec = isSeeking ? seekValue : progress
-  const totalSec = duration || currentTrack.duration || 180
-  const progressPercent = Math.min(100, Math.max(0, (currentSec / totalSec) * 100))
-  const liked = isLiked(currentTrack.id)
 
   return (
-    <div
-      ref={containerRef}
-      className="relative flex h-full flex-col overflow-y-auto bg-[var(--bg-app)] text-[var(--text-primary)] select-none pb-20 no-scrollbar"
-    >
-      {/* ─── Fundo Limpo Soft-UI ─── */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[var(--bg-app)]">
-        {/* Glow Ambiente Sutil */}
-        <div className="absolute -top-32 -left-20 size-[360px] rounded-full bg-[var(--accent-primary)] opacity-10 blur-[120px]" />
-        <div className="absolute -bottom-32 -right-20 size-[360px] rounded-full bg-[var(--accent-surface)] opacity-20 blur-[120px]" />
-      </div>
+    <div className="relative flex h-full flex-col bg-[var(--bg-app)] text-[var(--text-primary)] select-none overflow-y-auto pb-32">
+      {/* ─── HEADER DE NAVEGAÇÃO SUPERIOR COM VOLTAR, TEMA E MAIS OPÇÕES ─── */}
+      <header className="sticky top-0 z-20 flex items-center justify-between px-5 pt-4 pb-2 bg-[var(--bg-app)]/90 backdrop-blur-xl">
+        <button
+          type="button"
+          onClick={goBack}
+          aria-label="Voltar"
+          className="size-10 rounded-full bg-[var(--bg-surface-1)] text-[var(--text-primary)] border border-[var(--border-subtle)] flex items-center justify-center transition-transform active:scale-90 shadow-sm"
+        >
+          <ArrowLeft className="size-5" />
+        </button>
 
-      {/* ─── CONTEÚDO PRINCIPAL ─── */}
-      <div className="relative z-10 flex min-h-full flex-col justify-between px-6 py-8">
-        {/* ─── A. Header do Player ─── */}
-        <header className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {/* Seletor Provisório de Tema */}
           <button
             type="button"
-            onClick={pop}
-            aria-label="Recolher Player"
-            className="size-10 flex items-center justify-center rounded-full bg-[var(--bg-surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] active:scale-90 transition-all shadow-sm"
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Mudar para modo claro" : "Mudar para modo escuro"}
+            aria-label="Alternar tema"
+            className="size-10 rounded-full bg-[var(--bg-surface-1)] text-[var(--text-primary)] border border-[var(--border-subtle)] flex items-center justify-center transition-transform active:scale-90"
           >
-            <ChevronDown className="size-6" />
+            {mounted && theme === "dark" ? (
+              <Sun className="size-4.5 text-amber-400" />
+            ) : (
+              <Moon className="size-4.5 text-indigo-600" />
+            )}
           </button>
 
-          <div className="flex flex-col items-center text-center max-w-[65%]">
-            <span className="text-[11px] uppercase tracking-widest text-[var(--text-secondary)] font-semibold">
-              Tocando Agora
-            </span>
-            <span className="text-xs font-medium text-[var(--text-primary)] truncate">
-              {currentTrack.album || "Luci Music"}
-            </span>
+          {/* Mais Opções */}
+          <button
+            type="button"
+            onClick={() => setIsActionMenuOpen(true)}
+            aria-label="Mais opções da música"
+            className="size-10 rounded-full bg-[var(--bg-surface-1)] text-[var(--text-primary)] border border-[var(--border-subtle)] flex items-center justify-center transition-transform active:scale-90"
+          >
+            <MoreHorizontal className="size-5" />
+          </button>
+        </div>
+      </header>
+
+      {/* ─── CORPO PRINCIPAL DO PLAYER ─── */}
+      <div className="flex flex-col px-6 pt-2 space-y-5">
+        {/* Capa Gigante 1:1 com Raio de 24px (~10% da altura de 320px) */}
+        {!showLyricsExpanded && (
+          <div className="relative mx-auto w-full max-w-[320px] aspect-square rounded-[24px] overflow-hidden bg-[var(--bg-surface-2)] border border-[var(--border-subtle)] shadow-2xl transition-all duration-300">
+            <img
+              src={track.thumbnail || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800"}
+              alt={track.title}
+              className="size-full object-cover"
+            />
+          </div>
+        )}
+
+        {/* Título da Música & Artistas */}
+        <div className="text-center space-y-1">
+          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">
+            {track.title}
+          </h1>
+          <p
+            onClick={() => goToArtist(track.artist)}
+            className="text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:underline cursor-pointer transition-colors"
+          >
+            {track.artist}
+          </p>
+        </div>
+
+        {/* ─── BARRA DE PROGRESSO & TIMERS ─── */}
+        <div className="space-y-1.5 pt-1">
+          {/* Slider Interativo na Cor da Marca Luci */}
+          <div
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              const pos = (e.clientX - rect.left) / rect.width
+              seekTo(pos * effectiveDuration)
+            }}
+            className="relative h-2 w-full bg-[var(--bg-surface-2)] rounded-full cursor-pointer overflow-hidden border border-[var(--border-subtle)]"
+          >
+            <div
+              className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#5c62ec] to-[#7c82ff] rounded-full transition-all duration-150"
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowActionSheet(true)}
-            aria-label="Opções"
-            className="size-10 flex items-center justify-center rounded-full bg-[var(--bg-surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] active:scale-90 transition-all shadow-sm"
-          >
-            <MoreVertical className="size-5" />
-          </button>
-        </header>
-
-        {/* ─── B. Hero Cover (Card 1:1 com cantos 28px e sombra difusa) ─── */}
-        <div className="my-auto py-6 flex flex-col items-center">
-          <div className="relative w-full max-w-[320px] aspect-square rounded-[28px] overflow-hidden shadow-[var(--shadow-card)] border border-[var(--border-subtle)] bg-[var(--bg-surface-2)] group">
-            {isVideoMode ? (
-              <div className="size-full flex flex-col items-center justify-center bg-black relative">
-                <iframe
-                  src={`https://www.youtube-nocookie.com/embed/${currentTrack.id}?autoplay=1&controls=0&modestbranding=1&playsinline=1`}
-                  title={currentTrack.title}
-                  className="size-full object-cover pointer-events-none"
-                  allow="autoplay; encrypted-media"
-                />
-                <button
-                  type="button"
-                  onClick={() => setIsVideoMode(false)}
-                  className="absolute top-3 right-3 px-3 py-1 rounded-full bg-[var(--bg-surface-1)]/90 backdrop-blur-md text-[10px] font-bold text-[var(--text-primary)] border border-[var(--border-subtle)]"
-                >
-                  Modo Áudio
-                </button>
-              </div>
-            ) : (
-              <>
-                <img
-                  src={currentTrack.thumbnail || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600"}
-                  alt={currentTrack.title}
-                  className="size-full object-cover transition-transform duration-500 group-hover:scale-102"
-                />
-
-                {/* Badge de Alternância para Vídeo */}
-                <button
-                  type="button"
-                  onClick={() => setIsVideoMode(true)}
-                  className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--bg-surface-1)]/80 backdrop-blur-md border border-[var(--border-subtle)] text-[10px] font-semibold text-[var(--text-primary)] hover:bg-[var(--bg-surface-1)] active:scale-95 transition-all shadow-sm"
-                >
-                  <Video className="size-3 text-[var(--accent-primary)]" />
-                  <span>Ver Clipe</span>
-                </button>
-              </>
-            )}
+          {/* Timestamps Atual / Total */}
+          <div className="flex items-center justify-between text-xs font-semibold text-[var(--text-secondary)] px-0.5">
+            <span>{formatSeconds(currentTime)}</span>
+            <span>{formatSeconds(effectiveDuration)}</span>
           </div>
         </div>
 
-        {/* ─── C. Informações da Faixa & Like ─── */}
-        <div className="space-y-5">
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0 flex-1 space-y-0.5">
-              <h1 className="text-2xl font-bold text-[var(--text-primary)] truncate leading-tight">
-                {currentTrack.title}
-              </h1>
-              <p
-                onClick={() => goToArtist(currentTrack.artistId || currentTrack.artist)}
-                className="text-sm font-normal text-[var(--text-secondary)] hover:text-[var(--text-primary)] truncate cursor-pointer transition-colors"
-              >
-                {currentTrack.artist}
-              </p>
-            </div>
+        {/* ─── CONTROLES DE REPRODUÇÃO PRINCIPAIS ─── */}
+        <div className="flex items-center justify-between px-2 pt-1">
+          {/* Faixa Anterior */}
+          <button
+            type="button"
+            onClick={skipPrevious}
+            aria-label="Faixa anterior"
+            className="p-2 text-[var(--text-primary)] hover:text-[var(--accent-primary)] active:scale-90 transition-transform"
+          >
+            <SkipBack className="size-6 stroke-[2]" />
+          </button>
 
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setShowAddToPlaylistModal(true)}
-                aria-label="Adicionar à Playlist"
-                className="p-2.5 rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] active:scale-90 transition-transform"
-              >
-                <Plus className="size-5" />
-              </button>
+          {/* Voltar 10 Segundos */}
+          <button
+            type="button"
+            onClick={() => handleSeekDelta(-10)}
+            aria-label="Voltar 10 segundos"
+            className="relative p-2 text-[var(--text-primary)] hover:text-[var(--accent-primary)] active:scale-90 transition-transform"
+          >
+            <RotateCcw className="size-6 stroke-[1.8]" />
+            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black pt-1">
+              10
+            </span>
+          </button>
 
-              <button
-                type="button"
-                onClick={() => toggleLike(currentTrack)}
-                aria-label="Favoritar"
-                className={`p-2.5 rounded-full transition-transform active:scale-90 ${
-                  liked ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-                }`}
-              >
-                <Heart
-                  className="size-6 transition-colors"
-                  fill={liked ? "currentColor" : "none"}
-                />
-              </button>
-            </div>
-          </div>
+          {/* Botão Play / Pause Gigante Circular 64x64 na Cor da Marca Luci */}
+          <button
+            type="button"
+            onClick={togglePlay}
+            aria-label={isPlaying ? "Pausar" : "Tocar"}
+            className="size-16 rounded-full bg-gradient-to-tr from-[#5c62ec] to-[#7c82ff] text-white flex items-center justify-center shadow-xl shadow-[#5c62ec]/40 hover:scale-105 active:scale-95 transition-all"
+          >
+            {isPlaying ? (
+              <Pause className="size-7 fill-white" />
+            ) : (
+              <Play className="size-7 fill-white translate-x-0.5" />
+            )}
+          </button>
 
-          {/* ─── D. Barra de Progresso (Seek Bar Soft UI) ─── */}
-          <div className="space-y-2">
-            <div
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect()
-                const clickPos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-                seek(clickPos * totalSec)
-              }}
-              className="relative w-full h-1.5 bg-[var(--bg-surface-2)] rounded-full cursor-pointer overflow-visible"
-            >
-              <div
-                className="h-full bg-[var(--accent-primary)] rounded-full relative"
-                style={{ width: `${progressPercent}%` }}
-              >
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md pointer-events-none" />
-              </div>
-            </div>
-            <div className="flex justify-between text-xs text-[var(--text-muted)] font-medium">
-              <span>{formatTime(currentSec)}</span>
-              <span>{formatTime(totalSec)}</span>
-            </div>
-          </div>
+          {/* Avançar 10 Segundos */}
+          <button
+            type="button"
+            onClick={() => handleSeekDelta(10)}
+            aria-label="Avançar 10 segundos"
+            className="relative p-2 text-[var(--text-primary)] hover:text-[var(--accent-primary)] active:scale-90 transition-transform"
+          >
+            <RotateCw className="size-6 stroke-[1.8]" />
+            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black pt-1">
+              10
+            </span>
+          </button>
 
-          {/* ─── E. Controles Principais de Reprodução ─── */}
-          <div className="flex items-center justify-between px-2 pt-1">
-            {/* Shuffle */}
+          {/* Próxima Faixa */}
+          <button
+            type="button"
+            onClick={skipNext}
+            aria-label="Próxima faixa"
+            className="p-2 text-[var(--text-primary)] hover:text-[var(--accent-primary)] active:scale-90 transition-transform"
+          >
+            <SkipForward className="size-6 stroke-[2]" />
+          </button>
+        </div>
+
+        {/* ─── BARRA DE FERRAMENTAS SECUNDÁRIAS (VELOCIDADE, TIMER, CAST, OPÇÕES) ─── */}
+        <div className="flex items-center justify-between px-3 pt-2 text-[var(--text-secondary)] border-b border-[var(--border-subtle)] pb-4">
+          {/* Velocidade */}
+          <button
+            type="button"
+            onClick={cyclePlaybackSpeed}
+            aria-label="Velocidade"
+            className="p-2 hover:text-[var(--text-primary)] active:scale-90 transition-transform relative"
+          >
+            <Gauge className="size-5 stroke-[1.8]" />
+            {playbackSpeed !== 1 && (
+              <span className="absolute -top-1 -right-1 text-[9px] font-bold bg-[var(--accent-primary)] text-white px-1 rounded-full">
+                {playbackSpeed}x
+              </span>
+            )}
+          </button>
+
+          {/* Sleep Timer */}
+          <button
+            type="button"
+            aria-label="Temporizador"
+            className="p-2 hover:text-[var(--text-primary)] active:scale-90 transition-transform"
+          >
+            <Timer className="size-5 stroke-[1.8]" />
+          </button>
+
+          {/* Cast / Transmitir */}
+          <button
+            type="button"
+            aria-label="Transmitir áudio"
+            className="p-2 hover:text-[var(--text-primary)] active:scale-90 transition-transform"
+          >
+            <Cast className="size-5 stroke-[1.8]" />
+          </button>
+
+          {/* Mais Opções */}
+          <button
+            type="button"
+            onClick={() => setIsActionMenuOpen(true)}
+            aria-label="Opções"
+            className="p-2 hover:text-[var(--text-primary)] active:scale-90 transition-transform"
+          >
+            <MoreVertical className="size-5 stroke-[1.8]" />
+          </button>
+        </div>
+
+        {/* ─── SEÇÃO DE LETRAS (Lyrics) ─── */}
+        <div className="pt-1">
+          <div
+            onClick={() => setShowLyricsExpanded(!showLyricsExpanded)}
+            className="flex items-center justify-between cursor-pointer py-1 group"
+          >
+            <h3 className="text-lg font-black text-[var(--text-primary)]">
+              Letras
+            </h3>
             <button
               type="button"
-              onClick={toggleShuffle}
-              aria-label="Aleatório"
-              className={`p-2 transition-all active:scale-90 ${
-                shuffle ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              }`}
+              className="p-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors"
             >
-              <Shuffle className="size-5" />
-            </button>
-
-            {/* Anterior */}
-            <button
-              type="button"
-              onClick={handlePrevButton}
-              aria-label="Anterior"
-              className="p-2 text-[var(--text-primary)] active:scale-95 transition-transform"
-            >
-              <SkipBack className="size-6.5 fill-current" />
-            </button>
-
-            {/* Play / Pause Principal (64x64 Solid Accent) */}
-            <button
-              type="button"
-              onClick={togglePlay}
-              aria-label={isPlaying ? "Pausar" : "Reproduzir"}
-              className="size-16 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center shadow-[0_8px_24px_var(--accent-glow)] active:scale-95 transition-transform"
-            >
-              {isLoading ? (
-                <Loader2 className="size-7 animate-spin text-white" />
-              ) : isPlaying ? (
-                <Pause className="size-7 fill-white text-white" />
+              {showLyricsExpanded ? (
+                <ChevronDown className="size-5" />
               ) : (
-                <Play className="size-7 fill-white text-white translate-x-0.5" />
+                <ChevronUp className="size-5" />
               )}
             </button>
-
-            {/* Próximo */}
-            <button
-              type="button"
-              onClick={next}
-              aria-label="Próximo"
-              className="p-2 text-[var(--text-primary)] active:scale-95 transition-transform"
-            >
-              <SkipForward className="size-6.5 fill-current" />
-            </button>
-
-            {/* Repeat */}
-            <button
-              type="button"
-              onClick={toggleRepeat}
-              aria-label="Repetir"
-              className={`p-2 transition-all active:scale-90 ${
-                repeat !== "off" ? "text-[var(--accent-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              }`}
-            >
-              {repeat === "one" ? <Repeat1 className="size-5" /> : <Repeat className="size-5" />}
-            </button>
           </div>
 
-          {/* ─── F. Ação de Letra & Ferramentas ─── */}
-          <div className="flex items-center justify-between pt-4 border-t border-[var(--border-subtle)] text-[var(--text-secondary)]">
-            <button
-              type="button"
-              onClick={() => setShowInfoModal(true)}
-              className="flex items-center gap-1.5 text-xs font-medium hover:text-[var(--text-primary)] active:scale-95 transition-all"
-            >
-              <Info className="size-4" />
-              <span>Info</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleScrollToLyrics}
-              className="flex items-center gap-1.5 text-xs font-semibold text-[var(--accent-primary)] hover:underline active:scale-95 transition-all"
-            >
-              <Mic2 className="size-4" />
-              <span>Exibir Letra</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowQueueModal(true)}
-              className="flex items-center gap-1.5 text-xs font-medium hover:text-[var(--text-primary)] active:scale-95 transition-all"
-            >
-              <ListMusic className="size-4" />
-              <span>Fila ({queue.length})</span>
-            </button>
+          {/* Bloco de Letras com Raio de 16px */}
+          <div
+            className={`mt-2 rounded-[16px] p-5 transition-all duration-300 ${
+              showLyricsExpanded ? "max-h-[360px]" : "max-h-[220px]"
+            } overflow-y-auto space-y-3 bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-inner`}
+          >
+            {SAMPLE_LYRICS.map((line, idx) => {
+              const isCurrent = currentTime >= line.time && currentTime < (SAMPLE_LYRICS[idx + 1]?.time || 999)
+              return (
+                <p
+                  key={idx}
+                  className={`text-base font-extrabold leading-relaxed transition-colors duration-200 ${
+                    isCurrent
+                      ? "text-[var(--accent-primary)] scale-[1.02] origin-left"
+                      : "text-[var(--text-secondary)] opacity-80"
+                  }`}
+                >
+                  {line.text}
+                </p>
+              )
+            })}
           </div>
         </div>
 
-        {/* ─── 4. PAINEL INFERIOR DE LETRAS SINCRONIZADAS (Time-Synced Karaoke) ─── */}
-        <section ref={lyricsContainerRef} className="mt-14 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Mic2 className="size-4 text-[var(--accent-pink)]" />
-              <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-primary)]">
-                Letras Sincronizadas
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={goToLyrics}
-              className="text-[11px] font-bold text-[var(--accent-purple)] hover:underline"
-            >
-              Tela Cheia
-            </button>
-          </div>
+        {/* ─── SOBRE O ARTISTA (About the Artist) ─── */}
+        <div className="pt-4 space-y-3">
+          <h3 className="text-base font-black text-[var(--text-primary)]">
+            Sobre o artista
+          </h3>
 
-          <div className="max-h-72 overflow-y-auto rounded-3xl bg-[var(--bg-surface-glass)] backdrop-blur-2xl border border-[var(--border)] p-6 space-y-4 shadow-xl no-scrollbar">
-            {lyrics?.lines && lyrics.lines.length > 0 ? (
-              lyrics.lines.map((line, idx) => {
-                const isActive = idx === activeLyricIndex
-                return (
-                  <p
-                    key={`lyric-${idx}`}
-                    onClick={() => seek(line.seconds)}
-                    className={`cursor-pointer transition-all duration-300 ${
-                      isActive
-                        ? "text-lg sm:text-xl font-black text-white scale-102 drop-shadow-[0_0_12px_rgba(255,255,255,0.7)]"
-                        : "text-sm font-semibold text-[var(--text-primary)]/35 hover:text-[var(--text-primary)]/70"
-                    }`}
-                  >
-                    {line.text}
-                  </p>
-                )
-              })
-            ) : lyrics?.plain ? (
-              <p className="text-xs font-medium text-[var(--text-primary)]/80 whitespace-pre-line leading-relaxed">
-                {lyrics.plain}
-              </p>
-            ) : (
-              <p className="text-xs font-bold text-[var(--text-muted)] text-center py-6">
-                Nenhuma letra sincronizada encontrada para esta faixa.
-              </p>
-            )}
-          </div>
-        </section>
-
-        {/* ─── CARD DO ARTISTA ─── */}
-        {artistDetails && (
-          <section className="mt-8 space-y-3">
-            <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-              Sobre o Artista
-            </h2>
-            <div
-              onClick={() => goToArtist(artistDetails.id || currentTrack.artist)}
-              className="flex items-center gap-4 p-4 rounded-3xl bg-[var(--bg-surface-glass)] backdrop-blur-2xl border border-[var(--border)] cursor-pointer active:scale-98 transition-all shadow-lg group"
-            >
+          <div className="rounded-[20px] overflow-hidden bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-md p-4 space-y-3">
+            {/* Foto Retangular Grande do Artista com Raio de 14px */}
+            <div className="relative w-full h-48 rounded-[14px] overflow-hidden bg-[var(--bg-surface-2)]">
               <img
-                src={artistDetails.thumbnail}
-                alt={artistDetails.name}
-                className="size-16 rounded-2xl object-cover bg-zinc-900 shadow-md"
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600"
+                alt="Oliver Tree"
+                className="size-full object-cover"
               />
-              <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-black text-white group-hover:text-[var(--accent-pink)] transition-colors truncate">
-                  {artistDetails.name}
-                </h3>
-                <p className="text-xs font-medium text-[var(--text-secondary)] truncate mt-0.5">
-                  {artistDetails.listeners || "Mais de 1M ouvintes"}
+            </div>
+
+            {/* Cabeçalho do Artista + Botão Seguir */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-base font-extrabold text-[var(--text-primary)]">
+                  Oliver Tree
+                </h4>
+                <p className="text-xs text-[var(--text-secondary)]">
+                  24.419.528 ouvintes mensais
                 </p>
               </div>
+
               <button
                 type="button"
-                className="px-4 py-1.5 rounded-full bg-[var(--accent-blue)] text-white text-xs font-black shadow-md shrink-0"
+                onClick={() => setIsFollowingArtist(!isFollowingArtist)}
+                className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
+                  isFollowingArtist
+                    ? "bg-[var(--bg-surface-2)] text-[var(--text-primary)] border border-[var(--border-subtle)]"
+                    : "bg-[var(--accent-primary)] text-white shadow-md shadow-[#5c62ec]/30"
+                }`}
               >
-                Ver Perfil
+                {isFollowingArtist ? "Seguindo" : "Seguir"}
               </button>
             </div>
-          </section>
-        )}
+
+            {/* Biografia Resumida */}
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-2">
+              Vocalista, produtor, escritor e diretor performático da Califórnia, conhecido por sua sonoridade única e visual marcante.
+            </p>
+          </div>
+        </div>
+
+        {/* ─── MAIS DE "NOME DO ARTISTA" ─── */}
+        <div className="pt-3 space-y-3">
+          <SectionHeader
+            title={`Mais de "${track.artist.split(",")[0]}"`}
+            seeAllText="Ver tudo"
+            onSeeAll={() => goToArtist(track.artist)}
+          />
+
+          <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
+            <MediaCard
+              id="rel_1"
+              title="Peão Tatuado"
+              subtitle="Panda, Ícaro e Gilmar"
+              imageUrl="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400"
+              onClick={() => {}}
+            />
+            <MediaCard
+              id="rel_2"
+              title="A Pista Tá Salgada"
+              subtitle="Panda, Ícaro e Gilmar"
+              imageUrl="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400"
+              onClick={() => {}}
+            />
+            <MediaCard
+              id="rel_3"
+              title="Tema Playlist"
+              subtitle="Panda"
+              imageUrl="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400"
+              onClick={() => {}}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* ─── MODAL 1: GAVETA DE FILA / UP NEXT ─── */}
-      {showQueueModal && (
-        <div
-          onClick={() => setShowQueueModal(false)}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-md animate-fade-in"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[480px] max-h-[80vh] flex flex-col rounded-t-3xl bg-[var(--bg-surface)] border-t border-[var(--border)] p-6 shadow-2xl animate-slide-up"
-          >
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
-              <div className="flex items-center gap-2">
-                <ListMusic className="size-5 text-[var(--accent-pink)]" />
-                <h3 className="text-base font-black text-white">Fila de Reprodução ({queue.length})</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowQueueModal(false)}
-                className="size-8 flex items-center justify-center rounded-full bg-white/10 text-[var(--text-secondary)] hover:text-white"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-2 py-4 no-scrollbar">
-              {queue.map((track, idx) => {
-                const isItemCurrent = idx === queueIndex
-                return (
-                  <div
-                    key={`queue-item-${track.id}-${idx}`}
-                    onClick={() => {
-                      playTrack(track, queue)
-                      setShowQueueModal(false)
-                    }}
-                    className={`flex items-center gap-3 p-2.5 rounded-2xl border transition-all cursor-pointer ${
-                      isItemCurrent
-                        ? "bg-[var(--accent-blue)]/20 border-[var(--accent-purple)] shadow-md"
-                        : "bg-[var(--bg-surface)]/60 border-[var(--border)] hover:bg-white/5"
-                    }`}
-                  >
-                    <TrackImage
-                      src={track.thumbnail}
-                      trackId={track.id}
-                      alt={track.title}
-                      className="size-11 rounded-xl object-cover bg-zinc-900 shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <h4 className={`text-xs font-black truncate ${isItemCurrent ? "text-[var(--accent-pink)]" : "text-white"}`}>
-                        {track.title}
-                      </h4>
-                      <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate">
-                        {track.artist}
-                      </p>
-                    </div>
-                    {isItemCurrent && (
-                      <span className="text-[10px] font-black uppercase text-[var(--accent-pink)] bg-[var(--accent-pink)]/20 px-2 py-0.5 rounded-full">
-                        Tocando
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL 2: INFO & DETALHES TÉCNICOS ─── */}
-      {showInfoModal && (
-        <div
-          onClick={() => setShowInfoModal(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/80 backdrop-blur-md animate-fade-in"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[400px] rounded-3xl bg-[var(--bg-surface)] border border-[var(--border)] p-6 space-y-4 shadow-2xl animate-scale-up"
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h3 className="text-sm font-black text-white">Informações Técnicas da Faixa</h3>
-              <button
-                type="button"
-                onClick={() => setShowInfoModal(false)}
-                className="text-xs font-bold text-[var(--text-secondary)] hover:text-white"
-              >
-                Fechar
-              </button>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-[var(--text-muted)]">Codec de Áudio</span>
-                <span className="font-bold text-white">Opus / AAC High-Res</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-[var(--text-muted)]">Bitrate Estimado</span>
-                <span className="font-bold text-white">256 kbps (Lossless Normalized)</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-[var(--text-muted)]">Normalização LUFS</span>
-                <span className="font-bold text-[var(--accent-pink)]">-14.0 LUFS Integrado</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-[var(--text-muted)]">ID da Faixa</span>
-                <span className="font-mono text-[10px] text-white/80">{currentTrack.id}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL 3: PROMPT COGNITIVO DA LUCI ─── */}
-      {showPromptModal && (
-        <div
-          onClick={() => setShowPromptModal(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/80 backdrop-blur-md animate-fade-in"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[420px] rounded-3xl bg-gradient-to-br from-[#06003d] to-[#00001f] border border-[var(--accent-purple)]/50 p-6 space-y-4 shadow-2xl animate-scale-up"
-          >
-            <div className="flex items-center gap-2">
-              <Sparkles className="size-5 text-[var(--accent-pink)] animate-pulse" />
-              <h3 className="text-sm font-black text-white">Pedir à Inteligência da Luci</h3>
-            </div>
-            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-              Diga o que deseja ouvir a seguir com base nesta música (ex: "Continue com MPB acústico", "Adicione músicas mais animadas").
-            </p>
-
-            <div className="relative">
-              <input
-                type="text"
-                value={luciPromptText}
-                onChange={(e) => setLuciPromptText(e.target.value)}
-                placeholder="Como você quer guiar o fluxo musical?"
-                className="w-full h-12 pl-4 pr-12 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border)] text-xs font-semibold text-white placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-purple)]"
-              />
-              <button
-                type="button"
-                onClick={handleSendLuciPrompt}
-                className="absolute right-2 top-2 size-8 rounded-xl bg-gradient-to-tr from-[#0033ff] to-[#977dff] text-white flex items-center justify-center shadow-md active:scale-90 transition-transform"
-              >
-                <Send className="size-4" />
-              </button>
-            </div>
-
-            {promptFeedback && (
-              <p className="text-xs font-bold text-[var(--accent-pink)] text-center animate-fade-in">
-                {promptFeedback}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL 4: ACTION SHEET GERAL ─── */}
-      {showActionSheet && (
-        <div
-          onClick={() => setShowActionSheet(false)}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fade-in"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[480px] rounded-t-3xl bg-[var(--bg-surface)] border-t border-[var(--border)] p-6 space-y-4 shadow-2xl animate-slide-up"
-          >
-            <div className="flex items-center gap-3 pb-3 border-b border-white/10">
-              <TrackImage
-                src={currentTrack.thumbnail}
-                trackId={currentTrack.id}
-                alt={currentTrack.title}
-                className="size-12 rounded-xl object-cover"
-              />
-              <div className="min-w-0 flex-1">
-                <h4 className="text-sm font-black text-white truncate">{currentTrack.title}</h4>
-                <p className="text-xs text-[var(--text-secondary)] truncate">{currentTrack.artist}</p>
-              </div>
-            </div>
-
-            <div className="space-y-1 text-sm font-bold text-[var(--text-primary)]">
-              <button
-                type="button"
-                onClick={() => {
-                  goToArtist(currentTrack.artistId || currentTrack.artist)
-                  setShowActionSheet(false)
-                }}
-                className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
-              >
-                <Disc3 className="size-5 text-[var(--accent-purple)]" />
-                <span>Ver Artista</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (currentTrack.albumId) goToAlbumDetail(currentTrack.albumId, currentTrack.album, currentTrack.artist)
-                  setShowActionSheet(false)
-                }}
-                className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
-              >
-                <Disc className="size-5 text-[var(--accent-purple)]" />
-                <span>Ver Álbum</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  addToQueue(currentTrack)
-                  setShowActionSheet(false)
-                }}
-                className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
-              >
-                <ListPlus className="size-5 text-[var(--accent-purple)]" />
-                <span>Tocar a Seguir</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowSleepTimerSheet(true)
-                  setShowActionSheet(false)
-                }}
-                className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
-              >
-                <Clock className="size-5 text-[var(--accent-purple)]" />
-                <span>Temporizador de Sono {activeSleepTimer ? `(${activeSleepTimer}m)` : ""}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({
-                      title: currentTrack.title,
-                      text: `Ouvindo ${currentTrack.title} na Luci`,
-                      url: window.location.href,
-                    })
-                  }
-                  setShowActionSheet(false)
-                }}
-                className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
-              >
-                <Share2 className="size-5 text-[var(--accent-purple)]" />
-                <span>Compartilhar com a Luci</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL DE FILA (QUEUE SCREEN) ─── */}
-      <QueueScreen
-        isOpen={showQueueModal}
-        onClose={() => setShowQueueModal(false)}
-      />
-
-      {/* ─── MODAL ADICIONAR À PLAYLIST (BOTTOM SHEET) ─── */}
-      <AddToPlaylistModal
-        track={currentTrack}
-        isOpen={showAddToPlaylistModal}
-        onClose={() => setShowAddToPlaylistModal(false)}
-      />
-
-      {/* ─── MODAL TEMPORIZADOR DE SONO (SLEEP TIMER SHEET) ─── */}
-      <SleepTimerSheet
-        isOpen={showSleepTimerSheet}
-        onClose={() => setShowSleepTimerSheet(false)}
-        onSetTimer={handleSetSleepTimer}
-        activeMinutes={activeSleepTimer}
+      {/* ─── MENU SUSPENSO DE AÇÕES FLUTUANTE (TrackActionMenu) ─── */}
+      <TrackActionMenu
+        isOpen={isActionMenuOpen}
+        track={track}
+        onClose={() => setIsActionMenuOpen(false)}
+        onToggleLike={(t) => toggleLike(t)}
+        onAddToPlaylist={() => {}}
+        onViewArtist={(artist) => goToArtist(artist)}
+        onGoToAlbum={() => {}}
+        onShare={() => {}}
+        isLiked={isLiked(track.id)}
       />
     </div>
   )

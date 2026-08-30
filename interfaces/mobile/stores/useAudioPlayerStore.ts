@@ -71,21 +71,6 @@ const initAudioEngine = () => {
   primaryAudio = new Audio()
   preloadAudio = new Audio()
 
-  primaryAudio.crossOrigin = "anonymous"
-  preloadAudio.crossOrigin = "anonymous"
-
-  try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
-    if (AudioContextClass) {
-      audioCtx = new AudioContextClass()
-      gainNode = audioCtx.createGain()
-      sourceNode = audioCtx.createMediaElementSource(primaryAudio)
-      sourceNode.connect(gainNode).connect(audioCtx.destination)
-    }
-  } catch (e) {
-    console.warn("[AudioEngine] Web Audio API fallback to direct audio element volume:", e)
-  }
-
   isEngineInitialized = true
 }
 
@@ -158,7 +143,10 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => ({
 
     if (primaryAudio) {
       isPreloaded = false
-      const streamUrl = track.audioUrl || `${API_BASE_URL}/api/v1/music/play/${track.id}`
+      const baseUrl = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+        ? "http://localhost:8000"
+        : API_BASE_URL
+      const streamUrl = track.audioUrl || `${baseUrl}/api/v1/music/play/${track.id}`
       primaryAudio.src = streamUrl
       primaryAudio.load()
 
@@ -211,11 +199,15 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => ({
   },
 
   togglePlay: () => {
-    const { isPlaying } = get()
+    const { isPlaying, currentTrack } = get()
     if (isPlaying) {
       get().pause()
     } else {
-      get().resume()
+      if (!primaryAudio?.src && currentTrack) {
+        get().playTrack(currentTrack)
+      } else {
+        get().resume()
+      }
     }
   },
 
@@ -227,9 +219,23 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => ({
   },
 
   resume: () => {
-    if (primaryAudio && get().currentTrack) {
-      primaryAudio.play().catch(console.error)
-      set({ isPlaying: true })
+    const { currentTrack } = get()
+    if (primaryAudio) {
+      if (!primaryAudio.src || primaryAudio.src === "" || primaryAudio.src === window.location.href) {
+        if (currentTrack) {
+          get().playTrack(currentTrack)
+          return
+        }
+      }
+      primaryAudio
+        .play()
+        .then(() => set({ isPlaying: true }))
+        .catch((err) => {
+          console.warn("[useAudioPlayerStore] Erro ao retomar reprodução:", err)
+          if (currentTrack) {
+            get().playTrack(currentTrack)
+          }
+        })
     }
   },
 

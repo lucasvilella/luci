@@ -8,11 +8,16 @@ export type MusicScreen =
   | { type: "home" }
   | { type: "now-playing" }
   | { type: "artist"; artistId: string | number }
+  | { type: "artists" }
   | { type: "lyrics" }
   | { type: "search" }
   | { type: "playlists" }
   | { type: "playlist-detail"; playlistId?: string | number; title?: string; thumbnail?: string; initialTracks?: any[] }
+  | { type: "albums" }
   | { type: "album-detail"; albumId?: string | number; title?: string; artist?: string; thumbnail?: string; initialTracks?: any[] }
+  | { type: "songs" }
+  | { type: "notifications" }
+  | { type: "history" }
   | { type: "library" }
   | { type: "profile" }
   | { type: "settings" }
@@ -24,15 +29,21 @@ type MusicNavigationContextValue = {
   pop: () => void
   reset: () => void
   goToArtist: (artistId: string | number) => void
+  goToArtists: () => void
   goToNowPlaying: () => void
   goToLyrics: () => void
   goToSearch: () => void
   goToPlaylists: () => void
-  goToPlaylistDetail: (params: { playlistId?: string | number; title?: string; thumbnail?: string; initialTracks?: any[] }) => void
-  goToAlbumDetail: (params: { albumId?: string | number; title?: string; artist?: string; thumbnail?: string; initialTracks?: any[] }) => void
+  goToPlaylistDetail: (playlistId?: string | number, title?: string, thumbnail?: string, initialTracks?: any[]) => void
+  goToAlbums: () => void
+  goToAlbumDetail: (albumId?: string | number, title?: string, coverUrl?: string, initialTracks?: any[]) => void
+  goToSongs: () => void
+  goToNotifications: () => void
+  goToHistory: () => void
   goToLibrary: () => void
   goToProfile: () => void
   goToSettings: () => void
+  goBack: () => void
 }
 
 // ─── Context ─────────────────────────────────────────────────────────
@@ -64,6 +75,11 @@ export function MusicNavigationProvider({ children }: { children: ReactNode }) {
     [push]
   )
 
+  const goToArtists = useCallback(
+    () => push({ type: "artists" }),
+    [push]
+  )
+
   const goToNowPlaying = useCallback(
     () => push({ type: "now-playing" }),
     [push]
@@ -84,24 +100,35 @@ export function MusicNavigationProvider({ children }: { children: ReactNode }) {
     [push]
   )
 
+  const goToAlbums = useCallback(
+    () => push({ type: "albums" }),
+    [push]
+  )
+
+  const goToSongs = useCallback(
+    () => push({ type: "songs" }),
+    [push]
+  )
+
+  const goToNotifications = useCallback(
+    () => push({ type: "notifications" }),
+    [push]
+  )
+
+  const goToHistory = useCallback(
+    () => push({ type: "history" }),
+    [push]
+  )
+
   const goToPlaylistDetail = useCallback(
-    (params: {
-      playlistId?: string | number
-      title?: string
-      thumbnail?: string
-      initialTracks?: any[]
-    }) => push({ type: "playlist-detail", ...params }),
+    (playlistId?: string | number, title?: string, thumbnail?: string, initialTracks?: any[]) =>
+      push({ type: "playlist-detail", playlistId, title, thumbnail, initialTracks }),
     [push]
   )
 
   const goToAlbumDetail = useCallback(
-    (params: {
-      albumId?: string | number
-      title?: string
-      artist?: string
-      thumbnail?: string
-      initialTracks?: any[]
-    }) => push({ type: "album-detail", ...params }),
+    (albumId?: string | number, title?: string, coverUrl?: string, initialTracks?: any[]) =>
+      push({ type: "album-detail", albumId, title, thumbnail: coverUrl, initialTracks }),
     [push]
   )
 
@@ -128,15 +155,21 @@ export function MusicNavigationProvider({ children }: { children: ReactNode }) {
       pop,
       reset,
       goToArtist,
+      goToArtists,
       goToNowPlaying,
       goToLyrics,
       goToSearch,
       goToPlaylists,
       goToPlaylistDetail,
+      goToAlbums,
       goToAlbumDetail,
+      goToSongs,
+      goToNotifications,
+      goToHistory,
       goToLibrary,
       goToProfile,
       goToSettings,
+      goBack: pop,
     }),
     [
       screen,
@@ -145,12 +178,17 @@ export function MusicNavigationProvider({ children }: { children: ReactNode }) {
       pop,
       reset,
       goToArtist,
+      goToArtists,
       goToNowPlaying,
       goToLyrics,
       goToSearch,
       goToPlaylists,
       goToPlaylistDetail,
+      goToAlbums,
       goToAlbumDetail,
+      goToSongs,
+      goToNotifications,
+      goToHistory,
       goToLibrary,
       goToProfile,
       goToSettings,

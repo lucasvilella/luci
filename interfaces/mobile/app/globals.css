@@ -114,7 +114,9 @@
   --music-accent-foreground: #FFFFFF;
 }
 
-[data-theme="light"] {
+[data-theme="light"],
+.light,
+html.light {
   color-scheme: light;
   /* ─── Superfícies & Elevações ─── */
   --bg-app: #f4f5f8;              /* Fundo claro cinza-neve */

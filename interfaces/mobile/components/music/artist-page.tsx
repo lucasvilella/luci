@@ -1,658 +1,215 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
-import {
-  ArrowLeft,
-  Cast,
-  MoreVertical,
-  Heart,
-  Shuffle,
-  Play,
-  Pause,
-  ChevronRight,
-  Disc3,
-  Video,
-  Sparkles,
-  Users,
-  Info,
-  Loader2,
-  ListPlus,
-  Share2,
-  FileText,
-  Radio,
-} from "lucide-react"
-import {
-  fetchArtist,
-  fetchArtistRadio,
-  toggleFollowArtist,
-  type ArtistDetails,
-  type LuciTrack,
-  recordTrackEvent,
-} from "@/lib/lucimusic"
-import { useMusicNavigation } from "@/hooks/use-music-navigation"
+import React, { useState } from "react"
+import { ArrowLeft, MoreHorizontal, MoreVertical, Play, Pause, Sun, Moon } from "lucide-react"
+import { TrackRow } from "@/components/ui/track-row"
+import { TrackActionMenu } from "@/components/ui/track-action-menu"
+import { SectionHeader } from "@/components/ui/section-header"
 import { useMusicPlayer } from "@/hooks/use-music-player"
-import { TrackImage } from "./track-image"
+import { useMusicNavigation } from "@/hooks/use-music-navigation"
+import { useTheme } from "@/hooks/use-theme"
+import { type LuciTrack } from "@/lib/lucimusic"
 
-export function ArtistPage({ artistId }: { artistId: string | number }) {
-  const { pop, goToAlbumDetail, goToArtist, goToLyrics } = useMusicNavigation()
-  const { playTrack, currentTrack, isPlaying, togglePlay, toggleLike, isLiked, addToQueue } = useMusicPlayer()
+interface ArtistPageProps {
+  artistId: string
+}
 
-  const [artist, setArtist] = useState<ArtistDetails | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [showAllTracks, setShowAllTracks] = useState(false)
+// Catálogo com dados oficiais dos mockups
+const ARTIST_DATA: Record<string, {
+  name: string
+  monthlyListeners: string
+  avatarUrl: string
+  popularSongs: LuciTrack[]
+}> = {
+  default: {
+    name: "Ariana Grande",
+    monthlyListeners: "55.278.829 ouvintes mensais",
+    avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500",
+    popularSongs: [
+      { id: "ari_1", title: "Side to Side", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300", duration: 226 },
+      { id: "ari_2", title: "7 Rings", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300", duration: 178 },
+      { id: "ari_3", title: "Stuck With U", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300", duration: 228 },
+      { id: "ari_4", title: "Thank U, Next", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300", duration: 207 },
+      { id: "ari_5", title: "Positions", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300", duration: 172 },
+    ],
+  },
+  "The Weeknd": {
+    name: "The Weeknd",
+    monthlyListeners: "108.452.120 ouvintes mensais",
+    avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500",
+    popularSongs: [
+      { id: "wk_1", title: "Blinding Lights", artist: "The Weeknd", thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300", duration: 200 },
+      { id: "wk_2", title: "Starboy", artist: "The Weeknd", thumbnail: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300", duration: 230 },
+      { id: "wk_3", title: "Save Your Tears", artist: "The Weeknd", thumbnail: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300", duration: 215 },
+      { id: "wk_4", title: "Die For You", artist: "The Weeknd", thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300", duration: 200 },
+    ],
+  },
+}
+
+export function ArtistPage({ artistId }: ArtistPageProps) {
+  const { goBack } = useMusicNavigation()
+  const { currentTrack, isPlaying, playTrack, togglePlay, toggleLike, isLiked } = useMusicPlayer()
+  const { theme, toggleTheme, mounted } = useTheme()
+
   const [isFollowing, setIsFollowing] = useState(false)
-  const [showBioModal, setShowBioModal] = useState(false)
-  const [generatingRadio, setGeneratingRadio] = useState(false)
+  const [selectedTrack, setSelectedTrack] = useState<LuciTrack | null>(null)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  // Action Sheet
-  const [actionSheetTrack, setActionSheetTrack] = useState<LuciTrack | null>(null)
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const artist = ARTIST_DATA[artistId] || ARTIST_DATA.default
+  const isThisArtistPlaying = currentTrack?.artist?.toLowerCase().includes(artist.name.toLowerCase()) && isPlaying
 
-  useEffect(() => {
-    setLoading(true)
-    setShowAllTracks(false)
-    fetchArtist(String(artistId))
-      .then((data) => {
-        if (data) {
-          setArtist(data)
-          setIsFollowing(Boolean(data.is_followed))
-        }
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [artistId])
-
-  const handleFollowToggle = () => {
-    if (!artist) return
-    const nextState = !isFollowing
-    setIsFollowing(nextState)
-    toggleFollowArtist(artist.id, artist.name, artist.thumbnail).then((res) => {
-      setIsFollowing(res)
-    })
-  }
-
-  const handlePlayArtistRadio = () => {
-    if (!artist) return
-    setGeneratingRadio(true)
-    fetchArtistRadio(artist.id)
-      .then((tracks) => {
-        if (tracks.length > 0) {
-          playTrack(tracks[0], tracks)
-        } else if (artist.top_tracks.length > 0) {
-          playTrack(artist.top_tracks[0], artist.top_tracks)
-        }
-      })
-      .catch(() => {
-        if (artist.top_tracks.length > 0) {
-          playTrack(artist.top_tracks[0], artist.top_tracks)
-        }
-      })
-      .finally(() => setGeneratingRadio(false))
-  }
-
-  const handlePlaySingle = (track: LuciTrack, context?: LuciTrack[]) => {
-    playTrack(track, context)
-    recordTrackEvent({
-      track_id: track.id,
-      played_seconds: 1,
-      total_seconds: track.duration || 180,
-      context_mood: "artist_page",
-      artist: track.artist,
-    })
-  }
-
-  const handleTouchStart = (track: LuciTrack) => {
-    longPressTimerRef.current = setTimeout(() => {
-      setActionSheetTrack(track)
-    }, 550)
-  }
-
-  const handleTouchEnd = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
+  const handlePlayArtist = () => {
+    if (isThisArtistPlaying) {
+      togglePlay()
+    } else if (artist.popularSongs.length > 0) {
+      playTrack(artist.popularSongs[0], artist.popularSongs)
     }
+  }
+
+  const handleOpenMore = (track: LuciTrack) => {
+    setSelectedTrack(track)
+    setIsMenuOpen(true)
   }
 
   return (
     <div className="relative flex h-full flex-col bg-[var(--bg-app)] text-[var(--text-primary)] select-none overflow-y-auto pb-32">
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-48 gap-3 text-[var(--text-secondary)]">
-          <Loader2 className="size-8 animate-spin text-[var(--accent-purple)]" />
-          <p className="text-xs font-bold">Carregando universo do artista...</p>
+      {/* ─── HEADER DE NAVEGAÇÃO SUPERIOR COM VOLTAR, TEMA E MAIS OPÇÕES ─── */}
+      <header className="sticky top-0 z-20 flex items-center justify-between px-5 pt-4 pb-2 bg-[var(--bg-app)]/90 backdrop-blur-xl">
+        <button
+          type="button"
+          onClick={goBack}
+          aria-label="Voltar"
+          className="size-10 rounded-full bg-[var(--bg-surface-1)] text-[var(--text-primary)] border border-[var(--border-subtle)] flex items-center justify-center transition-transform active:scale-90 shadow-sm"
+        >
+          <ArrowLeft className="size-5" />
+        </button>
+
+        <div className="flex items-center gap-2">
+          {/* Seletor Provisório de Tema */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Mudar para modo claro" : "Mudar para modo escuro"}
+            aria-label="Alternar tema"
+            className="size-10 rounded-full bg-[var(--bg-surface-1)] text-[var(--text-primary)] border border-[var(--border-subtle)] flex items-center justify-center transition-transform active:scale-90"
+          >
+            {mounted && theme === "dark" ? (
+              <Sun className="size-4.5 text-amber-400" />
+            ) : (
+              <Moon className="size-4.5 text-indigo-600" />
+            )}
+          </button>
+
+          {/* Mais Opções */}
+          <button
+            type="button"
+            aria-label="Mais opções do artista"
+            className="size-10 rounded-full bg-[var(--bg-surface-1)] text-[var(--text-primary)] border border-[var(--border-subtle)] flex items-center justify-center transition-transform active:scale-90"
+          >
+            <MoreHorizontal className="size-5" />
+          </button>
         </div>
-      ) : artist ? (
-        <>
-          {/* ─── Hero Header com Foto / Banner Parallax ─── */}
-          <div className="relative h-80 w-full overflow-hidden bg-zinc-950 shrink-0">
-            <img
-              src={artist.banner_url || artist.thumbnail}
-              alt={artist.name}
-              className="size-full object-cover object-top opacity-90 scale-105"
-            />
-            {/* Gradiente de Fusão Escura Inferior para #00001F */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[var(--bg-app)]" />
+      </header>
 
-            {/* Sticky Glass Bar Superior (Voltar, Cast, Menu) */}
-            <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-5 pt-4 pb-3">
-              <button
-                type="button"
-                onClick={pop}
-                aria-label="Voltar"
-                className="size-9 flex items-center justify-center rounded-full bg-[var(--bg-surface-glass)] backdrop-blur-xl border border-[var(--border)] text-white active:scale-90 transition-all shadow-md"
-              >
-                <ArrowLeft className="size-5" />
-              </button>
+      {/* ─── HERO CENTRAL DO ARTISTA (AVATAR CIRCULAR GIGANTE + NOME + OUVINTES) ─── */}
+      <div className="flex flex-col items-center px-6 pt-2 pb-6 text-center space-y-3">
+        {/* Avatar Circular Gigante (220x220) com Sombra Profunda */}
+        <div className="relative size-[220px] rounded-full overflow-hidden bg-[var(--bg-surface-2)] border-2 border-[var(--border-subtle)] shadow-2xl">
+          <img
+            src={artist.avatarUrl}
+            alt={artist.name}
+            className="size-full object-cover"
+          />
+        </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  aria-label="Transmitir"
-                  className="size-9 flex items-center justify-center rounded-full bg-[var(--bg-surface-glass)] backdrop-blur-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-white active:scale-90 transition-all shadow-md"
-                >
-                  <Cast className="size-4" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Opções"
-                  className="size-9 flex items-center justify-center rounded-full bg-[var(--bg-surface-glass)] backdrop-blur-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-white active:scale-90 transition-all shadow-md"
-                >
-                  <MoreVertical className="size-4" />
-                </button>
-              </div>
-            </div>
+        {/* Nome do Artista */}
+        <div className="space-y-1 pt-1">
+          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">
+            {artist.name}
+          </h1>
+          <p className="text-xs font-medium text-[var(--text-secondary)]">
+            {artist.monthlyListeners}
+          </p>
+        </div>
 
-            {/* Informações Centrais do Artista */}
-            <div className="absolute bottom-4 left-5 right-5 z-10 space-y-1">
-              <span className="inline-block px-2.5 py-0.5 rounded-full bg-[var(--accent-blue)]/80 backdrop-blur-md text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
-                Artista Verificado
-              </span>
-              <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight drop-shadow-md">
-                {artist.name}
-              </h1>
-              <p className="text-xs font-semibold text-[var(--text-secondary)] drop-shadow-sm">
-                {artist.listeners || "Artista em destaque na Luci"}
-              </p>
-            </div>
-          </div>
-
-          {/* ─── Bloco de Ações do Artista (Seguir, Mix/Rádio, Play Flutuante) ─── */}
-          <div className="flex items-center justify-between px-5 -mt-3 relative z-20">
-            <div className="flex items-center gap-2.5">
-              {/* Botão Seguir */}
-              <button
-                type="button"
-                onClick={handleFollowToggle}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all active:scale-95 shadow-md ${
-                  isFollowing
-                    ? "bg-[var(--accent-purple)] text-white border border-[var(--accent-pink)]/40 shadow-[#977dff]/20"
-                    : "bg-[var(--bg-surface-glass)] border border-[var(--border)] text-[var(--text-primary)] hover:text-white backdrop-blur-xl"
-                }`}
-              >
-                <Heart className={`size-3.5 ${isFollowing ? "fill-white" : ""}`} />
-                <span>{isFollowing ? "Seguindo" : "Seguir"}</span>
-              </button>
-
-              {/* Botão Mix / Rádio Infinita */}
-              <button
-                type="button"
-                onClick={handlePlayArtistRadio}
-                disabled={generatingRadio}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[var(--bg-surface-glass)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-white text-xs font-bold backdrop-blur-xl active:scale-95 transition-all shadow-md"
-              >
-                {generatingRadio ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <Radio className="size-3.5 text-[var(--accent-pink)] animate-pulse" />
-                )}
-                <span>Mix / Rádio</span>
-              </button>
-            </div>
-
-            {/* Play Geral Flutuante com Gradiente Luci */}
+        {/* ─── BARRA DE AÇÕES PRINCIPAIS (SEGUIR, 3 PONTOS E PLAY GIGANTE) ─── */}
+        <div className="flex items-center justify-between w-full pt-3 px-1">
+          <div className="flex items-center gap-3">
+            {/* Botão Seguir / Seguindo na cor da marca */}
             <button
               type="button"
-              onClick={() => {
-                if (artist.top_tracks.length > 0) {
-                  const isCurArt = currentTrack?.artist === artist.name
-                  if (isCurArt && isPlaying) togglePlay()
-                  else handlePlaySingle(artist.top_tracks[0], artist.top_tracks)
-                }
-              }}
-              className="size-14 rounded-full bg-gradient-to-tr from-[#0033ff] via-[#977dff] to-[#ffccf2] text-white flex items-center justify-center shadow-xl shadow-[#0033ff]/50 active:scale-90 transition-transform"
-              aria-label="Reproduzir Artista"
+              onClick={() => setIsFollowing(!isFollowing)}
+              className={`px-6 py-2.5 rounded-full text-xs font-bold transition-all active:scale-95 border ${
+                isFollowing
+                  ? "bg-transparent text-[var(--accent-primary)] border-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10"
+                  : "bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-md shadow-[#5c62ec]/30"
+              }`}
             >
-              {currentTrack?.artist === artist.name && isPlaying ? (
-                <Pause className="size-6 fill-white text-white" />
-              ) : (
-                <Play className="size-6 fill-white text-white translate-x-0.5" />
-              )}
+              {isFollowing ? "Seguindo" : "Seguir"}
+            </button>
+
+            {/* Botão Menu 3 Pontos */}
+            <button
+              type="button"
+              aria-label="Mais opções"
+              className="size-10 rounded-full hover:bg-[var(--bg-surface-1)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center justify-center active:scale-90 transition-transform"
+            >
+              <MoreVertical className="size-5" />
             </button>
           </div>
 
-          <div className="space-y-7 px-5 pt-5">
-            {/* ─── 1. Top Músicas (Populares) ─── */}
-            {artist.top_tracks && artist.top_tracks.length > 0 && (
-              <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                    Músicas Populares
-                  </h2>
-                </div>
-
-                <div className="space-y-2">
-                  {(showAllTracks ? artist.top_tracks : artist.top_tracks.slice(0, 5)).map((track, idx) => {
-                    const isCurrent = currentTrack?.id === track.id
-                    const liked = isLiked(track.id)
-
-                    return (
-                      <div
-                        key={`top-track-${track.id}`}
-                        onClick={() => handlePlaySingle(track, artist.top_tracks)}
-                        onTouchStart={() => handleTouchStart(track)}
-                        onTouchEnd={handleTouchEnd}
-                        className={`flex items-center gap-3 p-2 rounded-xl bg-[var(--bg-surface)] border transition-all active:scale-[0.99] cursor-pointer group ${
-                          isCurrent
-                            ? "border-[var(--accent-purple)] bg-[var(--bg-surface)]/90 shadow-md shadow-[#977dff]/15"
-                            : "border-[var(--border)] hover:border-[var(--accent-purple)]/30"
-                        }`}
-                      >
-                        {/* Numeração */}
-                        <span className={`w-5 text-center text-xs font-black shrink-0 ${
-                          isCurrent ? "text-[var(--accent-pink)]" : "text-[var(--text-muted)]"
-                        }`}>
-                          {idx + 1}
-                        </span>
-
-                        <TrackImage
-                          src={track.thumbnail}
-                          trackId={track.id}
-                          alt={track.title}
-                          className="size-11 rounded-lg object-cover bg-zinc-900 shrink-0"
-                        />
-
-                        <div className="min-w-0 flex-1">
-                          <h4 className={`text-xs font-black truncate leading-tight ${
-                            isCurrent ? "text-[var(--accent-pink)]" : "text-[var(--text-primary)]"
-                          }`}>
-                            {track.title}
-                          </h4>
-                          <p className="text-[11px] font-semibold text-[var(--text-secondary)] truncate mt-0.5">
-                            {track.album || artist.name}
-                          </p>
-                        </div>
-
-                        {/* Curtir */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleLike(track)
-                          }}
-                          className="p-2 text-[var(--text-secondary)] hover:text-white active:scale-90 transition-transform"
-                        >
-                          <Heart className={`size-4 ${liked ? "fill-[var(--accent-purple)] text-[var(--accent-purple)]" : ""}`} />
-                        </button>
-
-                        {/* Menu de Ações */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setActionSheetTrack(track)
-                          }}
-                          className="p-2 text-[var(--text-muted)] hover:text-white active:scale-90 transition-transform"
-                        >
-                          <MoreVertical className="size-4" />
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {artist.top_tracks.length > 5 && (
-                  <button
-                    type="button"
-                    onClick={() => setShowAllTracks(!showAllTracks)}
-                    className="w-full py-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border)] text-xs font-bold text-[var(--text-secondary)] hover:text-white active:scale-98 transition-all text-center"
-                  >
-                    {showAllTracks ? "Ver menos" : "Exibir mais músicas"}
-                  </button>
-                )}
-              </section>
+          {/* Botão de Reprodução Principal Gigante (Play / Pause) */}
+          <button
+            type="button"
+            onClick={handlePlayArtist}
+            aria-label="Tocar músicas do artista"
+            className="size-12 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center shadow-lg shadow-[#5c62ec]/40 active:scale-90 transition-transform"
+          >
+            {isThisArtistPlaying ? (
+              <Pause className="size-5 fill-white" />
+            ) : (
+              <Play className="size-5 fill-white translate-x-0.5" />
             )}
+          </button>
+        </div>
+      </div>
 
-            {/* ─── 2. Último Lançamento ─── */}
-            {artist.latest_release && (
-              <section className="space-y-3">
-                <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                  Último Lançamento
-                </h2>
-                <div
-                  onClick={() => {
-                    if (artist.top_tracks[0]) handlePlaySingle(artist.top_tracks[0], artist.top_tracks)
-                  }}
-                  className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent-purple)]/40 cursor-pointer active:scale-98 transition-all shadow-md group"
-                >
-                  <img
-                    src={artist.latest_release.cover}
-                    alt={artist.latest_release.title}
-                    className="size-16 rounded-xl object-cover bg-zinc-900 shadow-sm shrink-0"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <span className="inline-block px-2 py-0.5 rounded-md bg-[var(--accent-pink)]/15 text-[9.5px] font-black text-[var(--accent-pink)] uppercase">
-                      {artist.latest_release.type} • {artist.latest_release.release_date}
-                    </span>
-                    <h3 className="text-xs font-bold text-[var(--text-primary)] truncate mt-1">
-                      {artist.latest_release.title}
-                    </h3>
-                    <p className="text-[11px] font-medium text-[var(--text-secondary)] truncate">
-                      {artist.name}
-                    </p>
-                  </div>
-                  <div className="size-9 rounded-full bg-[var(--accent-blue)] text-white flex items-center justify-center shadow-md shrink-0 group-hover:scale-105 transition-transform">
-                    <Play className="size-4 fill-white translate-x-0.5" />
-                  </div>
-                </div>
-              </section>
-            )}
+      {/* Divisor sutil */}
+      <div className="h-[1px] bg-[var(--border-subtle)] mx-5 mb-4" />
 
-            {/* ─── 3. Discografia / Álbuns ─── */}
-            {artist.albums && artist.albums.length > 0 && (
-              <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                    Discografia & Álbuns
-                  </h2>
-                </div>
+      {/* ─── SEÇÃO DE MÚSICAS POPULARES (Popular Songs) ─── */}
+      <div className="px-5 space-y-2">
+        <SectionHeader
+          title="Músicas Populares"
+          seeAllText="Ver tudo"
+          onSeeAll={() => {}}
+        />
 
-                <div className="flex gap-3.5 overflow-x-auto no-scrollbar py-1">
-                  {artist.albums.map((alb) => (
-                    <div
-                      key={`album-${alb.id}`}
-                      onClick={() => goToAlbumDetail(alb.id, alb.title, artist.name, alb.thumbnail)}
-                      className="w-32 shrink-0 space-y-1.5 cursor-pointer active:scale-95 transition-transform group"
-                    >
-                      <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-[var(--border)] shadow-md group-hover:border-[var(--accent-purple)]/50 transition-all">
-                        <img
-                          src={alb.thumbnail}
-                          alt={alb.title}
-                          className="size-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                      <h4 className="text-xs font-bold text-[var(--text-primary)] line-clamp-1 group-hover:text-[var(--accent-pink)]">
-                        {alb.title}
-                      </h4>
-                      <p className="text-[10px] font-medium text-[var(--text-secondary)] line-clamp-1">
-                        {alb.year || "Álbum"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+        <div className="space-y-1">
+          {artist.popularSongs.map((track) => (
+            <TrackRow
+              key={track.id}
+              track={track}
+              isArtist={false}
+              onPlay={(t) => playTrack(t, artist.popularSongs)}
+              onMore={handleOpenMore}
+            />
+          ))}
+        </div>
+      </div>
 
-            {/* ─── 4. Vídeos & Clipes (16:9) ─── */}
-            {artist.videos && artist.videos.length > 0 && (
-              <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Video className="size-4 text-[var(--accent-pink)]" />
-                    <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-primary)]">
-                      Vídeos & Clipes Oficiais
-                    </h2>
-                  </div>
-                </div>
-
-                <div className="flex gap-3.5 overflow-x-auto no-scrollbar py-1">
-                  {artist.videos.map((vid) => (
-                    <div
-                      key={`vid-${vid.id}`}
-                      onClick={() => {
-                        const fakeTrack: LuciTrack = {
-                          id: vid.id,
-                          title: vid.title,
-                          artist: artist.name,
-                          thumbnail: vid.thumbnail,
-                          duration: 240,
-                        }
-                        handlePlaySingle(fakeTrack)
-                      }}
-                      className="w-52 shrink-0 space-y-1.5 cursor-pointer active:scale-95 transition-transform group"
-                    >
-                      <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-[var(--bg-surface)] border border-[var(--border)] shadow-md">
-                        <img
-                          src={vid.thumbnail}
-                          alt={vid.title}
-                          className="size-full object-cover"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/10 transition-colors">
-                          <div className="size-8 rounded-full bg-[var(--accent-blue)] text-white flex items-center justify-center shadow-lg">
-                            <Play className="size-3.5 fill-white translate-x-0.5" />
-                          </div>
-                        </div>
-                      </div>
-                      <h4 className="text-xs font-bold text-[var(--text-primary)] line-clamp-1 group-hover:text-[var(--accent-pink)]">
-                        {vid.title}
-                      </h4>
-                      <p className="text-[10px] font-medium text-[var(--text-muted)]">
-                        {vid.views || "YouTube Vídeo"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* ─── 5. Curadoria Cognitiva da Luci ("Mix do Artista") ─── */}
-            <section className="space-y-3">
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="size-4 text-[var(--accent-pink)]" />
-                <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-primary)]">
-                  Mix Inspirado em {artist.name}
-                </h2>
-              </div>
-
-              <div
-                onClick={handlePlayArtistRadio}
-                className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br from-[#06003d] via-[#0033ff] to-[#977dff] text-white shadow-xl shadow-[#0033ff]/20 cursor-pointer active:scale-[0.99] transition-transform"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1 max-w-[75%]">
-                    <span className="inline-block px-2 py-0.5 rounded-full bg-white/20 text-[9.5px] font-black uppercase text-white backdrop-blur-md">
-                      Curadoria Inteligente
-                    </span>
-                    <h3 className="text-sm font-black text-white leading-tight">
-                      Rádio Infinita Balanceada
-                    </h3>
-                    <p className="text-[11px] text-white/80 font-medium leading-tight">
-                      40% {artist.name}, 40% artistas do mesmo nicho e 20% novidades selecionadas
-                    </p>
-                  </div>
-                  <div className="size-11 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner">
-                    <Play className="size-5 fill-white text-white translate-x-0.5" />
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* ─── 6. Artistas Similares / Pontes de Descoberta ─── */}
-            {artist.similar_artists && artist.similar_artists.length > 0 && (
-              <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                    Os Fãs Também Ouvem
-                  </h2>
-                </div>
-
-                <div className="flex gap-4 overflow-x-auto no-scrollbar py-1">
-                  {artist.similar_artists.map((sim) => (
-                    <div
-                      key={`sim-${sim.id}`}
-                      onClick={() => goToArtist(sim.id || sim.name)}
-                      className="flex flex-col items-center gap-1.5 w-20 shrink-0 cursor-pointer active:scale-95 transition-transform group"
-                    >
-                      <div className="size-18 rounded-full p-[2px] bg-gradient-to-br from-[var(--border)] to-[var(--accent-purple)]/40 group-hover:to-[var(--accent-pink)] transition-all">
-                        <img
-                          src={sim.thumbnail || sim.avatar || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200"}
-                          alt={sim.name}
-                          className="size-full rounded-full object-cover bg-zinc-900"
-                          loading="lazy"
-                        />
-                      </div>
-                      <span className="text-[11px] font-bold text-[var(--text-primary)] text-center line-clamp-1 group-hover:text-[var(--accent-pink)]">
-                        {sim.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* ─── 7. Biografia & Sobre ─── */}
-            {artist.bio && (
-              <section className="space-y-3">
-                <div className="flex items-center gap-1.5">
-                  <Info className="size-4 text-[var(--accent-purple)]" />
-                  <h2 className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
-                    Sobre o Artista
-                  </h2>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border)] space-y-2.5">
-                  <p className="text-xs font-medium text-[var(--text-primary)]/80 leading-relaxed line-clamp-3">
-                    {artist.bio}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowBioModal(true)}
-                    className="text-[11px] font-bold text-[var(--accent-pink)] hover:underline block"
-                  >
-                    Ler biografia completa
-                  </button>
-                </div>
-              </section>
-            )}
-          </div>
-
-          {/* ─── Modal Biografia Completa ─── */}
-          {showBioModal && (
-            <div
-              onClick={() => setShowBioModal(false)}
-              className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-black/80 backdrop-blur-md animate-fade-in"
-            >
-              <div
-                onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-[480px] max-h-[75vh] overflow-y-auto rounded-3xl bg-[var(--bg-surface)] border border-[var(--border)] p-6 space-y-4 shadow-2xl animate-scale-up"
-              >
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                  <h3 className="text-base font-black text-[var(--text-primary)]">
-                    Biografia • {artist.name}
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowBioModal(false)}
-                    className="text-xs font-bold text-[var(--text-secondary)] hover:text-white"
-                  >
-                    Fechar
-                  </button>
-                </div>
-                <p className="text-xs font-medium text-[var(--text-primary)]/90 leading-relaxed whitespace-pre-line">
-                  {artist.bio}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* ─── Action Sheet de Faixa ─── */}
-          {actionSheetTrack && (
-            <div
-              onClick={() => setActionSheetTrack(null)}
-              className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm animate-fade-in"
-            >
-              <div
-                onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-[480px] rounded-t-3xl bg-[var(--bg-surface)] border-t border-[var(--border)] p-6 space-y-4 shadow-2xl animate-slide-up"
-              >
-                <div className="flex items-center gap-3 pb-3 border-b border-white/10">
-                  <TrackImage
-                    src={actionSheetTrack.thumbnail}
-                    trackId={actionSheetTrack.id}
-                    alt={actionSheetTrack.title}
-                    className="size-12 rounded-xl object-cover"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-sm font-black text-[var(--text-primary)] truncate">
-                      {actionSheetTrack.title}
-                    </h4>
-                    <p className="text-xs text-[var(--text-secondary)] truncate">
-                      {actionSheetTrack.artist}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-1 text-sm font-bold text-[var(--text-primary)]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      addToQueue(actionSheetTrack)
-                      setActionSheetTrack(null)
-                    }}
-                    className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
-                  >
-                    <ListPlus className="size-5 text-[var(--accent-purple)]" />
-                    <span>Adicionar à fila</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      goToLyrics()
-                      setActionSheetTrack(null)
-                    }}
-                    className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
-                  >
-                    <FileText className="size-5 text-[var(--accent-purple)]" />
-                    <span>Ver letra da música</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toggleLike(actionSheetTrack)
-                      setActionSheetTrack(null)
-                    }}
-                    className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
-                  >
-                    <Heart className={`size-5 ${isLiked(actionSheetTrack.id) ? "fill-[var(--accent-purple)] text-[var(--accent-purple)]" : "text-[var(--accent-purple)]"}`} />
-                    <span>{isLiked(actionSheetTrack.id) ? "Remover dos favoritos" : "Favoritar música"}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: actionSheetTrack.title,
-                          text: `Ouvindo ${actionSheetTrack.title} de ${actionSheetTrack.artist} na Luci`,
-                          url: window.location.href,
-                        })
-                      }
-                      setActionSheetTrack(null)
-                    }}
-                    className="flex w-full items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 active:bg-white/10"
-                  >
-                    <Share2 className="size-5 text-[var(--accent-purple)]" />
-                    <span>Compartilhar no Chat da Luci</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </>
-      ) : null}
+      {/* ─── MENU SUSPENSO DE AÇÕES FLUTUANTE (TrackActionMenu) ─── */}
+      <TrackActionMenu
+        isOpen={isMenuOpen}
+        track={selectedTrack}
+        onClose={() => setIsMenuOpen(false)}
+        onToggleLike={(t) => toggleLike(t)}
+        onAddToPlaylist={() => {}}
+        onViewArtist={() => {}}
+        onGoToAlbum={() => {}}
+        onShare={() => {}}
+        isLiked={selectedTrack ? isLiked(selectedTrack.id) : false}
+      />
     </div>
   )
 }
