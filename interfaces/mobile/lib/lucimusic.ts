@@ -3,7 +3,7 @@
  * Integração direta com o backend FastAPI (ytmusicapi, yt-dlp, LRCLIB e SQLite).
  */
 
-import { luciApiFetch } from "./api"
+import { luciApiFetch, getApiBaseUrl } from "./api"
 
 export interface LuciTrack {
   id: string
@@ -368,15 +368,27 @@ export async function searchTracks(q: string): Promise<LuciTrack[]> {
   }
 }
 
-export function getAudioStreamUrl(trackId: string): string {
-  if (typeof window === "undefined") return `/api/v1/music/play/${trackId}`
-  return `${window.location.origin}/api/v1/music/play/${trackId}`
+export function getAudioStreamUrl(trackId: string, title?: string, artist?: string): string {
+  const base = getApiBaseUrl()
+  const params = new URLSearchParams()
+  params.set("ngrok-skip-browser-warning", "1")
+  if (title) params.set("title", title)
+  if (artist) params.set("artist", artist)
+  return `${base}/api/v1/music/play/${encodeURIComponent(trackId)}?${params.toString()}`
 }
 
-export async function fetchTrackStream(trackId: string): Promise<{ stream_url: string }> {
-  const res = await luciApiFetch(`/api/v1/music/stream/${trackId}`)
+export async function fetchTrackStream(trackId: string, title?: string, artist?: string): Promise<{ stream_url: string }> {
+  const params = new URLSearchParams()
+  if (title) params.set("title", title)
+  if (artist) params.set("artist", artist)
+  const qs = params.toString() ? `?${params.toString()}` : ""
+  const res = await luciApiFetch(`/api/v1/music/stream/${encodeURIComponent(trackId)}${qs}`)
   if (!res.ok) throw new Error("Falha ao resolver áudio")
-  return res.json()
+  const data = await res.json()
+  if (data?.stream_url && data.stream_url.startsWith("/")) {
+    data.stream_url = `${getApiBaseUrl()}${data.stream_url}${data.stream_url.includes("?") ? "&" : "?"}ngrok-skip-browser-warning=1`
+  }
+  return data
 }
 
 export async function fetchLyrics(trackId: string, title: string, artist: string, duration = 0): Promise<LyricsData> {

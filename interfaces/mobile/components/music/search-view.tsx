@@ -31,7 +31,7 @@ import { SectionHeader } from "@/components/ui/section-header"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useTheme } from "@/hooks/use-theme"
-import { searchTracks, type LuciTrack } from "@/lib/lucimusic"
+import { searchMusic, type SearchResultsResponse, type LuciTrack } from "@/lib/lucimusic"
 
 // ─── 01. Músicas por Gênero ───
 const GENRE_CARDS_MOCK = [
@@ -100,7 +100,7 @@ export function SearchView() {
 
   const [query, setQuery] = useState("")
   const [activeFilter, setActiveFilter] = useState("top")
-  const [searchResults, setSearchResults] = useState<LuciTrack[]>([])
+  const [searchData, setSearchData] = useState<SearchResultsResponse | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [selectedTrack, setSelectedTrack] = useState<LuciTrack | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -109,7 +109,7 @@ export function SearchView() {
 
   useEffect(() => {
     if (!query.trim()) {
-      setSearchResults([])
+      setSearchData(null)
       setIsSearching(false)
       return
     }
@@ -117,17 +117,18 @@ export function SearchView() {
     setIsSearching(true)
     const timeout = setTimeout(async () => {
       try {
-        const res = await searchTracks(query)
-        setSearchResults(res.songs || res.tracks || [])
+        const filterParam = activeFilter === "top" ? "all" : activeFilter
+        const res = await searchMusic(query.trim(), filterParam)
+        setSearchData(res)
       } catch (err) {
-        console.error("Erro na busca:", err)
+        console.error("[SearchView] Erro na busca:", err)
       } finally {
         setIsSearching(false)
       }
-    }, 300)
+    }, 350)
 
     return () => clearTimeout(timeout)
-  }, [query])
+  }, [query, activeFilter])
 
   const handleOpenMore = (track: LuciTrack) => {
     setSelectedTrack(track)
@@ -135,6 +136,11 @@ export function SearchView() {
   }
 
   const isBrowsing = query.trim().length === 0
+  const tracksList: LuciTrack[] = searchData?.tracks || searchData?.songs || []
+  const artistsList = searchData?.artists || []
+  const albumsList = searchData?.albums || []
+  const playlistsList = searchData?.playlists || []
+  const hasResults = tracksList.length > 0 || artistsList.length > 0 || albumsList.length > 0 || playlistsList.length > 0
 
   return (
     <div className="relative flex h-full flex-col bg-[var(--bg-app)] text-[var(--text-primary)] select-none overflow-y-auto pb-32">
@@ -222,7 +228,7 @@ export function SearchView() {
                     title={genre.title}
                     bgGradient={genre.bgGradient}
                     artistImageUrl={genre.artistImageUrl}
-                    onClick={() => {}}
+                    onClick={() => setQuery(genre.title)}
                   />
                 ))}
               </div>
@@ -243,7 +249,7 @@ export function SearchView() {
                     title={mode.title}
                     bgGradient={mode.bgGradient}
                     icon={mode.icon}
-                    onClick={() => {}}
+                    onClick={() => setQuery(mode.title)}
                   />
                 ))}
               </div>
@@ -264,72 +270,110 @@ export function SearchView() {
                     title={mood.title}
                     bgGradient={mood.bgGradient}
                     icon={mood.icon}
-                    onClick={() => {}}
+                    onClick={() => setQuery(mood.title)}
                   />
                 ))}
               </div>
             </section>
           </>
         ) : (
-          /* ─── RESULTADOS DA PESQUISA ─── */
+          /* ─── RESULTADOS DA PESQUISA REAL VINDOS DA API ─── */
           <div className="space-y-6">
             {isSearching ? (
-              <div className="py-16 text-center text-sm font-semibold text-[var(--text-secondary)]">
+              <div className="py-16 text-center text-sm font-semibold text-[var(--text-secondary)] animate-pulse">
                 Buscando faixas, artistas e álbuns...
               </div>
-            ) : searchResults.length > 0 ? (
+            ) : hasResults ? (
               <>
-                {/* Faixas Encontradas */}
-                <div className="space-y-1">
-                  {searchResults.map((track) => (
-                    <TrackRow
-                      key={track.id}
-                      track={track}
-                      isArtist={false}
-                      onPlay={(t) => playTrack(t, searchResults)}
-                      onMore={handleOpenMore}
-                    />
-                  ))}
-                </div>
-
-                {/* Artistas Relacionados */}
-                <div className="space-y-3 pt-2">
-                  <h3 className="text-base font-extrabold text-[var(--text-primary)]">
-                    Artistas
-                  </h3>
-                  <div className="space-y-1">
-                    {POPULAR_ARTISTS_CATALOG.map((artist) => (
-                      <ArtistRow
-                        key={artist.id}
-                        artist={artist}
-                        onFollowToggle={() => {}}
-                        onClick={() => goToArtist(artist.name)}
-                      />
-                    ))}
+                {/* 1. Faixas Encontradas */}
+                {tracksList.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-base font-extrabold text-[var(--text-primary)]">
+                      Músicas
+                    </h3>
+                    <div className="space-y-1">
+                      {tracksList.map((track) => (
+                        <TrackRow
+                          key={track.id}
+                          track={track}
+                          isArtist={false}
+                          onPlay={(t) => playTrack(t, tracksList)}
+                          onMore={handleOpenMore}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Álbuns Relacionados */}
-                <div className="space-y-3 pt-2">
-                  <h3 className="text-base font-extrabold text-[var(--text-primary)]">
-                    Álbuns
-                  </h3>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-                    {ALBUMS_CATALOG.map((album) => (
-                      <AlbumGridCard
-                        key={album.id}
-                        id={album.id}
-                        title={album.title}
-                        artist={album.artist}
-                        year={album.year}
-                        coverUrl={album.coverUrl}
-                        onClick={() =>
-                          goToAlbumDetail(album.id, album.title, album.coverUrl)
-                        }
-                      />
-                    ))}
+                {/* 2. Artistas Relacionados */}
+                {artistsList.length > 0 && (
+                  <div className="space-y-3 pt-2">
+                    <h3 className="text-base font-extrabold text-[var(--text-primary)]">
+                      Artistas
+                    </h3>
+                    <div className="space-y-1">
+                      {artistsList.map((artist: any) => (
+                        <ArtistRow
+                          key={artist.id || artist.name}
+                          artist={{
+                            id: artist.id || artist.name,
+                            name: artist.name,
+                            avatarUrl: artist.thumbnail || artist.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300",
+                          }}
+                          onFollowToggle={() => {}}
+                          onClick={() => goToArtist(artist.name || artist.id)}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* 3. Álbuns Relacionados */}
+                {albumsList.length > 0 && (
+                  <div className="space-y-3 pt-2">
+                    <h3 className="text-base font-extrabold text-[var(--text-primary)]">
+                      Álbuns
+                    </h3>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                      {albumsList.map((album: any) => (
+                        <AlbumGridCard
+                          key={album.id}
+                          id={album.id}
+                          title={album.title}
+                          artist={album.artist || ""}
+                          year={album.year || ""}
+                          coverUrl={album.thumbnail || album.coverUrl || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400"}
+                          onClick={() =>
+                            goToAlbumDetail(album.id, album.title, album.thumbnail || album.coverUrl)
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Playlists Relacionadas */}
+                {playlistsList.length > 0 && (
+                  <div className="space-y-3 pt-2">
+                    <h3 className="text-base font-extrabold text-[var(--text-primary)]">
+                      Playlists
+                    </h3>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                      {playlistsList.map((playlist: any) => (
+                        <PlaylistGridCard
+                          key={playlist.id}
+                          id={playlist.id}
+                          title={playlist.title}
+                          author={playlist.author || playlist.subtitle || "Luci"}
+                          coverUrl={playlist.thumbnail || playlist.coverUrl || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400"}
+                          onClick={() =>
+                            goToPlaylistDetail(playlist.id, playlist.title, playlist.thumbnail || playlist.coverUrl)
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className="py-16 text-center text-sm font-semibold text-[var(--text-secondary)]">

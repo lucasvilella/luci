@@ -355,13 +355,58 @@ export function VoiceOrbView({
   }, [speaking, listening, handleOrbStopAndSend, startListeningSession])
 
 
-  // Inicializa o AudioQueue e contexto
+  // ─── Detecção Contínua de Palavra de Ativação ("Luci") ───
+  const startWakeWordListener = useCallback(() => {
+    if (speaking || listening || isProcessingRef.current) return
+
+    voiceInputManager.startSpeechRecognition(
+      (text: string) => {
+        const lower = text.toLowerCase().trim()
+        const isWakeWord =
+          lower.includes("luci") ||
+          lower.includes("lúci") ||
+          lower.includes("lucy") ||
+          lower.includes("luzi") ||
+          lower.includes("lúcia")
+
+        if (isWakeWord && !isProcessingRef.current && !speaking) {
+          // Extrai o comando se já veio junto da palavra-chave (ex: "Luci toque Jorge Vercillo")
+          const command = lower
+            .replace(/^(oi|olá|hey|e aí|ei)?\s*(luci|lúci|lucy|luzi|lúcia)\s*,?\s*/i, "")
+            .trim()
+
+          if (command.length > 2) {
+            setTranscript(command)
+            sendVoiceQuery(command)
+          } else {
+            // Apenas acordou, inicia sessão de escuta ativa
+            isUserActiveSessionRef.current = true
+            startListeningSession()
+          }
+        }
+      },
+      () => {
+        // Reinicia a escuta da wake word se não estiver processando
+        if (!isProcessingRef.current && !speaking && !listening) {
+          setTimeout(() => {
+            if (!isProcessingRef.current && !speaking && !listening) {
+              startWakeWordListener()
+            }
+          }, 600)
+        }
+      },
+      true
+    )
+  }, [speaking, listening, sendVoiceQuery, startListeningSession])
+
+  // Inicializa o AudioQueue, escuta contínua de wake word e contexto
   useEffect(() => {
     audioQueueRef.current = new AudioPlayerQueue((isSpeaking) => {
       setSpeaking(isSpeaking)
     })
 
     voiceInputManager.setActiveContext("orb")
+    startWakeWordListener()
 
     return () => {
       audioQueueRef.current?.stopAndClear()
@@ -369,7 +414,7 @@ export function VoiceOrbView({
       clearSilenceTimer()
       isUserActiveSessionRef.current = false
     }
-  }, [])
+  }, [startWakeWordListener])
 
   // Determinar estado visual do Orb
   const orbState: OrbState = getOrbState(loading, speaking, listening)

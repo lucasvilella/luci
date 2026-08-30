@@ -68,7 +68,14 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
   // Extrai dados reais vindos da API
   const continueListening = homeData?.continue_listening || []
   const dailyMixes = homeData?.daily_mixes || []
-  const favoriteArtists = homeData?.favorite_artists || homeData?.recommended_artists || []
+  const favoriteArtists =
+    (homeData?.artists_you_like && homeData.artists_you_like.length > 0)
+      ? homeData.artists_you_like
+      : (homeData?.favorite_artists && homeData.favorite_artists.length > 0)
+      ? homeData.favorite_artists
+      : (homeData?.top_stations && homeData.top_stations.length > 0)
+      ? homeData.top_stations
+      : homeData?.recommended_artists || []
   const trendingBrasil = homeData?.trending_brasil || []
   const newReleases = homeData?.new_releases || []
   const customWorkout = homeData?.custom_workout?.tracks || []

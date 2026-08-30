@@ -8,6 +8,8 @@ import {
   toggleLikeTrack,
   fetchLikedTracks,
   recordTrackPlayed,
+  getAudioStreamUrl,
+  fetchTrackStream,
 } from "@/lib/lucimusic"
 
 export type RepeatMode = "off" | "all" | "one"
@@ -146,27 +148,16 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => ({
 
       if (!directUrl) {
         try {
-          const params = new URLSearchParams({
-            title: track.title || "",
-            artist: track.artist || "",
-          })
-          const streamRes = await fetch(`${API_BASE_URL}/api/v1/music/stream/${track.id}?${params.toString()}`)
-          if (streamRes.ok) {
-            const streamData = await streamRes.json()
-            if (streamData?.stream_url) {
-              directUrl = streamData.stream_url
-            }
+          const streamData = await fetchTrackStream(track.id, track.title, track.artist)
+          if (streamData?.stream_url) {
+            directUrl = streamData.stream_url
           }
         } catch {
-          // Fallback silencioso para o proxy local
+          // Fallback silencioso para o proxy de áudio com bypass do ngrok
         }
       }
 
-      const params = new URLSearchParams({
-        title: track.title || "",
-        artist: track.artist || "",
-      })
-      const streamUrl = directUrl || `${API_BASE_URL}/api/v1/music/play/${track.id}?${params.toString()}`
+      const streamUrl = directUrl || getAudioStreamUrl(track.id, track.title, track.artist)
       primaryAudio.src = streamUrl
       primaryAudio.load()
 
@@ -191,7 +182,7 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => ({
           const { queue: currentQ, currentIndex: currentIdx } = get()
           const nextTrack = currentQ[currentIdx + 1]
           if (nextTrack && preloadAudio) {
-            preloadAudio.src = nextTrack.audioUrl || `${API_BASE_URL}/api/v1/music/play/${nextTrack.id}`
+            preloadAudio.src = nextTrack.audioUrl || getAudioStreamUrl(nextTrack.id, nextTrack.title, nextTrack.artist)
             preloadAudio.load()
             isPreloaded = true
           }
