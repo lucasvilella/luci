@@ -7,8 +7,9 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
+import com.getcapacitor.Bridge;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebViewClient;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,93 +37,103 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onStart() {
         super.onStart();
-        if (getBridge() != null && getBridge().getWebView() != null) {
-            WebView webView = getBridge().getWebView();
-            WebSettings settings = webView.getSettings();
-            settings.setJavaScriptEnabled(true);
-            settings.setDomStorageEnabled(true);
-            settings.setDatabaseEnabled(true);
-            settings.setAllowFileAccess(true);
-            settings.setAllowContentAccess(true);
-            settings.setMediaPlaybackRequiresUserGesture(false);
-            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-            settings.setUserAgentString(settings.getUserAgentString() + " LuciApp/1.0");
 
-            // Injeta o header ngrok-skip-browser-warning em TODAS as requisições HTTP
-            // para evitar a tela de aviso do Ngrok ("Visit Site") no WebView
-            webView.setWebViewClient(new WebViewClient() {
-                @Override
-                public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                    String url = request.getUrl().toString();
-                    // Apenas intercepta requisições para o Ngrok
-                    if (url.contains("ngrok-free.dev") || url.contains("ngrok.io")) {
-                        try {
-                            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-                            conn.setRequestMethod(request.getMethod());
-                            // Copia headers originais
-                            Map<String, String> headers = request.getRequestHeaders();
-                            if (headers != null) {
-                                for (Map.Entry<String, String> entry : headers.entrySet()) {
-                                    conn.setRequestProperty(entry.getKey(), entry.getValue());
+        Bridge bridge = getBridge();
+        if (bridge == null || bridge.getWebView() == null) return;
+
+        WebView webView = bridge.getWebView();
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        settings.setUserAgentString(settings.getUserAgentString() + " LuciApp/1.0");
+
+        // Usa BridgeWebViewClient do Capacitor como base para NÃO quebrar o bridge.
+        // Apenas intercepta requests Ngrok para injetar o header que pula o warning.
+        webView.setWebViewClient(new BridgeWebViewClient(bridge) {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+
+                // Apenas intercepta requisições para Ngrok
+                if (url.contains("ngrok-free.dev") || url.contains("ngrok.io")) {
+                    try {
+                        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+                        conn.setRequestMethod(request.getMethod());
+
+                        // Copia headers originais do request
+                        Map<String, String> headers = request.getRequestHeaders();
+                        if (headers != null) {
+                            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                                conn.setRequestProperty(entry.getKey(), entry.getValue());
+                            }
+                        }
+
+                        // Injeta header para pular a tela de warning do Ngrok
+                        conn.setRequestProperty("ngrok-skip-browser-warning", "1");
+                        conn.setRequestProperty("User-Agent", "LuciApp/1.0");
+                        conn.setConnectTimeout(15000);
+                        conn.setReadTimeout(30000);
+                        conn.setInstanceFollowRedirects(true);
+
+                        int statusCode = conn.getResponseCode();
+                        String contentType = conn.getContentType();
+                        String mimeType = "text/html";
+                        String encoding = "UTF-8";
+
+                        if (contentType != null) {
+                            String[] parts = contentType.split(";");
+                            mimeType = parts[0].trim();
+                            for (String part : parts) {
+                                String trimmed = part.trim();
+                                if (trimmed.startsWith("charset=")) {
+                                    encoding = trimmed.substring(8).trim();
                                 }
                             }
-                            // Injeta o header mágico do Ngrok
-                            conn.setRequestProperty("ngrok-skip-browser-warning", "1");
-                            conn.setRequestProperty("User-Agent", "LuciApp/1.0");
-                            conn.setConnectTimeout(10000);
-                            conn.setReadTimeout(30000);
+                        }
 
-                            int statusCode = conn.getResponseCode();
-                            String contentType = conn.getContentType();
-                            String encoding = "UTF-8";
-                            String mimeType = "text/html";
+                        InputStream inputStream;
+                        if (statusCode >= 400) {
+                            inputStream = conn.getErrorStream();
+                        } else {
+                            inputStream = conn.getInputStream();
+                        }
 
-                            if (contentType != null) {
-                                String[] parts = contentType.split(";");
-                                mimeType = parts[0].trim();
-                                for (String part : parts) {
-                                    String trimmed = part.trim();
-                                    if (trimmed.startsWith("charset=")) {
-                                        encoding = trimmed.substring(8).trim();
-                                    }
-                                }
-                            }
-
-                            InputStream inputStream;
-                            if (statusCode >= 400) {
-                                inputStream = conn.getErrorStream();
-                            } else {
-                                inputStream = conn.getInputStream();
-                            }
-
-                            // Mapeia response headers
-                            Map<String, String> responseHeaders = new HashMap<>();
-                            Map<String, List<String>> headerFields = conn.getHeaderFields();
-                            if (headerFields != null) {
-                                for (Map.Entry<String, List<String>> entry : headerFields.entrySet()) {
-                                    if (entry.getKey() != null && entry.getValue() != null && !entry.getValue().isEmpty()) {
-                                        responseHeaders.put(entry.getKey(), entry.getValue().get(0));
-                                    }
-                                }
-                            }
-
-                            return new WebResourceResponse(
-                                mimeType,
-                                encoding,
-                                statusCode,
-                                conn.getResponseMessage() != null ? conn.getResponseMessage() : "OK",
-                                responseHeaders,
-                                inputStream
-                            );
-                        } catch (IOException e) {
-                            // Falha na interceptação — deixa o WebView resolver naturalmente
+                        if (inputStream == null) {
                             return super.shouldInterceptRequest(view, request);
                         }
+
+                        // Copia response headers
+                        Map<String, String> responseHeaders = new HashMap<>();
+                        Map<String, List<String>> headerFields = conn.getHeaderFields();
+                        if (headerFields != null) {
+                            for (Map.Entry<String, List<String>> entry : headerFields.entrySet()) {
+                                if (entry.getKey() != null && entry.getValue() != null && !entry.getValue().isEmpty()) {
+                                    responseHeaders.put(entry.getKey(), entry.getValue().get(0));
+                                }
+                            }
+                        }
+                        // Permite CORS para o WebView
+                        responseHeaders.put("Access-Control-Allow-Origin", "*");
+
+                        String reasonPhrase = conn.getResponseMessage();
+                        if (reasonPhrase == null) reasonPhrase = "OK";
+
+                        return new WebResourceResponse(mimeType, encoding, statusCode, reasonPhrase, responseHeaders, inputStream);
+                    } catch (IOException e) {
+                        // Falha na interceptação — delega ao Capacitor
+                        return super.shouldInterceptRequest(view, request);
                     }
-                    return super.shouldInterceptRequest(view, request);
                 }
-            });
-        }
+
+                // Para todas as outras URLs, delega ao BridgeWebViewClient do Capacitor
+                return super.shouldInterceptRequest(view, request);
+            }
+        });
     }
 
     @Override
