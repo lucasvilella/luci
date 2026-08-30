@@ -63,6 +63,7 @@ export function ModularDeck() {
     activeTabByModule,
     setActiveTab,
     setModuleSelectorOpen,
+    toggleModuleSelector,
     isPushToTalkActive,
     setPushToTalkActive,
     openOrbScreen,
@@ -124,7 +125,7 @@ export function ModularDeck() {
 
         {/* Botão Central Ubíquo da Luci */}
         <LuciCentralButton
-          onSingleTap={() => setModuleSelectorOpen(true)}
+          onSingleTap={toggleModuleSelector}
           onDoubleTap={openOrbScreen}
           onHoldStart={() => setPushToTalkActive(true)}
           onHoldEnd={() => setPushToTalkActive(false)}

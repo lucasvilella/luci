@@ -130,18 +130,20 @@ interface AppNavigationState {
   isModuleSelectorOpen: boolean
   isPushToTalkActive: boolean
   pushToTalkTranscript: string | null
+  moduleUsageCounts: Record<AppModuleId, number>
 
   // Ações
   setActiveModule: (moduleId: AppModuleId) => void
   setActiveTab: (tabId: string) => void
   setModuleSelectorOpen: (open: boolean) => void
+  toggleModuleSelector: () => void
   setPushToTalkActive: (active: boolean) => void
   setPushToTalkTranscript: (text: string | null) => void
   openOrbScreen: () => void
 }
 
 export const useAppNavigationStore = create<AppNavigationState>((set, get) => {
-  // Leitura inicial de sessionStorage (mantido enquanto a sessão/janela estiver aberta ou minimizada)
+  // Leitura inicial de sessionStorage
   let initialModule: AppModuleId = "orb"
   let initialTabs: Record<AppModuleId, string> = {
     orb: "chat",
@@ -152,19 +154,32 @@ export const useAppNavigationStore = create<AppNavigationState>((set, get) => {
     finance: "overview",
     tasks: "calendar",
   }
+  let initialUsage: Record<AppModuleId, number> = {
+    orb: 999,
+    music: 10,
+    home: 5,
+    cinema: 3,
+    fitness: 2,
+    finance: 1,
+    tasks: 1,
+  }
 
   if (typeof window !== "undefined") {
     try {
       const savedModule = sessionStorage.getItem("luci_active_module") as AppModuleId | null
       const savedTabs = sessionStorage.getItem("luci_active_tabs")
+      const savedUsage = localStorage.getItem("luci_module_usage")
       if (savedModule && MODULES_REGISTRY[savedModule]) {
         initialModule = savedModule
       }
       if (savedTabs) {
         initialTabs = { ...initialTabs, ...JSON.parse(savedTabs) }
       }
+      if (savedUsage) {
+        initialUsage = { ...initialUsage, ...JSON.parse(savedUsage) }
+      }
     } catch {
-      // Fallback padrão: 'orb'
+      // Fallback padrão
     }
   }
 
@@ -174,16 +189,25 @@ export const useAppNavigationStore = create<AppNavigationState>((set, get) => {
     isModuleSelectorOpen: false,
     isPushToTalkActive: false,
     pushToTalkTranscript: null,
+    moduleUsageCounts: initialUsage,
 
     setActiveModule: (moduleId) => {
+      const currentUsage = get().moduleUsageCounts
+      const updatedUsage = {
+        ...currentUsage,
+        [moduleId]: (currentUsage[moduleId] || 0) + 1,
+      }
+
       if (typeof window !== "undefined") {
         try {
           sessionStorage.setItem("luci_active_module", moduleId)
+          localStorage.setItem("luci_module_usage", JSON.stringify(updatedUsage))
         } catch {}
       }
       set({
         activeModuleId: moduleId,
         isModuleSelectorOpen: false,
+        moduleUsageCounts: updatedUsage,
       })
     },
 
@@ -204,6 +228,7 @@ export const useAppNavigationStore = create<AppNavigationState>((set, get) => {
     },
 
     setModuleSelectorOpen: (open) => set({ isModuleSelectorOpen: open }),
+    toggleModuleSelector: () => set((state) => ({ isModuleSelectorOpen: !state.isModuleSelectorOpen })),
     setPushToTalkActive: (active) => set({ isPushToTalkActive: active }),
     setPushToTalkTranscript: (text) => set({ pushToTalkTranscript: text }),
 
