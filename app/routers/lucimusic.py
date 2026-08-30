@@ -55,21 +55,20 @@ async def get_music_home(
 
     continue_listening = []
     try:
-        # Prioriza faixas individuais recentemente tocadas pelo usuário
-        history_tracks = MusicDatabase.get_history(user_id, limit=6)
-        for ht in history_tracks:
+        # "Continuar Ouvindo" registra EXCLUSIVAMENTE álbuns e playlists
+        collection_history = MusicDatabase.get_collection_history(user_id, limit=6)
+        for item in collection_history:
             continue_listening.append({
-                "id": ht["id"],
-                "type": "track",
-                "title": ht["title"],
-                "subtitle": ht["artist"],
-                "artist": ht["artist"],
-                "thumbnail": ht.get("thumbnail") or "",
-                "cover_url": ht.get("thumbnail") or "",
-                "duration": ht.get("duration", 0)
+                "id": item["id"],
+                "type": item.get("type", "playlist"),
+                "title": item["title"],
+                "subtitle": item.get("subtitle", "Coleção"),
+                "artist": item.get("subtitle", ""),
+                "cover_url": item.get("cover_url") or "",
+                "thumbnail": item.get("cover_url") or ""
             })
 
-        # Se não houver faixas no histórico, busca playlists/álbuns recentes do banco
+        # Se não houver histórico de coleções no banco, busca álbuns e playlists favoritados/salvos
         if not continue_listening:
             saved_albums = MusicDatabase.get_saved_albums(user_id, limit=3)
             saved_pls = MusicDatabase.get_saved_playlists(user_id, limit=3)
@@ -88,32 +87,36 @@ async def get_music_home(
                     "id": pl["id"],
                     "type": "playlist",
                     "title": pl["title"],
-                    "subtitle": f"{pl['track_count']} faixas",
+                    "subtitle": f"{pl.get('track_count', 12)} faixas",
                     "artist": "Playlist",
                     "cover_url": pl["cover_url"],
                     "thumbnail": pl["cover_url"]
                 })
-    except Exception as e:
-        print(f"[MusicHome] Warning: Continue listening fallback: {e}")
 
-    # Fallback garantido se o banco ou engine estiverem vazios no Termux
-    if not continue_listening:
-        continue_listening = [
-            {
-                "id": "MPREb_95vF8Xw4tC0",
-                "type": "album",
-                "title": "Top Hits Brasil",
-                "subtitle": "Os maiores sucessos do momento",
-                "cover_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300"
-            },
-            {
-                "id": "liked_songs",
-                "type": "playlist",
-                "title": "Mais Queridas",
-                "subtitle": "Suas músicas favoritas",
-                "cover_url": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300"
-            }
-        ]
+        # Se ainda estiver vazio, preenche com as playlists e álbuns curados da semana
+        if not continue_listening:
+            for pl in (feed.get("based_on_listened", []) if feed else [])[:3]:
+                continue_listening.append({
+                    "id": pl.get("id"),
+                    "type": "playlist",
+                    "title": pl.get("title", "Playlist da Luci"),
+                    "subtitle": pl.get("subtitle", "Seleção Inteligente"),
+                    "artist": pl.get("subtitle", "Luci"),
+                    "cover_url": pl.get("thumbnail") or "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300",
+                    "thumbnail": pl.get("thumbnail") or "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300"
+                })
+            for alb in (feed.get("favorite_albums", []) if feed else [])[:3]:
+                continue_listening.append({
+                    "id": alb.get("id"),
+                    "type": "album",
+                    "title": alb.get("title", "Álbum"),
+                    "subtitle": alb.get("artist", "Artista"),
+                    "artist": alb.get("artist", ""),
+                    "cover_url": alb.get("thumbnail") or "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300",
+                    "thumbnail": alb.get("thumbnail") or "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300"
+                })
+    except Exception as e:
+        print(f"[MusicHome] Warning: Continue listening error: {e}")
 
     daily_mixes = []
     gradient_themes = [
@@ -560,8 +563,11 @@ async def get_track_metadata(track_id: str, request: Request = None):
     data = await lucimusic_service.get_stream_url(track_id)
     is_liked = MusicDatabase.is_liked(user_id, track_id)
 
-    # Busca detalhes ricos (views, data de publicação, descrição, canal)
+    # Busca detalhes ricos (views, data de publicação, descrição, canal oficial, artist_id)
     rich_details = {}
+    resolved_artist_name = data.get("artist") or "Artista"
+    resolved_artist_id = data.get("artist_id") or ""
+
     try:
         from ytmusicapi import YTMusic
         import asyncio
@@ -570,11 +576,20 @@ async def get_track_metadata(track_id: str, request: Request = None):
         if song_res:
             v_details = song_res.get("videoDetails", {})
             micro = song_res.get("microformat", {}).get("microformatDataRenderer", {})
+            channel_id = v_details.get("channelId") or ""
+            author = v_details.get("author") or micro.get("pageOwnerDetails", {}).get("name")
+            
+            if author and author.strip():
+                resolved_artist_name = author.replace(" - Topic", "").strip()
+            if channel_id and channel_id.strip():
+                resolved_artist_id = channel_id.strip()
+
             rich_details = {
                 "view_count": v_details.get("viewCount") or micro.get("viewCount"),
                 "publish_date": micro.get("publishDate") or micro.get("uploadDate"),
                 "description": micro.get("description") or "",
-                "channel_name": v_details.get("author") or micro.get("pageOwnerDetails", {}).get("name")
+                "channel_name": resolved_artist_name,
+                "artist_id": resolved_artist_id
             }
     except Exception as e:
         print(f"[LuciMusic] get_song detalhes falhou para {track_id}: {e}")
@@ -582,8 +597,8 @@ async def get_track_metadata(track_id: str, request: Request = None):
     return {
         "id": track_id,
         "title": data.get("title") or "Música",
-        "artist": data.get("artist") or "Artista",
-        "artist_id": data.get("artist_id") or "",
+        "artist": resolved_artist_name,
+        "artist_id": resolved_artist_id,
         "album": data.get("album") or "Single",
         "album_id": data.get("album_id") or "",
         "duration": data.get("duration") or 210,
@@ -594,7 +609,7 @@ async def get_track_metadata(track_id: str, request: Request = None):
         "view_count": rich_details.get("view_count"),
         "publish_date": rich_details.get("publish_date"),
         "description": rich_details.get("description"),
-        "channel_name": rich_details.get("channel_name")
+        "channel_name": resolved_artist_name
     }
 
 @router.get("/lyrics/{track_id}")

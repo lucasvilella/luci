@@ -27,8 +27,8 @@ import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useTheme } from "@/hooks/use-theme"
 import { MediaCard } from "@/components/ui/media-card"
 import { SectionHeader } from "@/components/ui/section-header"
-import { TrackActionMenu } from "@/components/ui/track-action-menu"
-import { formatSeconds, type LuciTrack } from "@/lib/lucimusic"
+import { formatSeconds, fetchArtist, type LuciTrack } from "@/lib/lucimusic"
+import { luciApiFetch } from "@/lib/api"
 
 export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) {
   const {
@@ -77,6 +77,24 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
   const [artistDetails, setArtistDetails] = useState<any>(null)
   const [songInfo, setSongInfo] = useState<any>(null)
   const [loadingArtist, setLoadingArtist] = useState(false)
+  const miniLyricsContainerRef = useRef<HTMLDivElement | null>(null)
+
+  // Encontra a linha ativa na miniatura e rola suavemente o container
+  const activeMiniLineIndex = lyrics?.lines?.findIndex((line: any, i: number) => {
+    const nextLine = lyrics.lines[i + 1]
+    const lineSec = Number((line as any).timeSeconds ?? (line as any).seconds ?? (line as any).time ?? ((line as any).time_ms ? (line as any).time_ms / 1000 : 0))
+    const nextSec = nextLine ? Number((nextLine as any).timeSeconds ?? (nextLine as any).seconds ?? (nextLine as any).time ?? ((nextLine as any).time_ms ? (nextLine as any).time_ms / 1000 : 0)) : Infinity
+    return currentTime >= lineSec && currentTime < nextSec
+  }) ?? -1
+
+  useEffect(() => {
+    if (activeMiniLineIndex >= 0 && miniLyricsContainerRef.current) {
+      const activeEl = miniLyricsContainerRef.current.children[activeMiniLineIndex] as HTMLElement
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
+    }
+  }, [activeMiniLineIndex])
 
   useEffect(() => {
     let active = true
@@ -84,27 +102,33 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
       if (!track?.id) return
       setLoadingArtist(true)
 
-      // 1. Busca perfil oficial do artista principal
-      try {
-        const artData = await fetchArtist(primaryArtist)
-        if (active && artData) {
-          setArtistDetails(artData)
-        }
-      } catch (err) {
-        console.warn("[NowPlaying] Falha ao carregar artista:", err)
-      }
+      // 1. Busca informações ricas da música atual (views, data, descrição, artist_id e canal)
+      let resolvedArtistId = (track as any).artistId || ""
+      let resolvedArtistQuery = primaryArtist
 
-      // 2. Busca informações ricas da música atual (views, data, descrição)
       try {
         const res = await luciApiFetch(`/api/v1/music/track/${track.id}`)
         if (res.ok) {
           const sData = await res.json()
           if (active) {
             setSongInfo(sData)
+            if (sData.artist_id) resolvedArtistId = sData.artist_id
+            if (sData.artist) resolvedArtistQuery = sData.artist
           }
         }
       } catch (err) {
         console.warn("[NowPlaying] Falha ao carregar informações da música:", err)
+      }
+
+      // 2. Busca perfil oficial do artista principal utilizando o browseId oficial ou nome resolvido
+      try {
+        const queryToUse = resolvedArtistId || resolvedArtistQuery || primaryArtist
+        const artData = await fetchArtist(queryToUse)
+        if (active && artData) {
+          setArtistDetails(artData)
+        }
+      } catch (err) {
+        console.warn("[NowPlaying] Falha ao carregar artista:", err)
       } finally {
         if (active) setLoadingArtist(false)
       }
@@ -335,23 +359,27 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
             </button>
           </div>
 
-          {/* Bloco de Letras com Rolagem Suave e Destaque da Frase Cantada */}
+          {/* Bloco de Letras com Rolagem Suave Automática e Destaque da Frase Cantada */}
           <div
+            ref={miniLyricsContainerRef}
             onClick={goToLyrics}
-            className="mt-2 cursor-pointer rounded-[16px] p-5 max-h-[220px] overflow-y-auto space-y-3 bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-inner transition-all hover:border-[var(--accent-primary)]/50 group"
+            className="mt-2 cursor-pointer rounded-[16px] p-5 max-h-[200px] overflow-y-auto space-y-3 bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-inner transition-all hover:border-[var(--accent-primary)]/50 group scroll-smooth no-scrollbar"
           >
             {loadingLyrics ? (
               <p className="text-xs text-[var(--text-secondary)] italic animate-pulse">
                 Carregando letra sincronizada...
               </p>
             ) : lyrics?.lines && lyrics.lines.length > 0 ? (
-              lyrics.lines.map((line, idx) => {
-                const nextLineTime = lyrics.lines[idx + 1]?.time || 9999
-                const isCurrent = currentTime >= line.time && currentTime < nextLineTime
+              lyrics.lines.map((line: any, idx: number) => {
+                const nextLine = lyrics.lines[idx + 1]
+                const lineSec = Number((line as any).timeSeconds ?? (line as any).seconds ?? (line as any).time ?? ((line as any).time_ms ? (line as any).time_ms / 1000 : 0))
+                const nextSec = nextLine ? Number((nextLine as any).timeSeconds ?? (nextLine as any).seconds ?? (nextLine as any).time ?? ((nextLine as any).time_ms ? (nextLine as any).time_ms / 1000 : 0)) : Infinity
+                const isCurrent = currentTime >= lineSec && currentTime < nextSec
+
                 return (
                   <div
                     key={idx}
-                    className={`flex items-center gap-2 transition-all duration-300 ${
+                    className={`flex items-center gap-2 transition-all duration-300 py-0.5 ${
                       isCurrent
                         ? "text-[var(--accent-primary)] scale-[1.03] origin-left font-black"
                         : "text-[var(--text-secondary)] opacity-60 font-semibold"
