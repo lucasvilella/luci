@@ -27,6 +27,7 @@ import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useTheme } from "@/hooks/use-theme"
 import { MediaCard } from "@/components/ui/media-card"
 import { SectionHeader } from "@/components/ui/section-header"
+import { TrackActionMenu } from "@/components/ui/track-action-menu"
 import { formatSeconds, fetchArtist, type LuciTrack } from "@/lib/lucimusic"
 import { luciApiFetch } from "@/lib/api"
 
