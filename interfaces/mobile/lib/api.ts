@@ -5,7 +5,7 @@
 
 import { SystemStatus } from "./contracts/common"
 
-const DEFAULT_SERVER_URL = "http://192.168.15.90:8000"
+const DEFAULT_NGROK_URL = "https://subdivide-clip-easiest.ngrok-free.dev"
 
 export function getApiBaseUrl(): string {
   if (typeof window === "undefined") return "http://127.0.0.1:8000"
@@ -20,10 +20,10 @@ export function getApiBaseUrl(): string {
     return "http://localhost:8000"
   }
 
-  // No Capacitor ou Webview Android em rede local
+  // No Capacitor nativo Android ou PWA
   const isCapacitor = window.location.protocol === "capacitor:"
   if (isCapacitor) {
-    return "http://192.168.15.90:8000"
+    return DEFAULT_NGROK_URL
   }
 
   return window.location.origin
@@ -54,15 +54,20 @@ export function setAuthToken(token: string): void {
 export async function luciApiFetch(
   path: string,
   options: RequestInit = {},
-  timeoutMs = 8000
+  timeoutMs = 10000
 ): Promise<Response> {
   const token = getAuthToken()
   const headers = new Headers(options.headers || {})
 
+  headers.set("ngrok-skip-browser-warning", "1")
+  if (!headers.has("X-User-Id")) {
+    headers.set("X-User-Id", "lucas")
+  }
+
   if (token) {
     headers.set("Authorization", `Bearer ${token}`)
   }
-  if (!headers.has("Content-Type") && options.method && options.method !== "GET") {
+  if (!headers.has("Content-Type") && options.method && options.method !== "GET" && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json")
   }
 
@@ -70,6 +75,7 @@ export async function luciApiFetch(
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
   const url = `${getApiBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`
+
 
   try {
     const response = await fetch(url, {
