@@ -52,7 +52,7 @@ export function AppHeader({
   const displayAvatar = user?.avatarUrl || avatarUrl
 
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between px-5 pt-4 pb-3 bg-[var(--bg-app)]/90 backdrop-blur-xl select-none">
+    <header className="sticky top-0 z-30 flex items-center justify-between px-5 pt-4 pb-3 bg-[var(--bg-app)]/95 backdrop-blur-xl select-none border-b border-[var(--border-subtle)]/30">
       {/* Lado Esquerdo: Avatar + Saudação + Nome */}
       <div className="flex items-center gap-3">
         <div className="relative size-12 rounded-full overflow-hidden bg-[var(--bg-surface-2)] border border-[var(--border-subtle)] shadow-sm">
