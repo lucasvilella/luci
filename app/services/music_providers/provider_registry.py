@@ -86,5 +86,35 @@ class MusicProviderRegistry:
 
         return await self.audio_source.resolve_stream(resolved_track_id, title=title, artist=artist)
 
+    async def get_artist_details(self, artist_query: str) -> Dict[str, Any]:
+        """Obtém metadados canônicos do artista do MusicBrainz/ListenBrainz com fallback."""
+        if hasattr(self.metadata_primary, "get_artist_details"):
+            try:
+                mb_details = await self.metadata_primary.get_artist_details(artist_query)
+                if mb_details:
+                    return mb_details
+            except Exception as ex:
+                logger.warning(f"[MusicProviderRegistry] get_artist_details falhou no MusicBrainz para '{artist_query}': {ex}")
+        return {
+            "name": artist_query,
+            "avatar": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500",
+            "thumbnail": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500",
+            "tags": ["Música"],
+            "genres": ["Música Brasileira"],
+            "listeners": "Artista no radar da Luci"
+        }
+
+    async def get_official_cover_art(self, title: str, artist: str, release_id: Optional[str] = None) -> str:
+        """Obtém capa oficial 1:1 de estúdio via Cover Art Archive com fallback Deezer/iTunes."""
+        if hasattr(self.metadata_primary, "get_official_cover_art"):
+            try:
+                cov = await self.metadata_primary.get_official_cover_art(title, artist, release_id)
+                if cov:
+                    return cov
+            except Exception as ex:
+                logger.warning(f"[MusicProviderRegistry] get_official_cover_art falhou: {ex}")
+        return ""
+
 # Instância Singleton
 provider_registry = MusicProviderRegistry()
+

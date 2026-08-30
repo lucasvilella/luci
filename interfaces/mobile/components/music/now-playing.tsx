@@ -190,7 +190,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
         {!showLyricsExpanded && (
           <div className="relative mx-auto w-full max-w-[320px] aspect-square rounded-[24px] overflow-hidden bg-[var(--bg-surface-2)] border border-[var(--border-subtle)] shadow-2xl transition-all duration-300">
             <img
-              src={track.thumbnail || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800"}
+              src={songInfo?.cover_url || track.thumbnail || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800"}
               alt={track.title}
               className="size-full object-cover"
             />
@@ -421,7 +421,9 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
             <div className="relative w-full h-48 rounded-[14px] overflow-hidden bg-[var(--bg-surface-2)]">
               <img
                 src={
+                  artistDetails?.avatar_url ||
                   artistDetails?.thumbnail ||
+                  artistDetails?.banner_url ||
                   "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600"
                 }
                 alt={primaryArtist}

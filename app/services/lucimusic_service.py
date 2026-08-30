@@ -446,8 +446,12 @@ class LuciMusicService:
             thumb = ""
             if artist_data.get("thumbnails"):
                 thumb = artist_data["thumbnails"][-1].get("url", "")
+                if "googleusercontent.com" in thumb:
+                    thumb = re.sub(r'=w\d+-h\d+.*', '=w800-h800-p-l90-rj', thumb)
             elif search_res_thumb:
                 thumb = search_res_thumb
+                if "googleusercontent.com" in thumb:
+                    thumb = re.sub(r'=w\d+-h\d+.*', '=w800-h800-p-l90-rj', thumb)
             elif top_tracks:
                 thumb = top_tracks[0].get("thumbnail", "")
 
@@ -459,6 +463,8 @@ class LuciMusicService:
                 "name": name,
                 "description": artist_data.get("description", ""),
                 "thumbnail": thumb,
+                "avatar_url": thumb,
+                "banner_url": thumb,
                 "subscribers": subscribers,
                 "monthly_listeners": "24,419,528 monthly listeners",
                 "top_tracks": top_tracks[:10],
@@ -470,7 +476,28 @@ class LuciMusicService:
             artist_cache.set(cache_key, result)
             return result
 
-        return await loop.run_in_executor(None, _fetch_artist)
+        base_res = await loop.run_in_executor(None, _fetch_artist)
+
+        # Enriquecimento com Metadados Canônicos do MusicBrainz & ListenBrainz
+        try:
+            from app.services.music_providers import provider_registry
+            canonical_meta = await provider_registry.get_artist_details(base_res.get("name") or artist_id)
+            if canonical_meta:
+                if not base_res.get("thumbnail") or "unsplash" in base_res.get("thumbnail", "").lower() or not base_res.get("thumbnail").startswith("http"):
+                    base_res["thumbnail"] = canonical_meta.get("avatar") or base_res["thumbnail"]
+                    base_res["avatar_url"] = canonical_meta.get("avatar") or base_res.get("avatar_url")
+                    base_res["banner_url"] = canonical_meta.get("avatar") or base_res.get("banner_url")
+                
+                if not base_res.get("description") and canonical_meta.get("disambiguation"):
+                    tags_str = ", ".join(canonical_meta.get("tags", []))
+                    base_res["description"] = f"{canonical_meta.get('disambiguation')}. Gêneros e tags canônicas: {tags_str}."
+                
+                if canonical_meta.get("listeners") and canonical_meta["listeners"] != "Artista no radar da Luci":
+                    base_res["monthly_listeners"] = canonical_meta["listeners"]
+        except Exception as ex:
+            print(f"[LuciMusic] Enriquecimento canônico MusicBrainz falhou: {ex}")
+
+        return base_res
 
     # ─── 5.1 Detalhes do Álbum (Otimizado com Cache Rápido) ───
     async def get_album_details(self, album_id: str, title: Optional[str] = None, artist: Optional[str] = None) -> Dict[str, Any]:

@@ -594,15 +594,28 @@ async def get_track_metadata(track_id: str, request: Request = None):
     except Exception as e:
         print(f"[LuciMusic] get_song detalhes falhou para {track_id}: {e}")
 
+    cover = data.get("thumbnail") or ""
+    title_val = data.get("title") or "Música"
+
+    # Enriquecimento com Capa Oficial 1:1 de Estúdio (Cover Art Archive / MusicBrainz)
+    try:
+        from app.services.music_providers import provider_registry
+        official_cover = await provider_registry.get_official_cover_art(title_val, resolved_artist_name)
+        if official_cover:
+            cover = official_cover
+    except Exception as ex:
+        print(f"[LuciMusic] get_official_cover_art falhou: {ex}")
+
     return {
         "id": track_id,
-        "title": data.get("title") or "Música",
+        "title": title_val,
         "artist": resolved_artist_name,
         "artist_id": resolved_artist_id,
         "album": data.get("album") or "Single",
         "album_id": data.get("album_id") or "",
         "duration": data.get("duration") or 210,
-        "cover_url": data.get("thumbnail") or "",
+        "cover_url": cover,
+        "thumbnail": cover,
         "video_id": track_id,
         "stream_url": f"/api/v1/music/play/{track_id}",
         "is_liked": is_liked,
