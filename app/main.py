@@ -46,7 +46,7 @@ async def verify_api_secret(request: Request = None):
 
     path = getattr(request.url, "path", "")
     public_paths = ["/health", "/docs", "/openapi.json", "/favicon.ico"]
-    if path in public_paths or path == "/" or path.startswith("/_next") or path.startswith("/static") or path.startswith("/api/v1/music") or path.startswith("/api/v1/lucimusic") or path.startswith("/api/v1/chat") or path.startswith("/ws"):
+    if path in public_paths or path == "/" or path.startswith("/_next") or path.startswith("/static") or path.startswith("/api/v1/music") or path.startswith("/api/v1/lucimusic") or path.startswith("/api/v1/chat") or path.startswith("/api/v1/home") or path.startswith("/ws"):
         return True
 
     auth_header = request.headers.get("Authorization", "")
