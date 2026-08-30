@@ -143,10 +143,23 @@ export const useAudioPlayerStore = create<AudioPlayerState>((set, get) => ({
 
     if (primaryAudio) {
       isPreloaded = false
-      const baseUrl = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-        ? "http://localhost:8000"
-        : API_BASE_URL
-      const streamUrl = track.audioUrl || `${baseUrl}/api/v1/music/play/${track.id}`
+      let directUrl = track.audioUrl
+
+      if (!directUrl) {
+        try {
+          const streamRes = await fetch(`${API_BASE_URL}/api/v1/music/stream/${track.id}`)
+          if (streamRes.ok) {
+            const streamData = await streamRes.json()
+            if (streamData?.stream_url) {
+              directUrl = streamData.stream_url
+            }
+          }
+        } catch {
+          // Fallback silencioso para o proxy local
+        }
+      }
+
+      const streamUrl = directUrl || `${API_BASE_URL}/api/v1/music/play/${track.id}`
       primaryAudio.src = streamUrl
       primaryAudio.load()
 
