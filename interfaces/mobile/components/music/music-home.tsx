@@ -48,10 +48,14 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
         console.warn("[MusicHome] Erro ao buscar feed dinâmico:", err)
       }
 
-      const fallback = await fetchMusicHome("all")
-      if (mounted) {
-        setHomeData(fallback)
-        setLoading(false)
+      try {
+        const fallback = await fetchMusicHome("all")
+        if (mounted) {
+          setHomeData(fallback)
+          setLoading(false)
+        }
+      } catch {
+        if (mounted) setLoading(false)
       }
     }
 
@@ -125,26 +129,28 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
         </section>
 
         {/* ─── 01. CONTINUAR OUVIDO (Grid 2 colunas com Pílulas no Topo) ─── */}
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)] relative pb-1">
-              Continuar Ouvindo
-              <span className="absolute bottom-0 left-0 w-8 h-[2.5px] rounded-full bg-[var(--accent-primary)]" />
-            </h2>
-          </div>
+        {continuePills.length > 0 && (
+          <section className="space-y-3 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)] relative pb-1">
+                Continuar Ouvindo
+                <span className="absolute bottom-0 left-0 w-8 h-[2.5px] rounded-full bg-[var(--accent-primary)]" />
+              </h2>
+            </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
-            {continuePills.map((pill) => (
-              <ContinuePillCard
-                key={pill.id}
-                id={pill.id}
-                title={pill.title}
-                coverUrl={pill.coverUrl}
-                onClick={() => goToPlaylistDetail(pill.id, pill.title, pill.coverUrl)}
-              />
-            ))}
-          </div>
-        </section>
+            <div className="grid grid-cols-2 gap-2.5">
+              {continuePills.map((pill) => (
+                <ContinuePillCard
+                  key={pill.id}
+                  id={pill.id}
+                  title={pill.title}
+                  coverUrl={pill.coverUrl}
+                  onClick={() => goToPlaylistDetail(pill.id, pill.title, pill.coverUrl)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ─── 02. DAILY MIX (Motor do MusicIntelligenceEngine com Molduras Oficiais) ─── */}
         {dailyMixes.length > 0 && (
