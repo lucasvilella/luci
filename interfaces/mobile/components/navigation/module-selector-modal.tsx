@@ -55,17 +55,27 @@ export function ModuleSelectorModal() {
   if (!isModuleSelectorOpen) return null
 
   return (
-    <div className="fixed inset-x-0 bottom-4 z-30 flex justify-center px-4 pointer-events-none select-none animate-in fade-in slide-in-from-bottom-4 duration-150">
+    <>
       {/* 
-        Container em Pílula Orgânica que "sobe por trás" do deck de navegação (bottom-4 com z-30, dock no z-40).
-        Fundo da superfície suave, cantos arredondados generosos de 32px e alinhado perfeitamente com o deck (max-w-[404px] pb-[74px]).
+        Backdrop de Desfoque Cristalino Puro (Sem camada cinza / transparente com blur óptico)
+        Ao tocar em qualquer parte do fundo desfocado, o menu fecha instantaneamente.
       */}
       <div
-        className="pointer-events-auto relative w-full max-w-[404px] overflow-hidden rounded-[32px] pt-3 pb-[74px] px-3 shadow-[0_12px_40px_rgba(0,0,0,0.18)] backdrop-blur-2xl border border-[var(--border-subtle)] transition-all bg-[var(--bg-surface-1)]"
-        style={{
-          boxShadow: "0 -8px 32px rgba(0, 0, 0, 0.15), var(--shadow-deck)",
-        }}
-      >
+        onClick={() => setActiveModule(activeModuleId)}
+        className="fixed inset-0 z-20 backdrop-blur-[6px] transition-all duration-150 animate-in fade-in cursor-pointer select-none"
+      />
+
+      <div className="fixed inset-x-0 bottom-4 z-30 flex justify-center px-4 pointer-events-none select-none animate-in fade-in slide-in-from-bottom-4 duration-150">
+        {/* 
+          Container em Pílula Orgânica que "sobe por trás" do deck de navegação (bottom-4 com z-30, dock no z-40).
+          Fundo da superfície suave, cantos arredondados generosos de 32px e alinhado perfeitamente com o deck (max-w-[404px] pb-[74px]).
+        */}
+        <div
+          className="pointer-events-auto relative w-full max-w-[404px] overflow-hidden rounded-[32px] pt-3 pb-[74px] px-3 shadow-[0_12px_40px_rgba(0,0,0,0.18)] backdrop-blur-2xl border border-[var(--border-subtle)] transition-all bg-[var(--bg-surface-1)]"
+          style={{
+            boxShadow: "0 -8px 32px rgba(0, 0, 0, 0.15), var(--shadow-deck)",
+          }}
+        >
         {/* Lista Vertical de Módulos (1 por linha, sem pill pesada, tipografia ampliada e divisores sutis) */}
         <div className="divide-y divide-[var(--border-subtle)] max-h-[52vh] overflow-y-auto no-scrollbar">
           {sortedModules.map((mod) => {
@@ -115,6 +125,6 @@ export function ModuleSelectorModal() {
           })}
         </div>
       </div>
-    </div>
+    </>
   )
 }
