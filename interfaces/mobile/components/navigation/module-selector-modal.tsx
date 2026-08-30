@@ -125,6 +125,7 @@ export function ModuleSelectorModal() {
           })}
         </div>
       </div>
-    </>
-  )
+    </div>
+  </>
+)
 }
