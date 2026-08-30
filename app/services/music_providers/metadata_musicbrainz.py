@@ -298,3 +298,14 @@ class MusicBrainzMetadataProvider(MetadataProvider):
 
         return ""
 
+    async def get_track_metadata(self, track_id: str) -> Optional[Dict[str, Any]]:
+        """Enriquece metadados via MusicBrainz e ListenBrainz."""
+        clean_id = track_id.replace("mb_", "")
+        url = f"{self.base_url}/recording/{clean_id}"
+        params = {"fmt": "json", "inc": "artists+releases+tags"}
+        data = await self._rate_limited_get(url, params=params)
+        if not data:
+            return None
+        return self._format_recording(data)
+
+
