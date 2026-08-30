@@ -215,55 +215,50 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
         )}
 
         {/* ─── 04. SELEÇÃO DA SEMANA (Playlists com Montagem Mosaico 2x2 Dinâmicas) ─── */}
-        <section>
-          <SectionHeader
-            title="Seleção da semana"
-            seeAllText="Ver tudo"
-            onSeeAll={() => goToSearch()}
-          />
-          <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
-            {(weekSelection.length > 0 ? weekSelection : [
-              { id: "week_1", title: "É Hit Brasil", subtitle: "As mais tocadas no momento", covers: trendingBrasil.slice(0, 4).map((t: any) => t.thumbnail || t.cover_url) },
-              { id: "week_2", title: "Balada Sertaneja", subtitle: "O melhor do sertanejo atual", covers: trendingBrasil.slice(4, 8).map((t: any) => t.thumbnail || t.cover_url) },
-              { id: "week_3", title: "Pagode & Churrasco", subtitle: "Samba e pagode para curtir", covers: trendingBrasil.slice(2, 6).map((t: any) => t.thumbnail || t.cover_url) },
-              { id: "week_4", title: "Pop Internacional", subtitle: "Hits globais em alta", covers: trendingBrasil.slice(1, 5).map((t: any) => t.thumbnail || t.cover_url) },
-            ]).map((pl: any) => (
-              <PlaylistMosaicCard
-                key={pl.id}
-                id={pl.id}
-                title={pl.title}
-                subtitle={pl.subtitle}
-                covers={pl.covers && pl.covers.length > 0 ? pl.covers : trendingBrasil.slice(0, 4).map((t: any) => t.thumbnail || t.cover_url)}
-                onClick={() => goToPlaylistDetail(pl.id, pl.title)}
-              />
-            ))}
-          </div>
-        </section>
+        {weekSelection.length > 0 && (
+          <section className="animate-fade-in">
+            <SectionHeader
+              title="Seleção da semana"
+              seeAllText="Ver tudo"
+              onSeeAll={() => goToSearch()}
+            />
+            <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
+              {weekSelection.map((pl: any) => (
+                <PlaylistMosaicCard
+                  key={pl.id}
+                  id={pl.id}
+                  title={pl.title}
+                  subtitle={pl.subtitle}
+                  covers={pl.covers && pl.covers.length > 0 ? pl.covers : trendingBrasil.slice(0, 4).map((t: any) => t.thumbnail || t.cover_url)}
+                  onClick={() => goToPlaylistDetail(pl.id, pl.title)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ─── 05. PLAYLISTS POPULARES (Playlists com Montagem Mosaico 2x2 Dinâmicas) ─── */}
-        <section>
-          <SectionHeader
-            title="Playlists Populares"
-            seeAllText="Ver tudo"
-            onSeeAll={() => goToSearch()}
-          />
-          <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
-            {(popularPlaylists.length > 0 ? popularPlaylists : [
-              { id: "pop_1", title: "Aquela Sofrência", subtitle: "As melhores músicas para cantar junto", covers: trendingBrasil.slice(3, 7).map((t: any) => t.thumbnail || t.cover_url) },
-              { id: "pop_2", title: "Sertanejo Universitário", subtitle: "Grandes sucessos do gênero", covers: trendingBrasil.slice(1, 5).map((t: any) => t.thumbnail || t.cover_url) },
-              { id: "pop_3", title: "Top 50 Brasil", subtitle: "O ranking oficial das mais ouvidas", covers: trendingBrasil.slice(0, 4).map((t: any) => t.thumbnail || t.cover_url) },
-            ]).map((pl: any) => (
-              <PlaylistMosaicCard
-                key={pl.id}
-                id={pl.id}
-                title={pl.title}
-                subtitle={pl.subtitle}
-                covers={pl.covers && pl.covers.length > 0 ? pl.covers : trendingBrasil.slice(2, 6).map((t: any) => t.thumbnail || t.cover_url)}
-                onClick={() => goToPlaylistDetail(pl.id, pl.title)}
-              />
-            ))}
-          </div>
-        </section>
+        {popularPlaylists.length > 0 && (
+          <section className="animate-fade-in">
+            <SectionHeader
+              title="Playlists Populares"
+              seeAllText="Ver tudo"
+              onSeeAll={() => goToSearch()}
+            />
+            <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
+              {popularPlaylists.map((pl: any) => (
+                <PlaylistMosaicCard
+                  key={pl.id}
+                  id={pl.id}
+                  title={pl.title}
+                  subtitle={pl.subtitle}
+                  covers={pl.covers && pl.covers.length > 0 ? pl.covers : trendingBrasil.slice(2, 6).map((t: any) => t.thumbnail || t.cover_url)}
+                  onClick={() => goToPlaylistDetail(pl.id, pl.title)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ─── 06. ÚLTIMOS LANÇAMENTOS PARA VOCÊ ─── */}
         {newReleases.length > 0 && (
