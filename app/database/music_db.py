@@ -415,6 +415,9 @@ class MusicDatabase:
         conn.close()
         return bool(row)
 
+    is_liked = is_song_liked
+
+
     @staticmethod
     def create_playlist(user_id: str, title: str, description: str = "", thumbnail: str = "", is_ai_generated: bool = False) -> Dict[str, Any]:
         """Cria uma nova playlist para o usuário."""
