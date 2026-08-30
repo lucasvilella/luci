@@ -711,30 +711,6 @@ class LuciMusicService:
             if not ranked_artists_list:
                 ranked_artists_list = ["Mariana Fagundes", "Ícaro e Gilmar", "Humberto e Ronaldo", "Gusttavo Lima", "Luan Santana", "Jorge e Mateus", "Marília Mendonça"]
 
-        def _get_artists_data():
-            artists_res = []
-            seen_names = set()
-            for art_name in ranked_artists_list[:8]:
-                clean_name = art_name.strip()
-                if not clean_name or clean_name.lower() in seen_names:
-                    continue
-                seen_names.add(clean_name.lower())
-                try:
-                    res = self.ytm.search(clean_name, filter="artists", limit=1)
-                    if res and len(res) > 0:
-                        item = res[0]
-                        thumb = (item.get("thumbnails") or [{}])[-1].get("url", "")
-                        artists_res.append({
-                            "id": item.get("browseId") or clean_name,
-                            "name": item.get("artist") or clean_name,
-                            "thumbnail": thumb
-                        })
-                    else:
-                        artists_res.append({
-                            "id": clean_name,
-                            "name": clean_name,
-                            "thumbnail": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300"
-                        })
         def _get_single_artist(clean_name: str):
             try:
                 res = self.ytm.search(clean_name, filter="artists", limit=1)

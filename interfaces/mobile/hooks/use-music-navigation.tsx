@@ -53,21 +53,56 @@ const MusicNavigationContext = createContext<MusicNavigationContextValue | null>
 // ─── Provider ────────────────────────────────────────────────────────
 
 export function MusicNavigationProvider({ children }: { children: ReactNode }) {
-  const [stack, setStack] = useState<MusicScreen[]>([{ type: "home" }])
+  const [stack, setStack] = useState<MusicScreen[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = sessionStorage.getItem("luci_music_nav_stack")
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed
+          }
+        }
+      } catch {}
+    }
+    return [{ type: "home" }]
+  })
 
   const screen = stack[stack.length - 1]
   const canGoBack = stack.length > 1
 
   const push = useCallback((s: MusicScreen) => {
-    setStack((prev) => [...prev, s])
+    setStack((prev) => {
+      const next = [...prev, s]
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem("luci_music_nav_stack", JSON.stringify(next))
+        } catch {}
+      }
+      return next
+    })
   }, [])
 
   const pop = useCallback(() => {
-    setStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev))
+    setStack((prev) => {
+      const next = prev.length > 1 ? prev.slice(0, -1) : prev
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem("luci_music_nav_stack", JSON.stringify(next))
+        } catch {}
+      }
+      return next
+    })
   }, [])
 
   const reset = useCallback(() => {
-    setStack([{ type: "home" }])
+    const next: MusicScreen[] = [{ type: "home" }]
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem("luci_music_nav_stack", JSON.stringify(next))
+      } catch {}
+    }
+    setStack(next)
   }, [])
 
   const goToArtist = useCallback(

@@ -140,9 +140,10 @@ interface AppNavigationState {
   openOrbScreen: () => void
 }
 
-export const useAppNavigationStore = create<AppNavigationState>((set, get) => ({
-  activeModuleId: "music",
-  activeTabByModule: {
+export const useAppNavigationStore = create<AppNavigationState>((set, get) => {
+  // Leitura inicial de sessionStorage (mantido enquanto a sessão/janela estiver aberta ou minimizada)
+  let initialModule: AppModuleId = "orb"
+  let initialTabs: Record<AppModuleId, string> = {
     orb: "chat",
     music: "home",
     cinema: "home",
@@ -150,40 +151,76 @@ export const useAppNavigationStore = create<AppNavigationState>((set, get) => ({
     fitness: "routines",
     finance: "overview",
     tasks: "calendar",
-  },
-  isModuleSelectorOpen: false,
-  isPushToTalkActive: false,
-  pushToTalkTranscript: null,
+  }
 
-  setActiveModule: (moduleId) => {
-    set({
-      activeModuleId: moduleId,
-      isModuleSelectorOpen: false,
-    })
-  },
+  if (typeof window !== "undefined") {
+    try {
+      const savedModule = sessionStorage.getItem("luci_active_module") as AppModuleId | null
+      const savedTabs = sessionStorage.getItem("luci_active_tabs")
+      if (savedModule && MODULES_REGISTRY[savedModule]) {
+        initialModule = savedModule
+      }
+      if (savedTabs) {
+        initialTabs = { ...initialTabs, ...JSON.parse(savedTabs) }
+      }
+    } catch {
+      // Fallback padrão: 'orb'
+    }
+  }
 
-  setActiveTab: (tabId) => {
-    const { activeModuleId, activeTabByModule } = get()
-    set({
-      activeTabByModule: {
+  return {
+    activeModuleId: initialModule,
+    activeTabByModule: initialTabs,
+    isModuleSelectorOpen: false,
+    isPushToTalkActive: false,
+    pushToTalkTranscript: null,
+
+    setActiveModule: (moduleId) => {
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem("luci_active_module", moduleId)
+        } catch {}
+      }
+      set({
+        activeModuleId: moduleId,
+        isModuleSelectorOpen: false,
+      })
+    },
+
+    setActiveTab: (tabId) => {
+      const { activeModuleId, activeTabByModule } = get()
+      const updated = {
         ...activeTabByModule,
         [activeModuleId]: tabId,
-      },
-    })
-  },
+      }
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem("luci_active_tabs", JSON.stringify(updated))
+        } catch {}
+      }
+      set({
+        activeTabByModule: updated,
+      })
+    },
 
-  setModuleSelectorOpen: (open) => set({ isModuleSelectorOpen: open }),
-  setPushToTalkActive: (active) => set({ isPushToTalkActive: active }),
-  setPushToTalkTranscript: (text) => set({ pushToTalkTranscript: text }),
+    setModuleSelectorOpen: (open) => set({ isModuleSelectorOpen: open }),
+    setPushToTalkActive: (active) => set({ isPushToTalkActive: active }),
+    setPushToTalkTranscript: (text) => set({ pushToTalkTranscript: text }),
 
-  openOrbScreen: () => {
-    set({
-      activeModuleId: "orb",
-      isModuleSelectorOpen: false,
-      activeTabByModule: {
-        ...get().activeTabByModule,
-        orb: "chat",
-      },
-    })
-  },
-}))
+    openOrbScreen: () => {
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem("luci_active_module", "orb")
+        } catch {}
+      }
+      set({
+        activeModuleId: "orb",
+        isModuleSelectorOpen: false,
+        activeTabByModule: {
+          ...get().activeTabByModule,
+          orb: "chat",
+        },
+      })
+    },
+  }
+})
