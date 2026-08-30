@@ -19,6 +19,7 @@ export type MusicPlayerState = {
   isPlaying: boolean
   isLoading: boolean
   progress: number
+  currentTime: number
   duration: number
   volume: number
   shuffle: boolean
@@ -35,7 +36,10 @@ export type MusicPlayerActions = {
   resume: () => void
   next: () => void
   prev: () => void
+  skipNext: () => void
+  skipPrevious: () => void
   seek: (seconds: number) => void
+  seekTo: (seconds: number) => void
   setVolume: (v: number) => void
   duckPlayerVolume: (targetLevel?: number, durationMs?: number) => void
   restorePlayerVolume: (durationMs?: number) => void
@@ -69,8 +73,16 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
       .catch(console.error)
   }, [])
 
+  const playerValue: MusicPlayerContextValue = {
+    ...store,
+    currentTime: store.progress,
+    seekTo: store.seek,
+    skipNext: store.next,
+    skipPrevious: store.prev,
+  }
+
   return (
-    <MusicPlayerContext.Provider value={store}>
+    <MusicPlayerContext.Provider value={playerValue}>
       {children}
     </MusicPlayerContext.Provider>
   )
@@ -79,5 +91,12 @@ export function MusicPlayerProvider({ children }: { children: ReactNode }) {
 export function useMusicPlayer(): MusicPlayerContextValue {
   const ctx = useContext(MusicPlayerContext)
   if (ctx) return ctx
-  return useAudioPlayerStore.getState()
+  const state = useAudioPlayerStore.getState()
+  return {
+    ...state,
+    currentTime: state.progress,
+    seekTo: state.seek,
+    skipNext: state.next,
+    skipPrevious: state.prev,
+  }
 }
