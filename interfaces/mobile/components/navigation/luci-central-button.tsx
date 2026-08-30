@@ -112,7 +112,16 @@ export function LuciCentralButton({
   const strokeDashoffset = circumference - (progress / 100) * circumference
 
   return (
-    <div className="relative flex items-center justify-center -top-2.5 z-30">
+    <div className="relative flex items-center justify-center -top-3 z-30">
+      {/* Halo / Sombra Suave e Discreta em #7527c3 atrás da calota conforme o Figma */}
+      <div
+        className="absolute size-[58px] rounded-full pointer-events-none transition-all duration-300"
+        style={{
+          background: "radial-gradient(circle, rgba(117, 39, 195, 0.4) 0%, rgba(43, 23, 118, 0.15) 70%, transparent 100%)",
+          filter: "blur(6px)",
+        }}
+      />
+
       {/* Moldura Circular Conectora / Bezel do Deck do Figma */}
       <div className="absolute size-[64px] rounded-full bg-[var(--bg-deck)] border-2 border-[var(--border-subtle)] shadow-sm pointer-events-none" />
 
@@ -138,15 +147,14 @@ export function LuciCentralButton({
           />
         )}
         <defs>
-          <linearGradient id="radialGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#5c62ec" />
-            <stop offset="50%" stopColor="#7c82ff" />
-            <stop offset="100%" stopColor="#c084fc" />
+          <linearGradient id="radialGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#2B1776" />
+            <stop offset="100%" stopColor="#7527C3" />
           </linearGradient>
         </defs>
       </svg>
 
-      {/* Botão Circular da Luci (Azul Índigo #5c62ec Sólido e Vibrante do Figma) */}
+      {/* Botão Circular da Luci com Degradê 45° (#2B1776 a #7527C3) do Figma */}
       <button
         type="button"
         onPointerDown={handlePointerDown}
@@ -154,11 +162,17 @@ export function LuciCentralButton({
         onPointerLeave={handlePointerLeave}
         onPointerCancel={cancelHold}
         aria-label="Botão Central Luci"
-        className={`relative flex size-[52px] items-center justify-center rounded-full transition-all duration-200 select-none touch-none bg-[#5c62ec] shadow-md shadow-[#5c62ec]/30 ${
+        className={`relative flex size-[52px] items-center justify-center rounded-full transition-all duration-200 select-none touch-none ${
           isHolding
-            ? "scale-105 shadow-xl shadow-[#5c62ec]/60 ring-2 ring-white"
-            : "active:scale-95 hover:bg-[#5258e3]"
+            ? "scale-105 ring-2 ring-white/80"
+            : "active:scale-95 hover:brightness-110"
         }`}
+        style={{
+          background: "linear-gradient(45deg, #2B1776 0%, #7527C3 100%)",
+          boxShadow: isHolding
+            ? "0 10px 28px rgba(117, 39, 195, 0.65)"
+            : "0 4px 16px rgba(117, 39, 195, 0.35), 0 2px 6px rgba(43, 23, 118, 0.4)",
+        }}
       >
         {isHolding ? (
           <Mic className="size-6 text-white animate-pulse" />
