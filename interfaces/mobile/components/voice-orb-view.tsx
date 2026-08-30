@@ -313,19 +313,10 @@ export function VoiceOrbView({
   const isConversationActive = hasStartedConversation || Boolean(transcript || response || loading || listening || speaking)
 
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-between bg-[var(--bg-app)] text-[var(--text-primary)] select-none px-6 pt-6 pb-24 overflow-hidden">
+    <div className="relative flex h-full w-full flex-col items-center justify-between bg-[var(--bg-app)] text-[var(--text-primary)] select-none px-6 pt-4 pb-24 overflow-hidden">
       
-      {/* ─── Botão de Anexo Discreto no Topo Esquerdo ─── */}
-      <div className="w-full flex items-center justify-between z-10">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          aria-label="Anexar arquivo"
-          className="size-10 flex items-center justify-center rounded-full bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] active:scale-95 transition-all"
-        >
-          <Paperclip className="size-4.5 stroke-[2]" />
-        </button>
-
+      {/* ─── Topo Limpo e Minimalista ─── */}
+      <div className="w-full flex items-center justify-end z-10 min-h-[36px]">
         {isConversationActive && (
           <button
             type="button"
@@ -336,7 +327,7 @@ export function VoiceOrbView({
               setListening(false)
               audioQueueRef.current?.stopAndClear()
             }}
-            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] active:scale-95 transition-all"
+            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] active:scale-95 transition-all shadow-sm"
           >
             Novo Tópico
           </button>
