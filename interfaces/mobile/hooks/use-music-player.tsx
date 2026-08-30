@@ -8,7 +8,6 @@ import {
 } from "react"
 import { useAudioPlayerStore, type RepeatMode } from "@/stores/useAudioPlayerStore"
 import { type LuciTrack, type LyricsData, fetchLikedTracks } from "@/lib/lucimusic"
-import { voiceInputManager } from "@/lib/voice-input-manager"
 
 export type { RepeatMode }
 

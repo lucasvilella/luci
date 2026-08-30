@@ -119,17 +119,21 @@ class VoiceInputManager {
   }
 
   /**
-   * Inicializa o Porcupine Worker e o WebVoiceProcessor com chave de acesso Picovoice.
+   * Inicializa o Porcupine Worker e o WebVoiceProcessor com chave de acesso Picovoice (Carregamento 100% Lazy sob demanda).
    */
   public async init(accessKey?: string, customKeywordPath?: string): Promise<void> {
     if (this.isInitialized) return
 
-    const key = accessKey || process.env.NEXT_PUBLIC_PICOVOICE_ACCESS_KEY || ""
+    const key = accessKey || (typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_PICOVOICE_ACCESS_KEY : "") || ""
 
-    try {
-      if (key && typeof window !== "undefined") {
-        const { PorcupineWorker } = await import("@picovoice/porcupine-web")
-        const { WebVoiceProcessor } = await import("@picovoice/web-voice-processor")
+    // Apenas tenta importar e inicializar o SDK Picovoice se uma chave explícita de acesso for fornecida
+    if (key && typeof window !== "undefined") {
+      try {
+        const porcupinePkg = "@picovoice/porcupine-web"
+        const processorPkg = "@picovoice/web-voice-processor"
+        
+        const { PorcupineWorker } = await import(/* webpackChunkName: "porcupine-engine" */ `${porcupinePkg}`)
+        const { WebVoiceProcessor } = await import(/* webpackChunkName: "porcupine-processor" */ `${processorPkg}`)
 
         const keyword = customKeywordPath
           ? { customWritePath: customKeywordPath, label: "Hey Luci" }
@@ -150,11 +154,11 @@ class VoiceInputManager {
         await WebVoiceProcessor.subscribe(this.porcupineWorker)
         this.isListening = true
         console.log("[VoiceInputManager] Porcupine Wake Word Engine ativo localmente.")
-      } else {
-        console.log("[VoiceInputManager] Chave Picovoice não informada. Operando em modo de escuta com ducking via UI.")
+      } catch (e) {
+        console.warn("[VoiceInputManager] Fallback para modo sem Porcupine WASM (usando SpeechRecognition nativo):", e)
       }
-    } catch (e) {
-      console.warn("[VoiceInputManager] Fallback para modo sem Porcupine WASM:", e)
+    } else {
+      console.log("[VoiceInputManager] Operando com SpeechRecognition nativo contínuo de alta velocidade (Zero Overhead).")
     }
 
     this.isInitialized = true
@@ -307,7 +311,8 @@ class VoiceInputManager {
     if (this.porcupineWorker) {
       try {
         if (typeof window !== "undefined") {
-          const { WebVoiceProcessor } = await import("@picovoice/web-voice-processor")
+          const processorPkg = "@picovoice/web-voice-processor"
+          const { WebVoiceProcessor } = await import(/* webpackChunkName: "porcupine-processor" */ `${processorPkg}`)
           await WebVoiceProcessor.unsubscribe(this.porcupineWorker)
         }
         await this.porcupineWorker.release()

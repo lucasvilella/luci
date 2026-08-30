@@ -3,8 +3,8 @@
   "short_name": "Luci",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0F1A2E",
-  "theme_color": "#023D8A",
+  "background_color": "#2B1776",
+  "theme_color": "#7527C3",
   "orientation": "portrait",
   "icons": [
     { "src": "/icon-light-32x32.png", "sizes": "32x32", "type": "image/png" },
