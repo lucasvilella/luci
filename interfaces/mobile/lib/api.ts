@@ -15,15 +15,20 @@ export function getApiBaseUrl(): string {
     return storedServer.replace(/\/$/, "")
   }
 
-  // Em desenvolvimento web local no PC (localhost:3000)
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    return "http://localhost:8000"
-  }
+  // Detecta se está rodando dentro do Capacitor nativo (Android/iOS)
+  // No Capacitor, window.Capacitor existe e isNativePlatform() retorna true
+  const isCapacitor =
+    (window as any).Capacitor?.isNativePlatform?.() === true ||
+    navigator.userAgent.includes("LuciApp") ||
+    (window.location.hostname === "localhost" && window.location.port === "")
 
-  // No Capacitor nativo Android ou PWA
-  const isCapacitor = window.location.protocol === "capacitor:"
   if (isCapacitor) {
     return DEFAULT_NGROK_URL
+  }
+
+  // Em desenvolvimento web local no PC (localhost:3000 ou localhost:outro)
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    return "http://localhost:8000"
   }
 
   return window.location.origin
