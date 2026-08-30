@@ -6,7 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'out',
   server: {
     cleartext: true,
-    androidScheme: 'https'
+    androidScheme: 'http',
+    hostname: 'localhost'
   },
   android: {
     allowMixedContent: true,
