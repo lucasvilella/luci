@@ -63,7 +63,7 @@
   --border-subtle: rgba(255, 255, 255, 0.06); /* Divisórias discretas */
   --border: rgba(255, 255, 255, 0.06);
 
-  /* ─── Acentos de Ação (Azul Índigo Periwinkle) ─── */
+  /* ─── Acentos de Ação & Assinatura da Marca Luci ─── */
   --accent-primary: #5c62ec;      /* Botões de destaque, play, ações principais */
   --accent-primary-hover: #4e53db;
   --accent-surface: #2b2e59;      /* Fundo de cards de destaque/ativos */
@@ -71,8 +71,11 @@
   --accent-blue: #5c62ec;
   --accent-purple: #7c82ff;
   --accent-pink: #ffccf2;
-  --gradient-luci: linear-gradient(135deg, #5c62ec 0%, #7c82ff 50%, #ffccf2 100%);
-  --gradient-daily-mix: linear-gradient(135deg, #2b2e59 0%, #5c62ec 50%, #7c82ff 100%);
+  --brand-purple-dark: #2b1776;   /* Gradiente Oficial da Marca Luci */
+  --brand-purple-light: #7527c3;  /* Gradiente Oficial da Marca Luci */
+  --gradient-luci-brand: linear-gradient(45deg, #2B1776 0%, #7527C3 100%);
+  --gradient-luci: linear-gradient(45deg, #2B1776 0%, #7527C3 100%);
+  --gradient-daily-mix: linear-gradient(135deg, #2b1776 0%, #5c62ec 50%, #7527c3 100%);
 
   /* ─── Tipografia & Textos ─── */
   --text-primary: #f5f6fa;        /* Títulos e valores principais */
@@ -82,6 +85,7 @@
   /* ─── Sombras Estruturais ─── */
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.35);
   --shadow-deck: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-brand: 0 8px 24px rgba(117, 39, 195, 0.35);
 
   /* Compatibilidade com Tailwind & Componentes Base */
   --background: var(--bg-app);
@@ -136,8 +140,11 @@ html.light {
   --accent-blue: #5c62ec;
   --accent-purple: #7c82ff;
   --accent-pink: #eef0fd;
-  --gradient-luci: linear-gradient(135deg, #5c62ec 0%, #7c82ff 50%, #9295a5 100%);
-  --gradient-daily-mix: linear-gradient(135deg, #eef0fd 0%, #5c62ec 50%, #7c82ff 100%);
+  --brand-purple-dark: #2b1776;
+  --brand-purple-light: #7527c3;
+  --gradient-luci-brand: linear-gradient(45deg, #2B1776 0%, #7527C3 100%);
+  --gradient-luci: linear-gradient(45deg, #2B1776 0%, #7527C3 100%);
+  --gradient-daily-mix: linear-gradient(135deg, #eef0fd 0%, #5c62ec 50%, #7527c3 100%);
 
   /* ─── Tipografia & Textos ─── */
   --text-primary: #121318;        /* Títulos e dados em preto/carvão */

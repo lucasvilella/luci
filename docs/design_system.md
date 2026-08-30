@@ -21,11 +21,12 @@ Este documento padroniza a linguagem visual, tokens CSS, componentes reutilizáv
 
 O design da Luci utiliza uma estética **Clean & Soft-UI**, sem neon agressivo, priorizando contraste refinado, superfícies táteis e harmonia em ambos os modos.
 
-### A. Cor-Mãe (Identidade Luci / Botão Central / Orb)
-- **Primary Gradient:** `linear-gradient(135deg, #5c62ec 0%, #7c82ff 100%)`
-- **Radial Hold Glow:** `linear-gradient(135deg, #5c62ec 0%, #7c82ff 50%, #ffccf2 100%)`
+### A. Cor-Mãe (Identidade Oficial Luci & Assinatura de Marca)
+- **Brand Gradient (45° Oficial):** `linear-gradient(45deg, #2B1776 0%, #7527C3 100%)`
+- **Primary Gradient:** `linear-gradient(45deg, #2B1776 0%, #7527C3 100%)`
+- **Deck Action & Controls:** `#5c62ec` / `#7c82ff`
 - **Active Dot / Indicator:** `#7c82ff` / `#5c62ec`
-- **Shadow Brand:** `0 8px 24px rgba(92, 98, 236, 0.35)`
+- **Shadow Brand:** `0 8px 24px rgba(117, 39, 195, 0.35)`
 
 ### B. Tokens de Superfícies & Modos
 
