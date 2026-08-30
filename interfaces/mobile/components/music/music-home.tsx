@@ -145,7 +145,28 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
                   id={pill.id}
                   title={pill.title}
                   coverUrl={pill.coverUrl}
-                  onClick={() => goToPlaylistDetail(pill.id, pill.title, pill.coverUrl)}
+                  onClick={() => {
+                    if (pill.type === "track") {
+                      handlePlayDirectTrack(
+                        {
+                          id: pill.id,
+                          title: pill.title,
+                          artist: pill.artist,
+                          thumbnail: pill.coverUrl,
+                        },
+                        continuePills.filter((p) => p.type === "track").map((p) => ({
+                          id: p.id,
+                          title: p.title,
+                          artist: p.artist,
+                          thumbnail: p.coverUrl,
+                        }))
+                      )
+                    } else if (pill.type === "album") {
+                      goToAlbumDetail(pill.id, pill.title, pill.coverUrl)
+                    } else {
+                      goToPlaylistDetail(pill.id, pill.title, pill.coverUrl)
+                    }
+                  }}
                 />
               ))}
             </div>

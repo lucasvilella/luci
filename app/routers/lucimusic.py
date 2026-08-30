@@ -55,7 +55,21 @@ async def get_music_home(
 
     continue_listening = []
     try:
-        continue_listening = MusicDatabase.get_collection_history(user_id, limit=6)
+        # Prioriza faixas individuais recentemente tocadas pelo usuário
+        history_tracks = MusicDatabase.get_history(user_id, limit=6)
+        for ht in history_tracks:
+            continue_listening.append({
+                "id": ht["id"],
+                "type": "track",
+                "title": ht["title"],
+                "subtitle": ht["artist"],
+                "artist": ht["artist"],
+                "thumbnail": ht.get("thumbnail") or "",
+                "cover_url": ht.get("thumbnail") or "",
+                "duration": ht.get("duration", 0)
+            })
+
+        # Se não houver faixas no histórico, busca playlists/álbuns recentes do banco
         if not continue_listening:
             saved_albums = MusicDatabase.get_saved_albums(user_id, limit=3)
             saved_pls = MusicDatabase.get_saved_playlists(user_id, limit=3)
@@ -65,7 +79,9 @@ async def get_music_home(
                     "type": "album",
                     "title": alb["title"],
                     "subtitle": alb["artist"],
-                    "cover_url": alb["cover_url"]
+                    "artist": alb["artist"],
+                    "cover_url": alb["cover_url"],
+                    "thumbnail": alb["cover_url"]
                 })
             for pl in saved_pls:
                 continue_listening.append({
@@ -73,7 +89,9 @@ async def get_music_home(
                     "type": "playlist",
                     "title": pl["title"],
                     "subtitle": f"{pl['track_count']} faixas",
-                    "cover_url": pl["cover_url"]
+                    "artist": "Playlist",
+                    "cover_url": pl["cover_url"],
+                    "thumbnail": pl["cover_url"]
                 })
     except Exception as e:
         print(f"[MusicHome] Warning: Continue listening fallback: {e}")
