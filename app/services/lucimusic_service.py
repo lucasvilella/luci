@@ -346,6 +346,7 @@ class LuciMusicService:
         def _fetch_artist():
             target_id = artist_id
             artist_data = {}
+            search_res_thumb = ""
 
             # 1. Se o ID não parece um Channel ID (UC...), busca pelo nome para obter o browseId oficial
             art_clean_name = artist_id
@@ -355,6 +356,7 @@ class LuciMusicService:
                     if search_res and search_res[0].get("browseId"):
                         target_id = search_res[0]["browseId"]
                         art_clean_name = search_res[0].get("artist") or search_res[0].get("name") or target_id
+                        search_res_thumb = (search_res[0].get("thumbnails") or [{}])[-1].get("url", "")
                 except Exception as ex:
                     print(f"[LuciMusic] Busca de browseId por nome falhou ({target_id}): {ex}")
 
@@ -441,8 +443,12 @@ class LuciMusicService:
                     pass
 
             name = artist_data.get("name") or art_clean_name
-            thumb = (artist_data.get("thumbnails") or [{}])[-1].get("url", "")
-            if not thumb and top_tracks:
+            thumb = ""
+            if artist_data.get("thumbnails"):
+                thumb = artist_data["thumbnails"][-1].get("url", "")
+            elif search_res_thumb:
+                thumb = search_res_thumb
+            elif top_tracks:
                 thumb = top_tracks[0].get("thumbnail", "")
 
             # Contadores de ouvintes / inscritos

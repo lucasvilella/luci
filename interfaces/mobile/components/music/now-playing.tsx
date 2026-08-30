@@ -68,6 +68,54 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     duration: 230,
   }
 
+  // Extrai apenas o artista principal (ex: "Mc Livinho" de "Mc Livinho, Mc Pedrinho, Perera DJ")
+  const primaryArtist = track.artist
+    ? track.artist.split(/[,/|&]|\bfeat\.?\b|\bft\.?\b|\b e \b/i)[0].trim()
+    : "Artista"
+
+  // Estado dinâmico do perfil do artista e das faixas recomendadas
+  const [artistDetails, setArtistDetails] = useState<any>(null)
+  const [songInfo, setSongInfo] = useState<any>(null)
+  const [loadingArtist, setLoadingArtist] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    async function loadArtistAndSongData() {
+      if (!track?.id) return
+      setLoadingArtist(true)
+
+      // 1. Busca perfil oficial do artista principal
+      try {
+        const artData = await fetchArtist(primaryArtist)
+        if (active && artData) {
+          setArtistDetails(artData)
+        }
+      } catch (err) {
+        console.warn("[NowPlaying] Falha ao carregar artista:", err)
+      }
+
+      // 2. Busca informações ricas da música atual (views, data, descrição)
+      try {
+        const res = await luciApiFetch(`/api/v1/music/track/${track.id}`)
+        if (res.ok) {
+          const sData = await res.json()
+          if (active) {
+            setSongInfo(sData)
+          }
+        }
+      } catch (err) {
+        console.warn("[NowPlaying] Falha ao carregar informações da música:", err)
+      } finally {
+        if (active) setLoadingArtist(false)
+      }
+    }
+
+    loadArtistAndSongData()
+    return () => {
+      active = false
+    }
+  }, [track.id, primaryArtist])
+
   const effectiveDuration = duration > 0 ? duration : (track.duration || 230)
   const progressPercent = Math.min(100, Math.max(0, (currentTime / effectiveDuration) * 100))
 
@@ -345,36 +393,48 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
           </div>
         </div>
 
-        {/* ─── SOBRE O ARTISTA (Dinâmico com dados reais da faixa) ─── */}
+        {/* ─── SOBRE O ARTISTA (Foto Oficial do Artista Principal + Inscritos) ─── */}
         <div className="pt-4 space-y-3">
           <h3 className="text-base font-black text-[var(--text-primary)]">
             Sobre o artista
           </h3>
 
-          <div className="rounded-[20px] overflow-hidden bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-md p-4 space-y-3">
-            {/* Foto Retangular Grande do Artista */}
+          <div
+            onClick={() => goToArtist(primaryArtist)}
+            className="rounded-[20px] overflow-hidden bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-md p-4 space-y-3 cursor-pointer group transition-all hover:border-[var(--accent-primary)]/40"
+          >
+            {/* Foto Retangular do Artista Oficial */}
             <div className="relative w-full h-48 rounded-[14px] overflow-hidden bg-[var(--bg-surface-2)]">
               <img
-                src={track.thumbnail || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600"}
-                alt={track.artist}
-                className="size-full object-cover"
+                src={
+                  artistDetails?.thumbnail ||
+                  "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600"
+                }
+                alt={primaryArtist}
+                className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
+              <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/50 backdrop-blur-md text-white text-[11px] font-extrabold uppercase tracking-wider">
+                Artistas
+              </div>
             </div>
 
             {/* Cabeçalho do Artista + Botão Seguir */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pt-1">
               <div>
-                <h4 className="text-base font-extrabold text-[var(--text-primary)]">
-                  {track.artist}
+                <h4 className="text-base font-extrabold text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors">
+                  {artistDetails?.name || primaryArtist}
                 </h4>
-                <p className="text-xs text-[var(--text-secondary)]">
-                  Artista no radar da Luci
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                  {artistDetails?.subscribers || "Artista no radar da Luci"}
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={() => setIsFollowingArtist(!isFollowingArtist)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsFollowingArtist(!isFollowingArtist)
+                }}
                 className={`px-5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
                   isFollowingArtist
                     ? "bg-[var(--bg-surface-2)] text-[var(--text-primary)] border border-[var(--border-subtle)]"
@@ -387,36 +447,77 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
           </div>
         </div>
 
-        {/* ─── MAIS DE "NOME DO ARTISTA" ─── */}
+        {/* ─── INFORMAÇÕES DA MÚSICA (Data de Publicação, Visualizações, Descrição) ─── */}
+        <div className="pt-2 space-y-3">
+          <div className="rounded-[20px] bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-md p-5 space-y-3 text-[var(--text-primary)]">
+            <p className="text-xs font-medium text-[var(--text-secondary)]">
+              {songInfo?.publish_date
+                ? `Publicado em ${songInfo.publish_date}`
+                : "Lançamento oficial"}
+            </p>
+
+            <div>
+              <h4 className="text-xl font-black text-[var(--text-primary)] leading-tight">
+                {songInfo?.view_count
+                  ? `${Number(songInfo.view_count).toLocaleString("pt-BR")} visualizações`
+                  : "Música em destaque"}
+              </h4>
+              <p className="text-xs text-[var(--text-secondary)] mt-1">
+                {track.title}
+              </p>
+            </div>
+
+            {/* Descrição / Créditos da Faixa */}
+            <div className="pt-2 border-t border-[var(--border-subtle)] space-y-1.5">
+              <span className="text-xs font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                Descrição
+              </span>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-4 whitespace-pre-line">
+                {songInfo?.description ||
+                  `Faixa oficial interpretada por ${track.artist}. Transmissão em alta fidelidade via Luci Music Engine.`}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── MAIS DE "[ARTISTA PRINCIPAL]" (Recomendações Reais) ─── */}
         <div className="pt-3 space-y-3">
           <SectionHeader
-            title={`Mais de "${track.artist.split(",")[0]}"`}
-            seeAllText="Ver tudo"
-            onSeeAll={() => goToArtist(track.artist)}
+            title={`Mais de "${primaryArtist}"`}
+            onSeeAll={() => goToArtist(primaryArtist)}
           />
 
           <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
-            <MediaCard
-              id="rel_1"
-              title="Peão Tatuado"
-              subtitle="Panda, Ícaro e Gilmar"
-              imageUrl="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400"
-              onClick={() => {}}
-            />
-            <MediaCard
-              id="rel_2"
-              title="A Pista Tá Salgada"
-              subtitle="Panda, Ícaro e Gilmar"
-              imageUrl="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400"
-              onClick={() => {}}
-            />
-            <MediaCard
-              id="rel_3"
-              title="Tema Playlist"
-              subtitle="Panda"
-              imageUrl="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400"
-              onClick={() => {}}
-            />
+            {artistDetails?.top_tracks && artistDetails.top_tracks.length > 0 ? (
+              artistDetails.top_tracks
+                .filter((t: any) => t.id !== track.id)
+                .slice(0, 6)
+                .map((relTrack: any) => (
+                  <MediaCard
+                    key={relTrack.id}
+                    id={relTrack.id}
+                    title={relTrack.title}
+                    subtitle={relTrack.artist || primaryArtist}
+                    imageUrl={relTrack.thumbnail}
+                    onClick={() =>
+                      playTrack(
+                        {
+                          id: relTrack.id,
+                          title: relTrack.title,
+                          artist: relTrack.artist || primaryArtist,
+                          thumbnail: relTrack.thumbnail,
+                          duration: relTrack.duration || 200,
+                        },
+                        artistDetails.top_tracks
+                      )
+                    }
+                  />
+                ))
+            ) : (
+              <p className="text-xs text-[var(--text-secondary)] italic py-2">
+                Carregando outras faixas de {primaryArtist}...
+              </p>
+            )}
           </div>
         </div>
       </div>

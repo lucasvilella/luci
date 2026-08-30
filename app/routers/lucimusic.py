@@ -560,6 +560,25 @@ async def get_track_metadata(track_id: str, request: Request = None):
     data = await lucimusic_service.get_stream_url(track_id)
     is_liked = MusicDatabase.is_liked(user_id, track_id)
 
+    # Busca detalhes ricos (views, data de publicação, descrição, canal)
+    rich_details = {}
+    try:
+        from ytmusicapi import YTMusic
+        import asyncio
+        yt = YTMusic()
+        song_res = await asyncio.to_thread(yt.get_song, track_id)
+        if song_res:
+            v_details = song_res.get("videoDetails", {})
+            micro = song_res.get("microformat", {}).get("microformatDataRenderer", {})
+            rich_details = {
+                "view_count": v_details.get("viewCount") or micro.get("viewCount"),
+                "publish_date": micro.get("publishDate") or micro.get("uploadDate"),
+                "description": micro.get("description") or "",
+                "channel_name": v_details.get("author") or micro.get("pageOwnerDetails", {}).get("name")
+            }
+    except Exception as e:
+        print(f"[LuciMusic] get_song detalhes falhou para {track_id}: {e}")
+
     return {
         "id": track_id,
         "title": data.get("title") or "Música",
@@ -571,7 +590,11 @@ async def get_track_metadata(track_id: str, request: Request = None):
         "cover_url": data.get("thumbnail") or "",
         "video_id": track_id,
         "stream_url": f"/api/v1/music/play/{track_id}",
-        "is_liked": is_liked
+        "is_liked": is_liked,
+        "view_count": rich_details.get("view_count"),
+        "publish_date": rich_details.get("publish_date"),
+        "description": rich_details.get("description"),
+        "channel_name": rich_details.get("channel_name")
     }
 
 @router.get("/lyrics/{track_id}")
