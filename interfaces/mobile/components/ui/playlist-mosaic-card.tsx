@@ -11,6 +11,13 @@ interface PlaylistMosaicCardProps {
   onClick?: () => void
 }
 
+const SAFE_COVERS = [
+  "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
+  "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400",
+  "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+  "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=400",
+]
+
 export function PlaylistMosaicCard({
   id,
   title,
@@ -19,9 +26,12 @@ export function PlaylistMosaicCard({
   fallbackCoverUrl = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
   onClick,
 }: PlaylistMosaicCardProps) {
-  // Filtra capas válidas
-  const validCovers = (covers || []).filter((c) => c && typeof c === "string" && c.trim().length > 0)
-  const isMosaic = validCovers.length >= 4
+  // Filtra capas válidas e completa até 4 para nunca quebrar a grade 2x2
+  const rawValid = (covers || []).filter((c) => c && typeof c === "string" && c.trim().length > 0)
+  const fullCovers = [...rawValid]
+  while (fullCovers.length < 4) {
+    fullCovers.push(SAFE_COVERS[fullCovers.length % SAFE_COVERS.length])
+  }
 
   return (
     <div
@@ -30,28 +40,23 @@ export function PlaylistMosaicCard({
     >
       {/* Container da Capa Quadrada de 130px com Raio de 14px */}
       <div className="relative aspect-square w-full rounded-[14px] overflow-hidden bg-[var(--bg-surface-2)] border border-[var(--border-subtle)] shadow-md">
-        {isMosaic ? (
-          /* Montagem 2x2 das 4 Primeiras Músicas */
-          <div className="grid grid-cols-2 grid-rows-2 size-full">
-            {validCovers.slice(0, 4).map((c, i) => (
-              <img
-                key={i}
-                src={c}
-                alt=""
-                loading="lazy"
-                className="size-full object-cover"
-              />
-            ))}
-          </div>
-        ) : (
-          /* Capa Única de Fallback */
-          <img
-            src={validCovers[0] || fallbackCoverUrl}
-            alt={title}
-            loading="lazy"
-            className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        )}
+        {/* Montagem 2x2 das 4 Primeiras Músicas com Fallback em caso de erro */}
+        <div className="grid grid-cols-2 grid-rows-2 size-full">
+          {fullCovers.slice(0, 4).map((c, i) => (
+            <img
+              key={i}
+              src={c}
+              alt=""
+              loading="lazy"
+              onError={(e) => {
+                const target = e.currentTarget
+                target.onerror = null
+                target.src = SAFE_COVERS[i % SAFE_COVERS.length]
+              }}
+              className="size-full object-cover"
+            />
+          ))}
+        </div>
       </div>
 
       {/* Título e Subtítulo com Margem Superior Arejada */}

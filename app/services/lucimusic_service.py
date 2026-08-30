@@ -735,22 +735,38 @@ class LuciMusicService:
                             "name": clean_name,
                             "thumbnail": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300"
                         })
-                except Exception:
-                    artists_res.append({
-                        "id": clean_name,
-                        "name": clean_name,
-                        "thumbnail": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300"
-                    })
-            return artists_res
-        # Tarefas paralelas de resolução
+        def _get_single_artist(clean_name: str):
+            try:
+                res = self.ytm.search(clean_name, filter="artists", limit=1)
+                if res and len(res) > 0:
+                    item = res[0]
+                    thumb = (item.get("thumbnails") or [{}])[-1].get("url", "")
+                    return {
+                        "id": item.get("browseId") or clean_name,
+                        "name": item.get("artist") or clean_name,
+                        "thumbnail": thumb
+                    }
+            except Exception:
+                pass
+            return {
+                "id": clean_name,
+                "name": clean_name,
+                "thumbnail": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300"
+            }
+
+        async def _get_artists_data_fast():
+            art_tasks = [loop.run_in_executor(None, _get_single_artist, art_name) for art_name in ranked_artists_list[:8]]
+            return await asyncio.gather(*art_tasks)
+
+        # Dispara todas as seções simultaneamente em paralelo
         similarity_task = self.resolve_seeds_to_tracks(curation.get("similarity_seeds", []))
-        trending_task = loop.run_in_executor(None, _get_charts)
-        new_releases_task = loop.run_in_executor(None, _get_new_releases)
+        charts_task = loop.run_in_executor(None, _get_charts)
+        releases_task = loop.run_in_executor(None, _get_new_releases)
         albums_task = loop.run_in_executor(None, _get_favorite_albums)
-        artists_task = loop.run_in_executor(None, _get_artists_data)
+        artists_task = _get_artists_data_fast()
 
         based_on_listened, trending, new_releases, favorite_albums, recommended_artists = await asyncio.gather(
-            similarity_task, trending_task, new_releases_task, albums_task, artists_task
+            similarity_task, charts_task, releases_task, albums_task, artists_task
         )
 
         history = MusicDatabase.get_history(user_id, limit=10)
