@@ -14,7 +14,8 @@ import { TrackActionMenu } from "@/components/ui/track-action-menu"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useTheme } from "@/hooks/use-theme"
-import { type LuciTrack } from "@/lib/lucimusic"
+import { type LuciTrack, fetchMusicHome } from "@/lib/lucimusic"
+import { Loader2 } from "lucide-react"
 
 interface NotificationItem {
   id: string
@@ -26,74 +27,66 @@ interface NotificationItem {
   thumbnail: string
 }
 
-// Dados oficiais dos mockups de Notificações organizados por período
-const TODAY_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: "notif_1",
-    title: "BREAK MY SOUL",
-    artist: "Beyonce",
-    type: "Álbum",
-    timeAgo: "Hoje",
-    durationText: "04:36 min",
-    thumbnail: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300",
-  },
-  {
-    id: "notif_2",
-    title: "Disaster",
-    artist: "Conan Gray",
-    type: "Single",
-    timeAgo: "Hoje",
-    durationText: "03:58 min",
-    thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300",
-  },
-  {
-    id: "notif_3",
-    title: "HANDSOME",
-    artist: "Warren Hue",
-    type: "Single",
-    timeAgo: "Hoje",
-    durationText: "04:45 min",
-    thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300",
-  },
-]
-
-const YESTERDAY_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: "notif_4",
-    title: "Sharks",
-    artist: "Imagine Dragons",
-    type: "Single",
-    timeAgo: "Ontem",
-    durationText: "05:23 min",
-    thumbnail: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300",
-  },
-  {
-    id: "notif_5",
-    title: "Fly Me To The Sun",
-    artist: "Romantic Echoes",
-    type: "Álbum",
-    timeAgo: "Ontem",
-    durationText: "04:20 min",
-    thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300",
-  },
-  {
-    id: "notif_6",
-    title: "The Bended Man",
-    artist: "Sunwich",
-    type: "Single",
-    timeAgo: "Ontem",
-    durationText: "03:48 min",
-    thumbnail: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300",
-  },
-]
-
 export function NotificationsScreen() {
   const { goBack, goToArtist } = useMusicNavigation()
   const { currentTrack, isPlaying, playTrack, togglePlay, toggleLike, isLiked } = useMusicPlayer()
   const { theme, toggleTheme, mounted } = useTheme()
 
+  const [todayNotifications, setTodayNotifications] = useState<NotificationItem[]>([])
+  const [yesterdayNotifications, setYesterdayNotifications] = useState<NotificationItem[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedTrack, setSelectedTrack] = useState<LuciTrack | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  React.useEffect(() => {
+    let isCancelled = false
+    setLoading(true)
+
+    async function loadNotifications() {
+      try {
+        const homeData = await fetchMusicHome()
+        if (isCancelled) return
+
+        const newReleases = homeData.new_releases || []
+        const trending = homeData.trending_brasil || []
+
+        const today: NotificationItem[] = (newReleases.length > 0 ? newReleases : trending)
+          .slice(0, 4)
+          .map((t, idx) => ({
+            id: t.id,
+            title: t.title,
+            artist: t.artist,
+            type: idx % 2 === 0 ? "Single" : "Álbum",
+            timeAgo: "Hoje",
+            durationText: t.durationFormatted || (t.duration ? `${Math.floor(t.duration / 60)}:${String(t.duration % 60).padStart(2, "0")} min` : "03:40 min"),
+            thumbnail: t.thumbnail || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300",
+          }))
+
+        const yesterday: NotificationItem[] = (trending.length > 4 ? trending.slice(4, 8) : newReleases.slice(4, 8))
+          .map((t, idx) => ({
+            id: t.id,
+            title: t.title,
+            artist: t.artist,
+            type: idx % 2 === 0 ? "Álbum" : "Single",
+            timeAgo: "Ontem",
+            durationText: t.durationFormatted || (t.duration ? `${Math.floor(t.duration / 60)}:${String(t.duration % 60).padStart(2, "0")} min` : "04:15 min"),
+            thumbnail: t.thumbnail || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300",
+          }))
+
+        setTodayNotifications(today)
+        setYesterdayNotifications(yesterday)
+      } catch (err) {
+        console.warn("[NotificationsScreen] Erro ao carregar novidades:", err)
+      } finally {
+        if (!isCancelled) setLoading(false)
+      }
+    }
+
+    loadNotifications()
+    return () => {
+      isCancelled = true
+    }
+  }, [])
 
   const handlePlayItem = (item: NotificationItem) => {
     const trackObj: LuciTrack = {
@@ -107,8 +100,8 @@ export function NotificationsScreen() {
       togglePlay()
     } else {
       playTrack(trackObj, [
-        ...TODAY_NOTIFICATIONS,
-        ...YESTERDAY_NOTIFICATIONS,
+        ...todayNotifications,
+        ...yesterdayNotifications,
       ].map((n) => ({
         id: n.id,
         title: n.title,
@@ -249,28 +242,43 @@ export function NotificationsScreen() {
 
       {/* ─── FEED CONTÍNUO DE LANÇAMENTOS E NOTIFICAÇÕES ─── */}
       <div className="px-5 pt-2 space-y-6">
-        {/* 01. LANÇAMENTOS DE HOJE */}
-        <section className="space-y-2">
-          <h3 className="text-base font-black text-[var(--text-primary)] tracking-tight">
-            Lançamentos de Hoje
-          </h3>
-          <div className="space-y-1">
-            {TODAY_NOTIFICATIONS.map((item) => renderNotificationRow(item))}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <Loader2 className="size-8 text-[var(--accent-primary)] animate-spin" />
+            <p className="text-xs font-medium text-[var(--text-secondary)]">Buscando lançamentos recentes...</p>
           </div>
-        </section>
+        ) : (
+          <>
+            {/* 01. LANÇAMENTOS DE HOJE */}
+            {todayNotifications.length > 0 && (
+              <section className="space-y-2">
+                <h3 className="text-base font-black text-[var(--text-primary)] tracking-tight">
+                  Lançamentos de Hoje
+                </h3>
+                <div className="space-y-1">
+                  {todayNotifications.map((item) => renderNotificationRow(item))}
+                </div>
+              </section>
+            )}
 
-        {/* Divisor sutil */}
-        <div className="h-[1px] bg-[var(--border-subtle)]" />
+            {/* Divisor sutil */}
+            {todayNotifications.length > 0 && yesterdayNotifications.length > 0 && (
+              <div className="h-[1px] bg-[var(--border-subtle)]" />
+            )}
 
-        {/* 02. LANÇAMENTOS DE ONTEM */}
-        <section className="space-y-2">
-          <h3 className="text-base font-black text-[var(--text-primary)] tracking-tight">
-            Ontem
-          </h3>
-          <div className="space-y-1">
-            {YESTERDAY_NOTIFICATIONS.map((item) => renderNotificationRow(item))}
-          </div>
-        </section>
+            {/* 02. LANÇAMENTOS DE ONTEM */}
+            {yesterdayNotifications.length > 0 && (
+              <section className="space-y-2">
+                <h3 className="text-base font-black text-[var(--text-primary)] tracking-tight">
+                  Ontem
+                </h3>
+                <div className="space-y-1">
+                  {yesterdayNotifications.map((item) => renderNotificationRow(item))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
       </div>
 
       {/* ─── MENU SUSPENSO DE AÇÕES FLUTUANTE (TrackActionMenu) ─── */}

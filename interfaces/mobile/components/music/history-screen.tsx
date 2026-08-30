@@ -15,38 +15,14 @@ import { TrackActionMenu } from "@/components/ui/track-action-menu"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useTheme } from "@/hooks/use-theme"
-import { type LuciTrack } from "@/lib/lucimusic"
+import { type LuciTrack, fetchMusicHome, fetchLibrarySummary, fetchLikedTracks } from "@/lib/lucimusic"
+import { Loader2 } from "lucide-react"
 
 // 3 Abas de Histórico Oficiais (Sem Podcasts)
 const HISTORY_TABS = [
   { id: "songs", label: "Músicas" },
   { id: "playlists", label: "Playlists" },
   { id: "albums", label: "Álbuns" },
-]
-
-// Catálogo com dados oficiais dos mockups de Histórico
-const HISTORY_SONGS_MOCK: LuciTrack[] = [
-  { id: "h_1", title: "Somebody's Nobody", artist: "Alexander 23", thumbnail: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300", duration: 210 },
-  { id: "h_2", title: "Sharks", artist: "Imagine Dragons", thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300", duration: 195 },
-  { id: "h_3", title: "Disaster", artist: "Conan Gray", thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300", duration: 180 },
-  { id: "h_4", title: "HANDSOME", artist: "Warren Hue", thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300", duration: 205 },
-  { id: "h_5", title: "God Is a Woman", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300", duration: 197 },
-  { id: "h_6", title: "BREAK MY SOUL", artist: "Beyonce", thumbnail: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300", duration: 278 },
-  { id: "h_7", title: "The Bended Man", artist: "Sunwich", thumbnail: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300", duration: 215 },
-]
-
-const HISTORY_PLAYLISTS_MOCK = [
-  { id: "pl_hist_1", title: "Ariana Grande - Maiores Sucessos", coverUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400" },
-  { id: "pl_hist_2", title: "Músicas Mais Tocadas 2026", coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400" },
-  { id: "pl_hist_3", title: "Pop Internacional Acústico", coverUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400" },
-  { id: "pl_hist_4", title: "Daily Mix 1", coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400" },
-]
-
-const HISTORY_ALBUMS_MOCK = [
-  { id: "alb_hist_1", title: "Sweetener", artist: "Ariana Grande", year: "2018", coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400" },
-  { id: "alb_hist_2", title: "Mercury - Act 1", artist: "Imagine Dragons", year: "2021", coverUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400" },
-  { id: "alb_hist_3", title: "Superache", artist: "Conan Gray", year: "2022", coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400" },
-  { id: "alb_hist_4", title: "Renaissance", artist: "Beyonce", year: "2022", coverUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400" },
 ]
 
 export function HistoryScreen() {
@@ -57,6 +33,104 @@ export function HistoryScreen() {
   const [activeTab, setActiveTab] = useState("songs")
   const [selectedTrack, setSelectedTrack] = useState<LuciTrack | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  const [historySongs, setHistorySongs] = useState<LuciTrack[]>([])
+  const [historyPlaylists, setHistoryPlaylists] = useState<Array<{ id: string; title: string; coverUrl: string }>>([])
+  const [historyAlbums, setHistoryAlbums] = useState<Array<{ id: string; title: string; artist: string; year: string; coverUrl: string }>>([])
+
+  React.useEffect(() => {
+    let isCancelled = false
+    setLoading(true)
+
+    async function loadHistory() {
+      try {
+        const [homeData, libData, liked] = await Promise.all([
+          fetchMusicHome().catch(() => null),
+          fetchLibrarySummary().catch(() => null),
+          fetchLikedTracks().catch(() => []),
+        ])
+        if (isCancelled) return
+
+        // 1. Músicas do Histórico
+        const songs: LuciTrack[] = []
+        if (homeData && homeData.trending_brasil) {
+          songs.push(...homeData.trending_brasil.slice(0, 10))
+        }
+        if (liked && liked.length > 0) {
+          for (const l of liked) {
+            if (!songs.some((s) => s.id === l.id)) songs.unshift(l)
+          }
+        }
+        setHistorySongs(songs)
+
+        // 2. Playlists
+        const pls: Array<{ id: string; title: string; coverUrl: string }> = []
+        if (homeData && homeData.continue_listening) {
+          for (const item of homeData.continue_listening) {
+            if (item.type === "playlist") {
+              pls.push({
+                id: item.id,
+                title: item.title,
+                coverUrl: item.cover_url || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
+              })
+            }
+          }
+        }
+        if (libData && libData.playlists) {
+          for (const p of libData.playlists) {
+            if (!pls.some((x) => x.id === p.id)) {
+              pls.push({
+                id: p.id,
+                title: p.title,
+                coverUrl: p.thumbnail || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400",
+              })
+            }
+          }
+        }
+        setHistoryPlaylists(pls)
+
+        // 3. Álbuns
+        const albs: Array<{ id: string; title: string; artist: string; year: string; coverUrl: string }> = []
+        if (homeData && homeData.continue_listening) {
+          for (const item of homeData.continue_listening) {
+            if (item.type === "album") {
+              albs.push({
+                id: item.id,
+                title: item.title,
+                artist: item.subtitle || "Artista",
+                year: "Álbum",
+                coverUrl: item.cover_url || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+              })
+            }
+          }
+        }
+        if (libData && libData.albums) {
+          for (const a of libData.albums) {
+            if (!albs.some((x) => x.id === a.id)) {
+              albs.push({
+                id: a.id,
+                title: a.title,
+                artist: a.artist || "Artista",
+                year: "Álbum",
+                coverUrl: a.cover || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
+              })
+            }
+          }
+        }
+        setHistoryAlbums(albs)
+      } catch (err) {
+        console.warn("[HistoryScreen] Erro ao carregar histórico:", err)
+      } finally {
+        if (!isCancelled) setLoading(false)
+      }
+    }
+
+    loadHistory()
+    return () => {
+      isCancelled = true
+    }
+  }, [])
 
   const handleOpenMore = (track: LuciTrack) => {
     setSelectedTrack(track)
@@ -146,51 +220,78 @@ export function HistoryScreen() {
 
       {/* ─── CONTEÚDO DA ABA ATIVA DE HISTÓRICO ─── */}
       <div className="px-5 pt-3">
-        {/* Aba 1: Músicas Tocadas Recentemente */}
-        {activeTab === "songs" && (
-          <div className="space-y-1">
-            {HISTORY_SONGS_MOCK.map((track) => (
-              <TrackRow
-                key={track.id}
-                track={track}
-                isArtist={false}
-                onPlay={(t) => playTrack(t, HISTORY_SONGS_MOCK)}
-                onMore={handleOpenMore}
-              />
-            ))}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <Loader2 className="size-8 text-[var(--accent-primary)] animate-spin" />
+            <p className="text-xs font-medium text-[var(--text-secondary)]">Carregando histórico...</p>
           </div>
-        )}
+        ) : (
+          <>
+            {/* Aba 1: Músicas Tocadas Recentemente */}
+            {activeTab === "songs" && (
+              <div className="space-y-1">
+                {historySongs.length === 0 ? (
+                  <div className="text-center py-16 text-xs text-[var(--text-secondary)]">
+                    Nenhuma música no histórico recente.
+                  </div>
+                ) : (
+                  historySongs.map((track) => (
+                    <TrackRow
+                      key={track.id}
+                      track={track}
+                      isArtist={false}
+                      onPlay={(t) => playTrack(t, historySongs)}
+                      onMore={handleOpenMore}
+                    />
+                  ))
+                )}
+              </div>
+            )}
 
-        {/* Aba 2: Playlists Tocadas Recentemente */}
-        {activeTab === "playlists" && (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-6 pt-1">
-            {HISTORY_PLAYLISTS_MOCK.map((pl) => (
-              <PlaylistGridCard
-                key={pl.id}
-                id={pl.id}
-                title={pl.title}
-                coverUrl={pl.coverUrl}
-                onClick={() => goToPlaylistDetail(pl.id, pl.title, pl.coverUrl)}
-              />
-            ))}
-          </div>
-        )}
+            {/* Aba 2: Playlists Tocadas Recentemente */}
+            {activeTab === "playlists" && (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-6 pt-1">
+                {historyPlaylists.length === 0 ? (
+                  <div className="col-span-2 text-center py-16 text-xs text-[var(--text-secondary)]">
+                    Nenhuma playlist no histórico recente.
+                  </div>
+                ) : (
+                  historyPlaylists.map((pl) => (
+                    <PlaylistGridCard
+                      key={pl.id}
+                      id={pl.id}
+                      title={pl.title}
+                      coverUrl={pl.coverUrl}
+                      onClick={() => goToPlaylistDetail(pl.id, pl.title, pl.coverUrl)}
+                    />
+                  ))
+                )}
+              </div>
+            )}
 
-        {/* Aba 3: Álbuns Tocados Recentemente */}
-        {activeTab === "albums" && (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-6 pt-1">
-            {HISTORY_ALBUMS_MOCK.map((album) => (
-              <AlbumGridCard
-                key={album.id}
-                id={album.id}
-                title={album.title}
-                artist={album.artist}
-                year={album.year}
-                coverUrl={album.coverUrl}
-                onClick={() => goToAlbumDetail(album.id, album.title, album.coverUrl)}
-              />
-            ))}
-          </div>
+            {/* Aba 3: Álbuns Tocados Recentemente */}
+            {activeTab === "albums" && (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-6 pt-1">
+                {historyAlbums.length === 0 ? (
+                  <div className="col-span-2 text-center py-16 text-xs text-[var(--text-secondary)]">
+                    Nenhum álbum no histórico recente.
+                  </div>
+                ) : (
+                  historyAlbums.map((album) => (
+                    <AlbumGridCard
+                      key={album.id}
+                      id={album.id}
+                      title={album.title}
+                      artist={album.artist}
+                      year={album.year}
+                      coverUrl={album.coverUrl}
+                      onClick={() => goToAlbumDetail(album.id, album.title, album.coverUrl)}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 

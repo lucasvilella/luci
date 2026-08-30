@@ -17,44 +17,74 @@ import { TrackActionMenu } from "@/components/ui/track-action-menu"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useTheme } from "@/hooks/use-theme"
-import { type LuciTrack } from "@/lib/lucimusic"
-
-// Catálogo com dados oficiais dos mockups de Músicas Salvas / Curtidas
-const SAVED_SONGS_CATALOG: LuciTrack[] = [
-  { id: "s_1", title: "BREAK MY SOUL", artist: "Beyonce", thumbnail: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300", duration: 320 },
-  { id: "s_2", title: "Fly Me To The Sun", artist: "Romantic Echoes", thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300", duration: 238 },
-  { id: "s_3", title: "God Is a Woman", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300", duration: 265 },
-  { id: "s_4", title: "The Bended Man", artist: "Sunwich", thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300", duration: 226 },
-  { id: "s_5", title: "HANDSOME", artist: "Warren Hue", thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300", duration: 232 },
-  { id: "s_6", title: "Sharks", artist: "Imagine Dragons", thumbnail: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300", duration: 288 },
-  { id: "s_7", title: "Somebody's Nobody", artist: "Alexander 23", thumbnail: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300", duration: 210 },
-  { id: "s_8", title: "Starboy", artist: "The Weeknd", thumbnail: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300", duration: 230 },
-]
+import { type LuciTrack, fetchLikedTracks, fetchLibrarySummary } from "@/lib/lucimusic"
+import { Loader2 } from "lucide-react"
 
 export function SongsScreen() {
   const { goBack, goToArtist, goToAlbumDetail } = useMusicNavigation()
   const { currentTrack, isPlaying, playTrack, togglePlay, toggleLike, isLiked } = useMusicPlayer()
   const { theme, toggleTheme, mounted } = useTheme()
 
+  const [tracks, setTracks] = useState<LuciTrack[]>([])
+  const [loading, setLoading] = useState(true)
   const [sortOrder, setSortOrder] = useState<"recent" | "title" | "artist">("recent")
   const [selectedTrack, setSelectedTrack] = useState<LuciTrack | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
+  React.useEffect(() => {
+    let isCancelled = false
+    setLoading(true)
+
+    async function loadSavedSongs() {
+      try {
+        const [likedList, libData] = await Promise.all([
+          fetchLikedTracks().catch(() => []),
+          fetchLibrarySummary("tracks").catch(() => null),
+        ])
+        if (isCancelled) return
+
+        let combined: LuciTrack[] = []
+        if (likedList && likedList.length > 0) {
+          combined = likedList
+        } else if (libData && libData.tracks && libData.tracks.length > 0) {
+          combined = libData.tracks
+        }
+
+        setTracks(combined)
+      } catch (err) {
+        console.warn("[SongsScreen] Erro ao carregar músicas salvas:", err)
+      } finally {
+        if (!isCancelled) setLoading(false)
+      }
+    }
+
+    loadSavedSongs()
+    return () => {
+      isCancelled = true
+    }
+  }, [])
+
+  const sortedTracks = [...tracks].sort((a, b) => {
+    if (sortOrder === "title") return a.title.localeCompare(b.title)
+    if (sortOrder === "artist") return a.artist.localeCompare(b.artist)
+    return 0
+  })
+
   const isAnySavedSongPlaying =
     isPlaying &&
     currentTrack &&
-    SAVED_SONGS_CATALOG.some((s) => s.id === currentTrack.id)
+    sortedTracks.some((s) => s.id === currentTrack.id)
 
   const handlePlayAll = () => {
     if (isAnySavedSongPlaying) {
       togglePlay()
-    } else if (SAVED_SONGS_CATALOG.length > 0) {
-      playTrack(SAVED_SONGS_CATALOG[0], SAVED_SONGS_CATALOG)
+    } else if (sortedTracks.length > 0) {
+      playTrack(sortedTracks[0], sortedTracks)
     }
   }
 
   const handleShufflePlay = () => {
-    const shuffled = [...SAVED_SONGS_CATALOG].sort(() => Math.random() - 0.5)
+    const shuffled = [...sortedTracks].sort(() => Math.random() - 0.5)
     if (shuffled.length > 0) {
       playTrack(shuffled[0], shuffled)
     }
@@ -172,15 +202,26 @@ export function SongsScreen() {
 
       {/* ─── LISTAGEM DE MÚSICAS CURTIDAS (TrackRow) ─── */}
       <div className="px-5 pt-3 space-y-1">
-        {SAVED_SONGS_CATALOG.map((track) => (
-          <TrackRow
-            key={track.id}
-            track={track}
-            isArtist={false}
-            onPlay={(t) => playTrack(t, SAVED_SONGS_CATALOG)}
-            onMore={handleOpenMore}
-          />
-        ))}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Loader2 className="size-8 text-[var(--accent-primary)] animate-spin" />
+            <p className="text-xs font-medium text-[var(--text-secondary)]">Carregando músicas...</p>
+          </div>
+        ) : sortedTracks.length === 0 ? (
+          <div className="text-center py-16 text-xs text-[var(--text-secondary)]">
+            Nenhuma música curtida ainda.
+          </div>
+        ) : (
+          sortedTracks.map((track) => (
+            <TrackRow
+              key={track.id}
+              track={track}
+              isArtist={false}
+              onPlay={(t) => playTrack(t, sortedTracks)}
+              onMore={handleOpenMore}
+            />
+          ))
+        )}
       </div>
 
       {/* ─── MENU SUSPENSO DE AÇÕES FLUTUANTE (TrackActionMenu) ─── */}

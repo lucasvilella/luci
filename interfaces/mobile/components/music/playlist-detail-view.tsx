@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   ArrowLeft,
   MoreHorizontal,
@@ -11,6 +11,7 @@ import {
   ListPlus,
   Sun,
   Moon,
+  Loader2,
 } from "lucide-react"
 import { TrackRow } from "@/components/ui/track-row"
 import { TrackActionMenu } from "@/components/ui/track-action-menu"
@@ -18,7 +19,7 @@ import { SectionHeader } from "@/components/ui/section-header"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useTheme } from "@/hooks/use-theme"
-import { type LuciTrack } from "@/lib/lucimusic"
+import { type LuciTrack, fetchCollectionDetails, searchTracks } from "@/lib/lucimusic"
 
 interface PlaylistDetailViewProps {
   playlistId?: string
@@ -27,38 +28,11 @@ interface PlaylistDetailViewProps {
   initialTracks?: LuciTrack[]
 }
 
-// Catálogo com dados oficiais dos mockups de Playlist
-const PLAYLIST_DATA: Record<
-  string,
-  {
-    title: string
-    creator: string
-    year: string
-    coverUrl: string
-    songs: LuciTrack[]
-  }
-> = {
-  default: {
-    title: "Ariana Grande - Maiores Sucessos",
-    creator: "Theresa Wilona",
-    year: "2022",
-    coverUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500",
-    songs: [
-      { id: "pl_1", title: "Dangerous Woman", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300", duration: 236 },
-      { id: "pl_2", title: "Bang Bang", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300", duration: 199 },
-      { id: "pl_3", title: "Side to Side", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300", duration: 226 },
-      { id: "pl_4", title: "7 Rings", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300", duration: 178 },
-      { id: "pl_5", title: "God Is a Woman", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300", duration: 197 },
-      { id: "pl_6", title: "Into You", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300", duration: 244 },
-    ],
-  },
-}
-
 export function PlaylistDetailView({
-  playlistId = "pl_greatest_hits",
-  title,
-  thumbnail,
-  initialTracks,
+  playlistId,
+  title = "Playlist",
+  thumbnail = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500",
+  initialTracks = [],
 }: PlaylistDetailViewProps) {
   const { goBack, goToArtist } = useMusicNavigation()
   const { currentTrack, isPlaying, playTrack, togglePlay, toggleLike, isLiked } = useMusicPlayer()
@@ -67,24 +41,106 @@ export function PlaylistDetailView({
   const [isPlaylistLiked, setIsPlaylistLiked] = useState(false)
   const [selectedTrack, setSelectedTrack] = useState<LuciTrack | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const playlist = PLAYLIST_DATA[playlistId] || {
-    ...PLAYLIST_DATA.default,
-    title: title || PLAYLIST_DATA.default.title,
-    coverUrl: thumbnail || PLAYLIST_DATA.default.coverUrl,
-    songs: initialTracks || PLAYLIST_DATA.default.songs,
-  }
+  const [playlistData, setPlaylistData] = useState<{
+    title: string
+    creator: string
+    year: string
+    coverUrl: string
+    songs: LuciTrack[]
+  }>({
+    title,
+    creator: "Luci Intelligence",
+    year: "2024",
+    coverUrl: thumbnail,
+    songs: initialTracks,
+  })
+
+  useEffect(() => {
+    let isCancelled = false
+    setLoading(true)
+
+    async function loadPlaylist() {
+      try {
+        if (initialTracks && initialTracks.length > 0) {
+          setPlaylistData({
+            title,
+            creator: "Luci Intelligence",
+            year: "2024",
+            coverUrl: thumbnail,
+            songs: initialTracks,
+          })
+          setLoading(false)
+          return
+        }
+
+        if (playlistId && playlistId !== "default" && !playlistId.startsWith("pump_")) {
+          const details = await fetchCollectionDetails("playlist", playlistId, title)
+          if (!isCancelled && details && details.tracks.length > 0) {
+            setPlaylistData({
+              title: details.title || title,
+              creator: details.artist || "Luci Intelligence",
+              year: details.release_year || "2024",
+              coverUrl: details.cover_url || thumbnail,
+              songs: details.tracks.map((t) => ({
+                id: t.id,
+                title: t.title,
+                artist: t.artist || "Artista",
+                thumbnail: t.thumbnail || details.cover_url || thumbnail,
+                duration: t.duration || 210,
+              })),
+            })
+            setLoading(false)
+            return
+          }
+        }
+
+        // Se for uma playlist de treino/foco ou busca dinâmica
+        const searchQuery = title || "Hits Brasil"
+        const tracks = await searchTracks(searchQuery)
+        if (!isCancelled) {
+          const dynamicSongs = tracks.length > 0 ? tracks : [
+            {
+              id: `pl_track_${encodeURIComponent(title)}`,
+              title: title,
+              artist: "Luci Curadoria",
+              thumbnail: thumbnail,
+              duration: 210,
+            }
+          ]
+
+          setPlaylistData({
+            title,
+            creator: "Luci Intelligence",
+            year: "2024",
+            coverUrl: thumbnail,
+            songs: dynamicSongs,
+          })
+        }
+      } catch (err) {
+        console.warn("[PlaylistDetailView] Erro ao carregar playlist dinâmica:", err)
+      } finally {
+        if (!isCancelled) setLoading(false)
+      }
+    }
+
+    loadPlaylist()
+    return () => {
+      isCancelled = true
+    }
+  }, [playlistId, title, thumbnail, initialTracks])
 
   const isThisPlaylistPlaying =
     isPlaying &&
     currentTrack &&
-    playlist.songs.some((s) => s.id === currentTrack.id)
+    playlistData.songs.some((s) => s.id === currentTrack.id)
 
   const handlePlayPlaylist = () => {
     if (isThisPlaylistPlaying) {
       togglePlay()
-    } else if (playlist.songs.length > 0) {
-      playTrack(playlist.songs[0], playlist.songs)
+    } else if (playlistData.songs.length > 0) {
+      playTrack(playlistData.songs[0], playlistData.songs)
     }
   }
 
@@ -137,23 +193,29 @@ export function PlaylistDetailView({
       <div className="flex flex-col items-center px-6 pt-2 pb-5 text-center space-y-3">
         {/* Capa Quadrada com Raio de 22px (10% da altura) */}
         <div className="relative size-[220px] rounded-[22px] overflow-hidden bg-[var(--bg-surface-2)] border border-[var(--border-subtle)] shadow-2xl">
-          <img
-            src={playlist.coverUrl}
-            alt={playlist.title}
-            className="size-full object-cover"
-          />
+          {loading ? (
+            <div className="size-full flex items-center justify-center bg-[var(--bg-surface-1)]">
+              <Loader2 className="size-8 animate-spin text-[var(--accent-primary)]" />
+            </div>
+          ) : (
+            <img
+              src={playlistData.coverUrl}
+              alt={playlistData.title}
+              className="size-full object-cover"
+            />
+          )}
         </div>
 
         {/* Título da Playlist & Criador */}
         <div className="space-y-1 pt-1">
           <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight line-clamp-2 max-w-xs">
-            {playlist.title}
+            {playlistData.title}
           </h1>
           <p className="text-sm font-semibold text-[var(--text-secondary)]">
-            por {playlist.creator}
+            por {playlistData.creator}
           </p>
           <p className="text-xs font-normal text-[var(--text-muted)]">
-            Playlist &nbsp;|&nbsp; {playlist.year}
+            Playlist &nbsp;|&nbsp; {playlistData.year}
           </p>
         </div>
 
@@ -224,12 +286,12 @@ export function PlaylistDetailView({
         />
 
         <div className="space-y-1">
-          {playlist.songs.map((track) => (
+          {playlistData.songs.map((track) => (
             <TrackRow
               key={track.id}
               track={track}
               isArtist={false}
-              onPlay={(t) => playTrack(t, playlist.songs)}
+              onPlay={(t) => playTrack(t, playlistData.songs)}
               onMore={handleOpenMore}
             />
           ))}

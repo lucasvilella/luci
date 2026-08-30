@@ -16,65 +16,110 @@ import { TrackActionMenu } from "@/components/ui/track-action-menu"
 import { NewPlaylistModal } from "@/components/ui/new-playlist-modal"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useTheme } from "@/hooks/use-theme"
+import {
+  fetchLibrarySummary,
+  fetchPlaylists,
+  fetchLikedTracks,
+  createPlaylist,
+} from "@/lib/lucimusic"
+import { Loader2 } from "lucide-react"
 
-// Catálogo com dados oficiais dos mockups de Playlists da Biblioteca
-const INITIAL_PLAYLISTS = [
-  {
-    id: "pl_likes",
-    title: "Músicas Curtidas",
-    songCount: 270,
-    isSpecialLikes: true,
-    coverUrl: "",
-  },
-  {
-    id: "pl_pop",
-    title: "Minhas Favoritas de Pop",
-    songCount: 345,
-    coverUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400",
-  },
-  {
-    id: "pl_90s",
-    title: "Flashback Anos 90",
-    songCount: 127,
-    coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
-  },
-  {
-    id: "pl_rock",
-    title: "Lendas do Rock",
-    songCount: 98,
-    coverUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400",
-  },
-  {
-    id: "pl_acoustic",
-    title: "Acústico Favorito",
-    songCount: 163,
-    coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
-  },
-  {
-    id: "pl_memories",
-    title: "Memórias de Amor",
-    songCount: 159,
-    coverUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
-  },
-]
+interface PlaylistItem {
+  id: string
+  title: string
+  songCount: number
+  isSpecialLikes?: boolean
+  coverUrl: string
+}
 
 export function PlaylistsScreen() {
   const { goBack, goToPlaylistDetail } = useMusicNavigation()
   const { theme, toggleTheme, mounted } = useTheme()
 
-  const [playlists, setPlaylists] = useState(INITIAL_PLAYLISTS)
+  const [playlists, setPlaylists] = useState<PlaylistItem[]>([])
+  const [likedCount, setLikedCount] = useState(0)
+  const [loading, setLoading] = useState(true)
   const [isNewModalOpen, setIsNewModalOpen] = useState(false)
   const [sortOrder, setSortOrder] = useState<"recent" | "alphabetical">("recent")
 
-  const handleCreatePlaylist = (data: { title: string; description: string; isPublic: boolean }) => {
-    const newPl = {
-      id: `pl_custom_${Date.now()}`,
-      title: data.title,
-      songCount: 0,
-      coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
+  const loadAllPlaylists = async () => {
+    try {
+      setLoading(true)
+      const [libData, userPls, liked] = await Promise.all([
+        fetchLibrarySummary("playlists").catch(() => null),
+        fetchPlaylists().catch(() => []),
+        fetchLikedTracks().catch(() => []),
+      ])
+
+      setLikedCount(liked.length || libData?.liked_summary?.total_tracks || 0)
+
+      const merged: PlaylistItem[] = []
+
+      // Adiciona playlists do usuário e da biblioteca
+      if (userPls && userPls.length > 0) {
+        for (const pl of userPls) {
+          merged.push({
+            id: pl.id,
+            title: pl.title,
+            songCount: pl.track_count || pl.tracks_count || (pl.tracks ? pl.tracks.length : 0),
+            coverUrl: pl.cover_url || pl.thumbnail || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
+          })
+        }
+      }
+
+      if (libData && libData.playlists) {
+        for (const pl of libData.playlists) {
+          if (!merged.some((m) => m.id === pl.id)) {
+            merged.push({
+              id: pl.id,
+              title: pl.title,
+              songCount: pl.count || pl.track_count || 0,
+              coverUrl: pl.thumbnail || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400",
+            })
+          }
+        }
+      }
+
+      setPlaylists(merged)
+    } catch (err) {
+      console.warn("[PlaylistsScreen] Erro ao carregar playlists:", err)
+    } finally {
+      setLoading(false)
     }
-    setPlaylists([playlists[0], newPl, ...playlists.slice(1)])
   }
+
+  React.useEffect(() => {
+    loadAllPlaylists()
+  }, [])
+
+  const handleCreatePlaylist = async (data: { title: string; description: string; isPublic: boolean }) => {
+    try {
+      const created = await createPlaylist(data.title, data.description)
+      const newPl: PlaylistItem = {
+        id: created.id,
+        title: created.title,
+        songCount: 0,
+        coverUrl: created.cover_url || created.thumbnail || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
+      }
+      setPlaylists((prev) => [newPl, ...prev])
+    } catch (err) {
+      console.warn("[PlaylistsScreen] Erro ao criar playlist no backend:", err)
+      const newPl: PlaylistItem = {
+        id: `pl_custom_${Date.now()}`,
+        title: data.title,
+        songCount: 0,
+        coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
+      }
+      setPlaylists((prev) => [newPl, ...prev])
+    }
+  }
+
+  const displayedPlaylists = [...playlists].sort((a, b) => {
+    if (sortOrder === "alphabetical") {
+      return a.title.localeCompare(b.title)
+    }
+    return 0
+  })
 
   return (
     <div className="relative flex h-full flex-col bg-[var(--bg-app)] text-[var(--text-primary)] select-none overflow-y-auto pb-32">
@@ -186,7 +231,7 @@ export function PlaylistsScreen() {
                 Músicas Curtidas
               </h4>
               <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                270 músicas
+                {likedCount} {likedCount === 1 ? "música" : "músicas"}
               </p>
             </div>
           </div>
@@ -199,43 +244,53 @@ export function PlaylistsScreen() {
           </button>
         </div>
 
-        {/* 03. LISTAGEM DE PLAYLISTS DO USUÁRIO COM CAPAS ARREDONDADAS DE 10PX */}
-        {playlists.slice(1).map((pl) => (
-          <div
-            key={pl.id}
-            onClick={() => goToPlaylistDetail(pl.id, pl.title, pl.coverUrl)}
-            className="flex items-center justify-between py-2 px-1 rounded-2xl hover:bg-[var(--bg-surface-1)] transition-colors cursor-pointer group active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-4 min-w-0 flex-1 pr-2">
-              <div className="size-[68px] rounded-[10px] overflow-hidden bg-[var(--bg-surface-2)] border border-[var(--border-subtle)] shadow-sm shrink-0">
-                <img
-                  src={pl.coverUrl}
-                  alt={pl.title}
-                  loading="lazy"
-                  className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="text-base font-extrabold text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors truncate">
-                  {pl.title}
-                </h4>
-                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                  {pl.songCount} músicas
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-              }}
-              aria-label="Opções"
-              className="size-8 rounded-full hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center justify-center active:scale-90"
-            >
-              <MoreVertical className="size-4.5" />
-            </button>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="size-8 text-[var(--accent-primary)] animate-spin" />
           </div>
-        ))}
+        ) : (
+          /* 03. LISTAGEM DE PLAYLISTS DO USUÁRIO */
+          displayedPlaylists.map((pl) => (
+            <div
+              key={pl.id}
+              onClick={() => goToPlaylistDetail(pl.id, pl.title, pl.coverUrl)}
+              className="flex items-center justify-between py-2 px-1 rounded-2xl hover:bg-[var(--bg-surface-1)] transition-colors cursor-pointer group active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-4 min-w-0 flex-1 pr-2">
+                <div className="size-[68px] rounded-[10px] overflow-hidden bg-[var(--bg-surface-2)] border border-[var(--border-subtle)] shadow-sm shrink-0">
+                  <img
+                    src={pl.coverUrl}
+                    alt={pl.title}
+                    loading="lazy"
+                    className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      ;(e.currentTarget as HTMLImageElement).src =
+                        "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400"
+                    }}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-base font-extrabold text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors truncate">
+                    {pl.title}
+                  </h4>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                    {pl.songCount} {pl.songCount === 1 ? "música" : "músicas"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                }}
+                aria-label="Opções"
+                className="size-8 rounded-full hover:bg-[var(--bg-surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center justify-center active:scale-90"
+              >
+                <MoreVertical className="size-4.5" />
+              </button>
+            </div>
+          ))
+        )}
       </div>
 
       {/* ─── MODAL DE CRIAÇÃO DE NOVA PLAYLIST (BOTTOM SHEET) ─── */}

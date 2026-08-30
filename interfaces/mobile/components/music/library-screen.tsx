@@ -20,34 +20,15 @@ import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useAppNavigationStore } from "@/stores/useAppNavigationStore"
 import { useTheme } from "@/hooks/use-theme"
+import { fetchLibrarySummary, fetchMusicHome, type LuciTrack } from "@/lib/lucimusic"
+import { Loader2 } from "lucide-react"
 
-// Histórico de reprodução oficial
-const YOUR_HISTORY_MOCK = [
-  {
-    id: "hist_1",
-    title: "Shades of Love",
-    subtitle: "Ania Szarmach",
-    imageUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
-  },
-  {
-    id: "hist_2",
-    title: "Starboy",
-    subtitle: "The Weeknd",
-    imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-  },
-  {
-    id: "hist_3",
-    title: "Sweetener",
-    subtitle: "Ariana Grande",
-    imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
-  },
-  {
-    id: "hist_4",
-    title: "Without You",
-    subtitle: "The Kid LAROI",
-    imageUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400",
-  },
-]
+interface HistoryItem {
+  id: string
+  title: string
+  subtitle: string
+  imageUrl: string
+}
 
 export function LibraryScreen() {
   const { playTrack } = useMusicPlayer()
@@ -62,7 +43,73 @@ export function LibraryScreen() {
   const { setActiveTab } = useAppNavigationStore()
   const { theme, toggleTheme, mounted } = useTheme()
 
-  const handlePlayHistory = (item: typeof YOUR_HISTORY_MOCK[0]) => {
+  const [historyItems, setHistoryItems] = React.useState<HistoryItem[]>([])
+  const [counts, setCounts] = React.useState({
+    playlists: 0,
+    albums: 0,
+    songs: 0,
+    artists: 0,
+  })
+  const [loading, setLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    let isCancelled = false
+    setLoading(true)
+
+    async function loadLibraryData() {
+      try {
+        const [libData, homeData] = await Promise.all([
+          fetchLibrarySummary().catch(() => null),
+          fetchMusicHome().catch(() => null),
+        ])
+        if (isCancelled) return
+
+        if (libData) {
+          setCounts({
+            playlists: libData.playlists?.length || 0,
+            albums: libData.albums?.length || 0,
+            songs: libData.liked_summary?.total_tracks || libData.tracks?.length || 0,
+            artists: libData.artists?.length || 0,
+          })
+        }
+
+        // Constrói itens do histórico a partir do continue_listening ou trending
+        const items: HistoryItem[] = []
+        if (homeData && homeData.continue_listening && homeData.continue_listening.length > 0) {
+          for (const cl of homeData.continue_listening.slice(0, 6)) {
+            items.push({
+              id: cl.id,
+              title: cl.title,
+              subtitle: cl.subtitle || "Continuar",
+              imageUrl: cl.cover_url || cl.thumbnail || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
+            })
+          }
+        } else if (homeData && homeData.trending_brasil) {
+          for (const t of homeData.trending_brasil.slice(0, 6)) {
+            items.push({
+              id: t.id,
+              title: t.title,
+              subtitle: t.artist,
+              imageUrl: t.thumbnail || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400",
+            })
+          }
+        }
+
+        setHistoryItems(items)
+      } catch (err) {
+        console.warn("[LibraryScreen] Erro ao carregar resumo da biblioteca:", err)
+      } finally {
+        if (!isCancelled) setLoading(false)
+      }
+    }
+
+    loadLibraryData()
+    return () => {
+      isCancelled = true
+    }
+  }, [])
+
+  const handlePlayHistory = (item: HistoryItem) => {
     playTrack(
       {
         id: item.id,
@@ -71,7 +118,7 @@ export function LibraryScreen() {
         thumbnail: item.imageUrl,
         duration: 210,
       },
-      YOUR_HISTORY_MOCK.map((t) => ({
+      historyItems.map((t) => ({
         id: t.id,
         title: t.title,
         artist: t.subtitle,
@@ -138,18 +185,26 @@ export function LibraryScreen() {
             seeAllText="Ver tudo"
             onSeeAll={goToHistory}
           />
-          <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
-            {YOUR_HISTORY_MOCK.map((item) => (
-              <MediaCard
-                key={item.id}
-                id={item.id}
-                title={item.title}
-                subtitle={item.subtitle}
-                imageUrl={item.imageUrl}
-                onClick={() => handlePlayHistory(item)}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="size-6 text-[var(--accent-primary)] animate-spin" />
+            </div>
+          ) : historyItems.length === 0 ? (
+            <p className="text-xs text-[var(--text-secondary)] py-3">Nenhum histórico recente.</p>
+          ) : (
+            <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
+              {historyItems.map((item) => (
+                <MediaCard
+                  key={item.id}
+                  id={item.id}
+                  title={item.title}
+                  subtitle={item.subtitle}
+                  imageUrl={item.imageUrl}
+                  onClick={() => handlePlayHistory(item)}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Divisor sutil */}
@@ -162,7 +217,7 @@ export function LibraryScreen() {
             id="playlists"
             label="Playlists"
             icon={ListMusic}
-            badgeCount={12}
+            badgeCount={counts.playlists}
             onClick={goToPlaylists}
           />
 
@@ -171,7 +226,7 @@ export function LibraryScreen() {
             id="albums"
             label="Álbuns"
             icon={Disc3}
-            badgeCount={8}
+            badgeCount={counts.albums}
             onClick={goToAlbums}
           />
 
@@ -180,7 +235,7 @@ export function LibraryScreen() {
             id="songs"
             label="Músicas"
             icon={Music}
-            badgeCount={145}
+            badgeCount={counts.songs}
             onClick={goToSongs}
           />
 
@@ -189,7 +244,7 @@ export function LibraryScreen() {
             id="artists"
             label="Artistas"
             icon={Users}
-            badgeCount={24}
+            badgeCount={counts.artists}
             onClick={goToArtists}
           />
         </section>

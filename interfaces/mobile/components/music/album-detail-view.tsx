@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   ArrowLeft,
   MoreHorizontal,
@@ -11,6 +11,7 @@ import {
   ListPlus,
   Sun,
   Moon,
+  Loader2,
 } from "lucide-react"
 import { TrackRow } from "@/components/ui/track-row"
 import { TrackActionMenu } from "@/components/ui/track-action-menu"
@@ -18,48 +19,22 @@ import { SectionHeader } from "@/components/ui/section-header"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
 import { useTheme } from "@/hooks/use-theme"
-import { type LuciTrack } from "@/lib/lucimusic"
+import { type LuciTrack, fetchCollectionDetails, searchTracks } from "@/lib/lucimusic"
 
 interface AlbumDetailViewProps {
   albumId?: string
   title?: string
+  artist?: string
   coverUrl?: string
-}
-
-// Catálogo com dados oficiais dos mockups
-const ALBUM_DATA: Record<
-  string,
-  {
-    title: string
-    artist: string
-    year: string
-    coverUrl: string
-    songs: LuciTrack[]
-  }
-> = {
-  default: {
-    title: "Sweetener",
-    artist: "Ariana Grande",
-    year: "2018",
-    coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500",
-    songs: [
-      { id: "sw_1", title: "Raindrops (An Angel Cried)", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300", duration: 37 },
-      { id: "sw_2", title: "God Is a Woman", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300", duration: 197 },
-      { id: "sw_3", title: "The Light Is Coming", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300", duration: 228 },
-      { id: "sw_4", title: "R.E.M", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300", duration: 245 },
-      { id: "sw_5", title: "Sweetener", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300", duration: 208 },
-      { id: "sw_6", title: "Successful", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300", duration: 227 },
-      { id: "sw_7", title: "Everytime", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300", duration: 172 },
-      { id: "sw_8", title: "Breathin", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300", duration: 198 },
-      { id: "sw_9", title: "No Tears Left to Cry", artist: "Ariana Grande", thumbnail: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300", duration: 205 },
-    ],
-  },
+  initialTracks?: LuciTrack[]
 }
 
 export function AlbumDetailView({
-  albumId = "alb_sweetener",
-  title,
-  coverUrl,
+  albumId,
+  title = "Álbum",
+  artist = "Artista",
+  coverUrl = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500",
+  initialTracks = [],
 }: AlbumDetailViewProps) {
   const { goBack, goToArtist } = useMusicNavigation()
   const { currentTrack, isPlaying, playTrack, togglePlay, toggleLike, isLiked } = useMusicPlayer()
@@ -68,23 +43,94 @@ export function AlbumDetailView({
   const [isAlbumLiked, setIsAlbumLiked] = useState(false)
   const [selectedTrack, setSelectedTrack] = useState<LuciTrack | null>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const album = ALBUM_DATA[albumId] || {
-    ...ALBUM_DATA.default,
-    title: title || ALBUM_DATA.default.title,
-    coverUrl: coverUrl || ALBUM_DATA.default.coverUrl,
-  }
+  const [albumData, setAlbumData] = useState<{
+    title: string
+    artist: string
+    year: string
+    coverUrl: string
+    songs: LuciTrack[]
+  }>({
+    title,
+    artist,
+    year: "2024",
+    coverUrl,
+    songs: initialTracks,
+  })
+
+  useEffect(() => {
+    let isCancelled = false
+    setLoading(true)
+
+    async function loadAlbum() {
+      try {
+        if (albumId && albumId !== "default" && !albumId.startsWith("cont_")) {
+          const details = await fetchCollectionDetails("album", albumId, title, artist)
+          if (!isCancelled && details) {
+            setAlbumData({
+              title: details.title || title,
+              artist: details.artist || artist,
+              year: details.release_year || "2024",
+              coverUrl: details.cover_url || coverUrl,
+              songs: details.tracks.map((t) => ({
+                id: t.id,
+                title: t.title,
+                artist: t.artist || details.artist || artist,
+                thumbnail: t.thumbnail || details.cover_url || coverUrl,
+                duration: t.duration || 210,
+              })),
+            })
+            setLoading(false)
+            return
+          }
+        }
+
+        // Busca faixas reais pelo título e artista do álbum
+        const searchQuery = `${title} ${artist}`.trim()
+        const tracks = await searchTracks(searchQuery)
+        if (!isCancelled) {
+          const dynamicSongs = tracks.length > 0 ? tracks : [
+            {
+              id: `track_${encodeURIComponent(title)}`,
+              title: title,
+              artist: artist,
+              thumbnail: coverUrl,
+              duration: 210,
+            }
+          ]
+
+          setAlbumData({
+            title,
+            artist,
+            year: "2024",
+            coverUrl,
+            songs: dynamicSongs,
+          })
+        }
+      } catch (err) {
+        console.warn("[AlbumDetailView] Erro ao carregar faixas dinâmicas:", err)
+      } finally {
+        if (!isCancelled) setLoading(false)
+      }
+    }
+
+    loadAlbum()
+    return () => {
+      isCancelled = true
+    }
+  }, [albumId, title, artist, coverUrl])
 
   const isThisAlbumPlaying =
     isPlaying &&
     currentTrack &&
-    album.songs.some((s) => s.id === currentTrack.id)
+    albumData.songs.some((s) => s.id === currentTrack.id)
 
   const handlePlayAlbum = () => {
     if (isThisAlbumPlaying) {
       togglePlay()
-    } else if (album.songs.length > 0) {
-      playTrack(album.songs[0], album.songs)
+    } else if (albumData.songs.length > 0) {
+      playTrack(albumData.songs[0], albumData.songs)
     }
   }
 
@@ -137,26 +183,32 @@ export function AlbumDetailView({
       <div className="flex flex-col items-center px-6 pt-2 pb-5 text-center space-y-3">
         {/* Capa Quadrada com Raio de 22px (10% da altura) */}
         <div className="relative size-[220px] rounded-[22px] overflow-hidden bg-[var(--bg-surface-2)] border border-[var(--border-subtle)] shadow-2xl">
-          <img
-            src={album.coverUrl}
-            alt={album.title}
-            className="size-full object-cover"
-          />
+          {loading ? (
+            <div className="size-full flex items-center justify-center bg-[var(--bg-surface-1)]">
+              <Loader2 className="size-8 animate-spin text-[var(--accent-primary)]" />
+            </div>
+          ) : (
+            <img
+              src={albumData.coverUrl}
+              alt={albumData.title}
+              className="size-full object-cover"
+            />
+          )}
         </div>
 
         {/* Título do Álbum & Artista */}
         <div className="space-y-1 pt-1">
           <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">
-            {album.title}
+            {albumData.title}
           </h1>
           <p
-            onClick={() => goToArtist(album.artist)}
+            onClick={() => goToArtist(albumData.artist)}
             className="text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:underline cursor-pointer transition-colors"
           >
-            {album.artist}
+            {albumData.artist}
           </p>
           <p className="text-xs font-normal text-[var(--text-muted)]">
-            Álbum &nbsp;|&nbsp; {album.year}
+            Álbum &nbsp;|&nbsp; {albumData.year}
           </p>
         </div>
 
@@ -227,12 +279,12 @@ export function AlbumDetailView({
         />
 
         <div className="space-y-1">
-          {album.songs.map((track) => (
+          {albumData.songs.map((track) => (
             <TrackRow
               key={track.id}
               track={track}
               isArtist={false}
-              onPlay={(t) => playTrack(t, album.songs)}
+              onPlay={(t) => playTrack(t, albumData.songs)}
               onMore={handleOpenMore}
             />
           ))}
