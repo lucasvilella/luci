@@ -300,74 +300,33 @@ html.light {
   animation: marquee-scroll 12s linear infinite alternate;
 }
 
-/* ─── Orb States — 4 estados visuais premium ─── */
-
-@keyframes orb-idle-glow {
+@keyframes orb-ethereal-pulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 40px -8px rgba(99, 102, 241, 0.3), 0 0 80px -16px rgba(139, 92, 246, 0.15);
+    box-shadow: 0 0 50px 10px rgba(117, 39, 195, 0.4), 0 0 90px 25px rgba(43, 23, 118, 0.25);
   }
   50% {
-    transform: scale(1.03);
-    box-shadow: 0 0 60px -8px rgba(99, 102, 241, 0.4), 0 0 100px -16px rgba(139, 92, 246, 0.2);
+    transform: scale(1.05);
+    box-shadow: 0 0 75px 18px rgba(117, 39, 195, 0.6), 0 0 120px 35px rgba(124, 130, 255, 0.35);
   }
 }
 
-@keyframes orb-listening-ring {
+@keyframes orb-listening-ripple {
   0% {
-    transform: scale(0.95);
-    opacity: 0.6;
+    transform: scale(0.92);
+    opacity: 0.8;
   }
   100% {
-    transform: scale(1.8);
+    transform: scale(1.65);
     opacity: 0;
   }
 }
 
-@keyframes orb-processing-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.animate-orb-ethereal {
+  animation: orb-ethereal-pulse 4.5s ease-in-out infinite;
 }
-
-@keyframes orb-speaking-wave {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 50px -5px rgba(99, 102, 241, 0.5), 0 0 100px -10px rgba(139, 92, 246, 0.3);
-  }
-  25% {
-    transform: scale(1.08);
-    box-shadow: 0 0 70px -5px rgba(99, 102, 241, 0.6), 0 0 120px -10px rgba(139, 92, 246, 0.35);
-  }
-  50% {
-    transform: scale(0.96);
-    box-shadow: 0 0 40px -5px rgba(99, 102, 241, 0.4), 0 0 80px -10px rgba(139, 92, 246, 0.2);
-  }
-  75% {
-    transform: scale(1.05);
-    box-shadow: 0 0 60px -5px rgba(99, 102, 241, 0.55), 0 0 110px -10px rgba(139, 92, 246, 0.3);
-  }
-}
-
-@keyframes eq-bar {
-  0%, 100% { transform: scaleY(0.3); }
-  50% { transform: scaleY(1); }
-}
-
-@keyframes slide-up {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.animate-orb-idle {
-  animation: orb-idle-glow 4s ease-in-out infinite;
-}
-.animate-orb-listening-ring {
-  animation: orb-listening-ring 1.5s ease-out infinite;
+.animate-orb-listening-ripple {
+  animation: orb-listening-ripple 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
 }
 .animate-orb-processing {
   animation: orb-processing-spin 1.2s linear infinite;

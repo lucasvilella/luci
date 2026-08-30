@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
-import { Plus, Mic, Keyboard, Loader2, Sparkles, ArrowUpRight, ImageIcon, FileText, Zap, Menu } from "lucide-react"
+import { Sparkles, Music, House, Film, ArrowUpRight, MessageSquare, Paperclip, Loader2 } from "lucide-react"
 import { luciApiFetch } from "@/lib/api"
 import { useConversation } from "@/hooks/use-conversation"
 import { voiceInputManager } from "@/lib/voice-input-manager"
 import { getOrbState, type OrbState } from "@/lib/orb-state"
+import { useAppNavigationStore } from "@/stores/useAppNavigationStore"
 
 // ─── AudioPlayerQueue (reprodução sequencial de chunks TTS) ───
 class AudioPlayerQueue {
@@ -97,38 +98,41 @@ function cleanTextForSpeech(text: string): string {
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     .replace(/http[s]?:\/\/\S+/gi, "")
     .replace(/[*_#`~>]/g, "")
-    .replace(/L\.U\.C\.I\./gi, "Lucy")
-    .replace(/L\.U\.C\.I/gi, "Lucy")
-    .replace(/\bLuci\b/gi, "Lucy")
+    .replace(/L\.U\.C\.I\./gi, "Luci")
+    .replace(/L\.U\.C\.I/gi, "Luci")
     .replace(/\s+/g, " ")
     .trim()
 }
 
-// ─── Atalhos de exemplo (cards) ───
-const SHORTCUT_CARDS = [
+// ─── Atalhos Recorrentes Inteligentes (Clean & Minimalista) ───
+const SHORTCUT_PROMPTS = [
   {
     id: "resumo",
     title: "Resumo do meu dia",
-    description: "Veja compromissos, previsão do tempo e notícias importantes personalizadas.",
+    subtitle: "Clima, compromissos e notícias",
+    command: "Me dê um resumo rápido do meu dia.",
     icon: Sparkles,
-    command: "Me dê um resumo do meu dia: compromissos, clima e notícias importantes.",
-    large: true,
   },
   {
-    id: "imagem",
-    title: "Gerar Imagem com IA",
-    description: "Descreva e crie",
-    icon: ImageIcon,
-    command: "Quero gerar uma imagem com IA. Me ajude a descrever.",
-    large: false,
+    id: "musica",
+    title: "Tocar algo relaxante",
+    subtitle: "Sessão tranquila no LuciMusic",
+    command: "Luci, toca uma playlist relaxante",
+    icon: Music,
   },
   {
-    id: "automacao",
-    title: "Automação Rápida",
-    description: "Controle inteligente",
-    icon: Zap,
-    command: "Quais automações de casa inteligente eu posso configurar?",
-    large: false,
+    id: "casa",
+    title: "Status da Casa",
+    subtitle: "Verificar luzes e dispositivos",
+    command: "Como estão os dispositivos da casa inteligente?",
+    icon: House,
+  },
+  {
+    id: "ideias",
+    title: "Planejar minha semana",
+    subtitle: "Organizar tarefas e objetivos",
+    command: "Me ajude a organizar as metas principais da minha semana.",
+    icon: Film,
   },
 ]
 
@@ -144,16 +148,23 @@ export function VoiceOrbView({
   const [loading, setLoading] = useState(false)
   const [transcript, setTranscript] = useState("")
   const [response, setResponse] = useState("")
-  const [statusText, setStatusText] = useState("Diga 'Ei, Luci' ou toque no microfone")
+  const [hasStartedConversation, setHasStartedConversation] = useState(false)
 
-  const recognitionRef = useRef<any>(null)
   const silenceTimerRef = useRef<any>(null)
-  const capturedTextRef = useRef<string>("")
   const audioQueueRef = useRef<AudioPlayerQueue | null>(null)
   const isProcessingRef = useRef<boolean>(false)
   const isUserActiveSessionRef = useRef<boolean>(false)
-  const isListeningRef = useRef<boolean>(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const { activeTabByModule, setActiveTab } = useAppNavigationStore()
+  const currentTab = activeTabByModule["orb"] || "chat"
+
+  // Se a aba do deck for "chat", alterna automaticamente para o modo de chat
+  useEffect(() => {
+    if (currentTab === "chat" && onSwitchToChat) {
+      // Deixa disponível para o usuário
+    }
+  }, [currentTab, onSwitchToChat])
 
   const clearSilenceTimer = () => {
     if (silenceTimerRef.current) {
@@ -188,7 +199,7 @@ export function VoiceOrbView({
     }
   }, [])
 
-  // ─── Enviar Mensagem para o Cérebro Unificado ───
+  // ─── Enviar Mensagem para o Cérebro da Luci ───
   const sendVoiceQuery = useCallback(async (text: string) => {
     if (!text.trim() || isProcessingRef.current) return
     isProcessingRef.current = true
@@ -197,10 +208,9 @@ export function VoiceOrbView({
 
     voiceInputManager.stopSpeechRecognition()
     setListening(false)
-    isListeningRef.current = false
+    setHasStartedConversation(true)
 
     setLoading(true)
-    setStatusText("Luci está pensando...")
     setResponse("")
     audioQueueRef.current?.stopAndClear()
 
@@ -208,7 +218,6 @@ export function VoiceOrbView({
       const result = await sendVoiceMessage(text)
       setResponse(result.reply)
       setLoading(false)
-      setStatusText(result.reply ? "Luci respondeu" : "Diga 'Ei, Luci' ou toque no microfone")
 
       if (result.audioBase64) {
         const binaryString = atob(result.audioBase64)
@@ -222,7 +231,6 @@ export function VoiceOrbView({
       }
     } catch (err) {
       console.error("[VoiceOrb] Erro no processamento de voz:", err)
-      setStatusText("Erro na resposta. Tente novamente.")
     } finally {
       isProcessingRef.current = false
       setLoading(false)
@@ -234,389 +242,246 @@ export function VoiceOrbView({
     if (isProcessingRef.current) return
 
     voiceInputManager.unlockAudio()
+    setHasStartedConversation(true)
+    setListening(true)
+    setResponse("")
+    setTranscript("")
 
     voiceInputManager.startSpeechRecognition(
       (currentSpeech: string, isFinal: boolean) => {
         if (!currentSpeech) return
+        setTranscript(currentSpeech)
 
-        // Regex flexível para variações fonéticas comuns de "Luci" no STT Mobile
-        const wakeWordRegex = /\b(ei\s+luci|oi\s+luci|ol[aá]\s+luci|hey\s+luci|ok\s+luci|e\s+a[ií]\s+luci|luci|lucy|luzia|luzi|lusi|luz)\b/i
-        const hasWakeWord = wakeWordRegex.test(currentSpeech)
-
-        if (hasWakeWord && !isUserActiveSessionRef.current) {
-          audioQueueRef.current?.initAudioContext()
-          isUserActiveSessionRef.current = true
-          setListening(true)
-          setStatusText("Ouvindo você...")
-
-          const commandAfterWake = currentSpeech.replace(wakeWordRegex, "").trim()
-          capturedTextRef.current = commandAfterWake
-          setTranscript(commandAfterWake)
-        } else if (isUserActiveSessionRef.current) {
-          // Se já está em sessão ativa (seja por wake word ou por clique no mic)
-          const cleanText = currentSpeech.replace(wakeWordRegex, "").trim()
-          capturedTextRef.current = cleanText || currentSpeech.trim()
-          setTranscript(capturedTextRef.current)
-        }
-
-        // Se está em sessão de escuta ativa e possui texto falado
-        if (isUserActiveSessionRef.current && capturedTextRef.current.length >= 2) {
-          clearSilenceTimer()
-          
-          // Debounce resiliente de 1.8s sem novas palavras antes de enviar ao backend
-          silenceTimerRef.current = setTimeout(() => {
-            if (capturedTextRef.current.length >= 2 && !isProcessingRef.current) {
-              sendVoiceQuery(capturedTextRef.current)
-            }
-          }, 1800)
-        }
+        clearSilenceTimer()
+        silenceTimerRef.current = setTimeout(() => {
+          if (currentSpeech.trim()) {
+            sendVoiceQuery(currentSpeech.trim())
+          }
+        }, 1600)
       },
       () => {
-        isListeningRef.current = false
-        clearSilenceTimer()
-
-        // 1. Se o Chrome Mobile encerrou (onend) e havia texto capturado pendente, dispara o envio
-        if (isUserActiveSessionRef.current && capturedTextRef.current.trim().length >= 2 && !isProcessingRef.current) {
-          sendVoiceQuery(capturedTextRef.current.trim())
-          return
-        }
-
-        // 2. Se o usuário ainda está em modo "Ouvindo" mas o Chrome Mobile fechou a conexão prematuramente, reinicia suavemente
-        if (isUserActiveSessionRef.current && !isProcessingRef.current && !speaking) {
-          setTimeout(() => {
-            if (isUserActiveSessionRef.current && !isProcessingRef.current) {
-              startListeningSession()
-            }
-          }, 250)
-        } else {
-          setListening(false)
-        }
+        setListening(false)
       },
       true
     )
-  }, [sendVoiceQuery, speaking])
+  }, [sendVoiceQuery])
 
-  // ─── Inicialização do Reconhecimento de Voz & Wake Word Compartilhada ───
-  useEffect(() => {
-    voiceInputManager.init().catch(() => {})
-    voiceInputManager.setActiveContext("orb")
-
-    audioQueueRef.current = new AudioPlayerQueue((isSpeaking) => {
-      setSpeaking(isSpeaking)
-      if (isSpeaking) {
-        setStatusText("Luci está falando...")
-        voiceInputManager.stopSpeechRecognition()
-      } else {
-        setStatusText("Toque no microfone para falar")
-      }
-    })
-
-    const unsubscribeWakeWord = voiceInputManager.registerWakeWordHandler("orb", () => {
-      console.log("[VoiceOrb] Wake Word acionada na tela do Orb.")
-      if (!isUserActiveSessionRef.current && !speaking && !loading) {
-        audioQueueRef.current?.initAudioContext()
-        isUserActiveSessionRef.current = true
-        setListening(true)
-        setStatusText("Ouvindo você...")
-        startListeningSession()
-      }
-    })
-
-    return () => {
-      clearSilenceTimer()
-      unsubscribeWakeWord()
-      voiceInputManager.stopSpeechRecognition()
-      if (audioQueueRef.current) {
-        audioQueueRef.current.stopAndClear()
-      }
-    }
-  }, [startListeningSession, speaking, loading])
-
-  // ─── Botão Central Único: Iniciar Escuta ou Cancelar ───
-  const handleCentralMicClick = () => {
-    voiceInputManager.unlockAudio()
-    audioQueueRef.current?.initAudioContext()
-    clearSilenceTimer()
-
+  // Ativar ou pausar escuta ao clicar no próprio Orbe central
+  const handleOrbClick = useCallback(() => {
     if (speaking) {
       audioQueueRef.current?.stopAndClear()
       setSpeaking(false)
-      setStatusText("Toque no microfone para falar")
       return
     }
 
-    if (listening || isUserActiveSessionRef.current) {
-      isUserActiveSessionRef.current = false
-      setListening(false)
-      capturedTextRef.current = ""
-      setTranscript("")
-      setStatusText("Cancelado. Toque no microfone para falar")
+    if (listening) {
       voiceInputManager.stopSpeechRecognition()
+      setListening(false)
+      if (transcript.trim()) {
+        sendVoiceQuery(transcript.trim())
+      }
     } else {
-      isUserActiveSessionRef.current = true
-      setListening(true)
-      setTranscript("")
-      setResponse("")
-      capturedTextRef.current = ""
-      setStatusText("Ouvindo você...")
       startListeningSession()
     }
-  }
+  }, [speaking, listening, transcript, sendVoiceQuery, startListeningSession])
 
-  // ─── Envio de Atalho (Cards) ───
-  const handleShortcutClick = (command: string) => {
-    setTranscript(command)
-    sendVoiceQuery(command)
-  }
+  // Inicializa o AudioQueue e escuta de áudio
+  useEffect(() => {
+    audioQueueRef.current = new AudioPlayerQueue((isSpeaking) => {
+      setSpeaking(isSpeaking)
+    })
 
-  // ─── Upload de Documentos ───
-  const handleFileUpload = () => {
-    fileInputRef.current?.click()
-  }
+    voiceInputManager.setActiveContext("orb")
 
-  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setStatusText(`Enviando ${file.name}...`)
-      setLoading(true)
-      try {
-        const reply = await uploadFile(file, "Analise o arquivo anexo.")
-        setResponse(reply)
-        setStatusText(reply ? "Luci analisou o arquivo" : "Diga 'Ei, Luci' ou toque no microfone")
-      } catch (err) {
-        setStatusText("Erro ao enviar arquivo.")
-      } finally {
-        setLoading(false)
-      }
+    return () => {
+      audioQueueRef.current?.stopAndClear()
+      voiceInputManager.stopSpeechRecognition()
+      clearSilenceTimer()
     }
-    e.target.value = ""
-  }
+  }, [])
 
-  // Determinar estado visual do Orb pela Máquina de Estados Oficial (State Machine)
+  // Determinar estado visual do Orb
   const orbState: OrbState = getOrbState(loading, speaking, listening)
 
+  const handleShortcutClick = (cmd: string) => {
+    setTranscript(cmd)
+    setHasStartedConversation(true)
+    sendVoiceQuery(cmd)
+  }
+
+  // Se houver conversa ativa ou resposta ou fala, oculta os atalhos
+  const isConversationActive = hasStartedConversation || Boolean(transcript || response || loading || listening || speaking)
+
   return (
-    <div className="flex h-full flex-col bg-background animate-view-in select-none">
-      {/* ─── Header Principal ─── */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-2 z-10">
+    <div className="relative flex h-full w-full flex-col items-center justify-between bg-[var(--bg-app)] text-[var(--text-primary)] select-none px-6 pt-6 pb-24 overflow-hidden">
+      
+      {/* ─── Botão de Anexo Discreto no Topo Esquerdo ─── */}
+      <div className="w-full flex items-center justify-between z-10">
         <button
           type="button"
-          onClick={onOpenMenu}
-          aria-label="Abrir Menu de Módulos"
-          className="size-10 flex items-center justify-center rounded-full bg-card border border-border shadow-sm text-foreground hover:bg-secondary active:scale-95 transition-all"
+          onClick={() => fileInputRef.current?.click()}
+          aria-label="Anexar arquivo"
+          className="size-10 flex items-center justify-center rounded-full bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] active:scale-95 transition-all"
         >
-          <Menu className="size-5" />
+          <Paperclip className="size-4.5 stroke-[2]" />
         </button>
 
-        <h1 className="text-base font-extrabold tracking-wider text-foreground">LUCI</h1>
-
-        <div className="size-10" />
+        {isConversationActive && (
+          <button
+            type="button"
+            onClick={() => {
+              setHasStartedConversation(false)
+              setTranscript("")
+              setResponse("")
+              setListening(false)
+              audioQueueRef.current?.stopAndClear()
+            }}
+            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] active:scale-95 transition-all"
+          >
+            Novo Tópico
+          </button>
+        )}
       </div>
 
-      {/* ─── Scrollable Content ─── */}
-      <div className="flex-1 flex flex-col items-center overflow-y-auto no-scrollbar px-6 pb-4">
-
-        {/* ─── Orb Central Premium ─── */}
-        <div className="relative flex items-center justify-center py-8 mt-2">
-          {/* Anel externo animado (listening / speaking) */}
+      {/* ─── CENTRO: ORBE DA MARCA LUCI & RESPOSTA DE TEXTO ELEGANTE ─── */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm text-center relative my-auto">
+        
+        {/* Orbe Eéreo com o Gradiente Oficial da Marca (#2B1776 a #7527C3 + Brilho e Ondas) */}
+        <div className="relative flex items-center justify-center my-6">
+          
+          {/* Ondas / Ripple Suaves na Escuta ou Fala */}
           {(orbState === "listening" || orbState === "speaking") && (
             <>
-              <span
-                className="absolute size-52 rounded-full border-2 border-primary/40 animate-orb-listening-ring"
-                aria-hidden="true"
-              />
-              <span
-                className="absolute size-52 rounded-full border border-primary/30 animate-orb-listening-ring"
-                style={{ animationDelay: "0.4s" }}
-                aria-hidden="true"
-              />
+              <span className="absolute size-64 rounded-full bg-gradient-to-tr from-[#2B1776]/20 to-[#7527C3]/30 animate-orb-listening-ripple pointer-events-none" />
+              <span className="absolute size-56 rounded-full bg-[#7527c3]/20 animate-orb-listening-ripple [animation-delay:0.5s] pointer-events-none" />
             </>
           )}
 
-          {/* Orbe Core */}
-          <div
-            className={`relative size-44 rounded-full ${
-              orbState === "idle" ? "animate-orb-idle" :
-              orbState === "listening" ? "animate-orb-idle" :
-              orbState === "processing" ? "" :
-              "animate-orb-speaking"
+          {/* Orbe Principal Interativo (Toque para falar/pausar) */}
+          <button
+            type="button"
+            onClick={handleOrbClick}
+            aria-label={listening ? "Parar de ouvir" : "Falar com a Luci"}
+            className={`relative size-44 sm:size-48 rounded-full cursor-pointer transition-transform active:scale-95 outline-none ${
+              orbState === "processing" ? "animate-spin" : "animate-orb-ethereal"
             }`}
+            style={{
+              background: "linear-gradient(135deg, #2B1776 0%, #5c62ec 45%, #7527C3 75%, #ffccf2 100%)",
+              boxShadow: "0 0 60px 10px rgba(117, 39, 195, 0.45), 0 0 100px 30px rgba(43, 23, 118, 0.25)",
+            }}
           >
-            {/* Gradiente rotativo externo */}
-            <div
-              className={`absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,#023D8A,#409775,#023D8A)] opacity-90 blur-[1px] ${
-                orbState === "processing" ? "animate-orb-processing" : "animate-orb-rotate"
-              }`}
-              style={{ animationDuration: orbState === "processing" ? "0.8s" : "14s" }}
-            />
-            {/* Gradiente radial interno */}
-            <div className="absolute inset-3 rounded-full bg-[radial-gradient(circle_at_35%_35%,#409775,#023D8A_60%,#023D8A)]" />
-            {/* Glow shadow */}
-            <div className="absolute inset-0 rounded-full shadow-[0_0_60px_-5px_rgba(2,61,138,0.5)]" />
+            {/* Camada interna de profundidade e brilho perolado */}
+            <div className="absolute inset-2 rounded-full bg-gradient-to-br from-white/30 via-transparent to-black/25 backdrop-blur-sm" />
+            
+            {/* Ícone de Loading Discreto se estiver processando */}
+            {orbState === "processing" && (
+              <div className="absolute inset-0 flex items-center justify-center text-white">
+                <Loader2 className="size-8 animate-spin" />
+              </div>
+            )}
+          </button>
+        </div>
 
-            {/* Conteúdo interno do Orb */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              {orbState === "processing" ? (
-                <Loader2 className="size-10 text-white/90 animate-spin" />
-              ) : (
-                /* Equalizer bars */
-                <div className="flex items-center justify-center gap-1.5">
-                  {[0.5, 0.9, 0.4, 1, 0.65, 0.85, 0.45].map((h, idx) => {
-                    const isAnim = orbState === "listening" || orbState === "speaking"
-                    return (
-                      <span
-                        key={idx}
-                        className="w-1.5 rounded-full bg-white/90 transition-all"
-                        style={{
-                          height: `${(isAnim ? h : 0.25) * 44}px`,
-                          animationName: isAnim ? "eq-bar" : "none",
-                          animationDuration: isAnim ? `${0.6 + idx * 0.1}s` : "0s",
-                          animationTimingFunction: "ease-in-out",
-                          animationIterationCount: isAnim ? "infinite" : "1",
-                          animationDelay: `${idx * 0.08}s`,
-                          transformOrigin: "center",
-                        }}
-                        aria-hidden="true"
-                      />
-                    )
-                  })}
+        {/* ─── ÁREA DE TEXTO / CONVERSA VIVA COM A LUCI ─── */}
+        <div className="w-full min-h-[90px] flex flex-col items-center justify-center transition-all duration-300">
+          {!isConversationActive ? (
+            <div className="space-y-1 animate-fade-in">
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-[var(--text-primary)]">
+                Fale suas ideias em voz alta
+              </h2>
+              <p className="text-xs text-[var(--text-secondary)]">
+                Toque no orbe ou use o botão central a qualquer momento
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3 w-full animate-fade-in px-2">
+              {/* Fala do Usuário em Destaque Fino */}
+              {transcript && (
+                <p className="text-sm font-semibold text-[var(--accent-primary)] italic">
+                  "{transcript}"
+                </p>
+              )}
+
+              {/* Status Dinâmico */}
+              {orbState === "listening" && (
+                <span className="text-xs font-bold text-[var(--text-secondary)] tracking-wide animate-pulse">
+                  Escutando...
+                </span>
+              )}
+
+              {orbState === "processing" && (
+                <span className="text-xs font-bold text-[var(--accent-primary)] tracking-wide animate-pulse">
+                  Luci está pensando...
+                </span>
+              )}
+
+              {/* Resposta Completa da Luci em Tipografia Nobre */}
+              {response && (
+                <div className="py-2 text-left max-h-[30vh] overflow-y-auto no-scrollbar">
+                  <p className="text-base sm:text-lg font-medium text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">
+                    {response}
+                  </p>
                 </div>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* ─── Greeting / Status ─── */}
-        <div className="text-center mb-5">
-          {!response && !transcript && !loading && (
-            <>
-              <h2 className="text-xl font-extrabold text-foreground mb-0.5">Olá, eu sou a Luci</h2>
-              <p className="text-sm text-muted-foreground">Sua assistente digital inteligente</p>
-            </>
           )}
-          <p className={`text-sm font-semibold mt-2 ${
-            orbState === "listening" ? "text-primary" :
-            orbState === "processing" ? "text-amber-600" :
-            orbState === "speaking" ? "text-accent" :
-            "text-muted-foreground"
-          }`}>
-            {statusText}
-          </p>
         </div>
-
-        {/* ─── Transcrição / Resposta ─── */}
-        {(transcript || response || loading) && (
-          <div className="w-full max-w-sm text-center mb-5 px-2">
-            {transcript && !loading && (
-              <p className="text-xs text-muted-foreground italic mb-1.5">"{transcript}"</p>
-            )}
-            {response && (
-              <div className="bg-card rounded-2xl border border-border shadow-sm px-4 py-3">
-                <p className="text-sm font-medium text-foreground leading-relaxed whitespace-pre-wrap">{response}</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ─── Cards de Atalho (apenas no idle, sem resposta) ─── */}
-        {orbState === "idle" && !response && (
-          <div className="w-full space-y-3 mt-auto mb-2">
-            {/* Card grande */}
-            {SHORTCUT_CARDS.filter(c => c.large).map((card) => (
-              <button
-                key={card.id}
-                type="button"
-                onClick={() => handleShortcutClick(card.command)}
-                className="w-full text-left p-4 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] group"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-sm font-bold text-foreground mb-1">{card.title}</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{card.description}</p>
-                  </div>
-                  <div className="size-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 ml-3 group-hover:bg-primary/20 transition-colors">
-                    <ArrowUpRight className="size-4.5" />
-                  </div>
-                </div>
-              </button>
-            ))}
-
-            {/* 2 Cards menores */}
-            <div className="grid grid-cols-2 gap-3">
-              {SHORTCUT_CARDS.filter(c => !c.large).map((card) => {
-                const Icon = card.icon
-                return (
-                  <button
-                    key={card.id}
-                    type="button"
-                    onClick={() => handleShortcutClick(card.command)}
-                    className="text-left p-4 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] group"
-                  >
-                    <div className="size-9 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground mb-3 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                      <Icon className="size-4.5" />
-                    </div>
-                    <h3 className="text-xs font-bold text-foreground mb-0.5">{card.title}</h3>
-                    <p className="text-[10px] text-muted-foreground">{card.description}</p>
-                    <div className="flex justify-end mt-2">
-                      <ArrowUpRight className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* ─── Botões Inferiores (3 botões) ─── */}
-      <div className="flex items-center justify-center gap-6 px-6 pb-5 pt-2 bg-background">
-        {/* + Upload Documento */}
-        <button
-          type="button"
-          onClick={handleFileUpload}
-          aria-label="Enviar documento"
-          className="flex size-12 items-center justify-center rounded-full bg-card border border-border shadow-sm text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/10 active:scale-95 transition-all"
-        >
-          <Plus className="size-5 stroke-[2.5]" />
-        </button>
+      {/* ─── BASE: ATALHOS DE USO RECORRENTE (Somem ao ativar a conversa) ─── */}
+      {!isConversationActive && (
+        <div className="w-full max-w-sm space-y-2 pt-2 animate-slide-up">
+          <div className="grid grid-cols-2 gap-2.5">
+            {SHORTCUT_PROMPTS.map((item) => {
+              const Icon = item.icon
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleShortcutClick(item.command)}
+                  className="flex flex-col items-start justify-between p-3.5 rounded-2xl bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-sm hover:border-[var(--border-strong)] active:scale-[0.97] transition-all text-left group"
+                >
+                  <div className="flex size-8 items-center justify-center rounded-xl bg-[var(--bg-surface-2)] text-[var(--text-secondary)] group-hover:text-[var(--accent-primary)] transition-colors mb-2">
+                    <Icon className="size-4 stroke-[2]" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-[var(--text-primary)] leading-snug">
+                      {item.title}
+                    </h4>
+                    <p className="text-[10px] text-[var(--text-secondary)] line-clamp-1 mt-0.5">
+                      {item.subtitle}
+                    </p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
-        {/* Mic Central (Botão Grande) */}
-        <button
-          type="button"
-          onClick={handleCentralMicClick}
-          aria-label={listening ? "Cancelar microfone" : "Ativar microfone"}
-          className={`relative flex size-16 items-center justify-center rounded-full transition-all active:scale-95 shadow-xl ${
-            listening
-              ? "bg-destructive text-destructive-foreground shadow-destructive/30 ring-4 ring-destructive/30"
-              : speaking
-                ? "bg-accent text-accent-foreground shadow-accent/30"
-                : "bg-primary text-primary-foreground shadow-[0_8px_30px_-6px_rgba(2,61,138,0.5)] hover:scale-105"
-          }`}
-        >
-          {listening && (
-            <span className="absolute inset-0 animate-ping rounded-full bg-destructive/30" aria-hidden="true" />
-          )}
-          <Mic className="relative size-7" aria-hidden="true" />
-        </button>
-
-        {/* Teclado → Chat */}
-        <button
-          type="button"
-          onClick={onSwitchToChat}
-          aria-label="Abrir chat por texto"
-          className="flex size-12 items-center justify-center rounded-full bg-white border border-zinc-200 shadow-sm text-zinc-600 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 active:scale-95 transition-all"
-        >
-          <Keyboard className="size-5" />
-        </button>
-      </div>
-
-      {/* Input file oculto para upload */}
+      {/* Input de Arquivo Oculto */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*,.pdf,.txt,.csv,.xlsx,.xls,.doc,.docx"
         className="hidden"
-        onChange={handleFileSelected}
+        onChange={async (e) => {
+          const file = e.target.files?.[0]
+          if (file) {
+            setHasStartedConversation(true)
+            setTranscript(`Analisando anexo: ${file.name}`)
+            setLoading(true)
+            try {
+              const reply = await uploadFile(file, "Analise o arquivo anexo.")
+              setResponse(reply)
+            } catch {
+              setResponse("Ocorreu um erro ao processar o arquivo.")
+            } finally {
+              setLoading(false)
+            }
+          }
+          e.target.value = ""
+        }}
       />
     </div>
   )
