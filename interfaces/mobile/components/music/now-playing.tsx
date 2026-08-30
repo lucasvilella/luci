@@ -135,7 +135,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
 
   return (
     <div className="relative flex h-full flex-col bg-[var(--bg-app)] text-[var(--text-primary)] select-none overflow-y-auto pb-32">
-      {/* ─── HEADER DE NAVEGAÇÃO SUPERIOR COM VOLTAR, TEMA E MAIS OPÇÕES ─── */}
+      {/* ─── HEADER DE NAVEGAÇÃO SUPERIOR COM VOLTAR E MAIS OPÇÕES ─── */}
       <header className="sticky top-0 z-20 flex items-center justify-between px-5 pt-4 pb-2 bg-[var(--bg-app)]/90 backdrop-blur-xl">
         <button
           type="button"
@@ -147,27 +147,12 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
         </button>
 
         <div className="flex items-center gap-2">
-          {/* Seletor Provisório de Tema */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            title={theme === "dark" ? "Mudar para modo claro" : "Mudar para modo escuro"}
-            aria-label="Alternar tema"
-            className="size-10 rounded-full bg-[var(--bg-surface-1)] text-[var(--text-primary)] border border-[var(--border-subtle)] flex items-center justify-center transition-transform active:scale-90"
-          >
-            {mounted && theme === "dark" ? (
-              <Sun className="size-4.5 text-amber-400" />
-            ) : (
-              <Moon className="size-4.5 text-indigo-600" />
-            )}
-          </button>
-
           {/* Mais Opções */}
           <button
             type="button"
             onClick={() => setIsActionMenuOpen(true)}
-            aria-label="Mais opções da música"
-            className="size-10 rounded-full bg-[var(--bg-surface-1)] text-[var(--text-primary)] border border-[var(--border-subtle)] flex items-center justify-center transition-transform active:scale-90"
+            aria-label="Mais opções"
+            className="size-10 rounded-full bg-[var(--bg-surface-1)] text-[var(--text-primary)] border border-[var(--border-subtle)] flex items-center justify-center transition-transform active:scale-90 shadow-sm"
           >
             <MoreHorizontal className="size-5" />
           </button>
