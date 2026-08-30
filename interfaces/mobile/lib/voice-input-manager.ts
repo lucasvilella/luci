@@ -1,14 +1,12 @@
 /**
- * VoiceInputManager — Gerenciador Unificado de Áudio, STT, Wake Word Local (Porcupine) e Ducking Suave.
- * Conforme docs/99_RULES/NON_NEGOTIABLES.md e STATE_MACHINE.md:
- * - Compartilha um único AudioContext e GainNode com todo o sistema (Música, Orb e Chat).
- * - Suporta escuta de Wake Word ("Hey Luci" / Porcupine local).
- * - Fornece suporte unificado a reconhecimento de fala (STT) para evitar instâncias concorrentes.
+ * VoiceInputManager — Gerenciador Universal de Áudio, Gravação (MediaRecorder), STT e Volume Meter.
+ * Funciona 100% no Android Studio (Capacitor), Chrome Mobile, PWA e Desktop.
  */
 
 export type WakeWordCallback = () => void
 export type SpeechResultCallback = (transcript: string, isFinal: boolean) => void
 export type SpeechEndCallback = () => void
+export type VolumeChangeCallback = (volume: number) => void
 
 export type VoiceContext = "orb" | "music" | "chat"
 
@@ -16,15 +14,23 @@ class VoiceInputManager {
   private static instance: VoiceInputManager | null = null
   private audioContext: AudioContext | null = null
   private musicGainNode: GainNode | null = null
-  private porcupineWorker: any = null
+  private mediaStream: MediaStream | null = null
+  private mediaRecorder: MediaRecorder | null = null
+  private audioChunks: Blob[] = []
   private isInitialized = false
   private isListening = false
-  
+  private isRecording = false
+
+  // Medição de volume em tempo real (RMS Analyzer)
+  private analyserNode: AnalyserNode | null = null
+  private animationFrameId: number | null = null
+  private onVolumeChangeCallback: VolumeChangeCallback | null = null
+
   // Arbitragem de contexto ativo
   private activeContext: VoiceContext | null = null
   private contextCallbacks: Map<VoiceContext, WakeWordCallback> = new Map()
 
-  // STT Unificado (SpeechRecognition)
+  // STT Nativo (Web Speech API como prévia rápida quando disponível)
   private recognition: any = null
   private onSpeechResultCallback: SpeechResultCallback | null = null
   private onSpeechEndCallback: SpeechEndCallback | null = null
@@ -39,21 +45,15 @@ class VoiceInputManager {
     return VoiceInputManager.instance
   }
 
-  /**
-   * Define qual tela ou componente está ativo no primeiro plano.
-   */
   public setActiveContext(context: VoiceContext | null): void {
     this.activeContext = context
-    console.log(`[VoiceInputManager] Contexto de voz ativo definido para: ${context}`)
+    console.log(`[VoiceInputManager] Contexto ativo: ${context}`)
   }
 
   public getActiveContext(): VoiceContext | null {
     return this.activeContext
   }
 
-  /**
-   * Obtém ou inicializa o AudioContext compartilhado para todas as interfaces de áudio.
-   */
   public getAudioContext(): AudioContext {
     if (typeof window === "undefined") return null as any
     if (!this.audioContext || this.audioContext.state === "closed") {
@@ -77,9 +77,6 @@ class VoiceInputManager {
     return this.musicGainNode as GainNode
   }
 
-  /**
-   * Registra um callback para quando a wake word for detectada para um contexto específico.
-   */
   public registerWakeWordHandler(context: VoiceContext, callback: WakeWordCallback): () => void {
     this.contextCallbacks.set(context, callback)
     return () => {
@@ -92,88 +89,10 @@ class VoiceInputManager {
     }
   }
 
-  /**
-   * Método de compatibilidade: registra para o contexto atual ou "orb".
-   */
   public onWakeWord(callback: WakeWordCallback, context: VoiceContext = "orb"): () => void {
     return this.registerWakeWordHandler(context, callback)
   }
 
-  /**
-   * Dispara a wake word APENAS para o contexto ativo em primeiro plano.
-   */
-  private triggerWakeWord() {
-    const targetContext = this.activeContext || "orb"
-    const handler = this.contextCallbacks.get(targetContext)
-    
-    if (handler) {
-      console.log(`[VoiceInputManager] Disparando Wake Word exclusivamente para o contexto ativo: ${targetContext}`)
-      try {
-        handler()
-      } catch (err) {
-        console.error(`[VoiceInputManager] Erro no handler de wake word (${targetContext}):`, err)
-      }
-    } else {
-      console.log(`[VoiceInputManager] Wake Word detectada, mas nenhum handler ativo para contexto '${targetContext}'.`)
-    }
-  }
-
-  /**
-   * Inicializa o Porcupine Worker e o WebVoiceProcessor com chave de acesso Picovoice (Carregamento 100% Lazy sob demanda).
-   */
-  public async init(accessKey?: string, customKeywordPath?: string): Promise<void> {
-    if (this.isInitialized) return
-
-    const key = accessKey || (typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_PICOVOICE_ACCESS_KEY : "") || ""
-
-    // Apenas tenta importar e inicializar o SDK Picovoice se uma chave explícita de acesso for fornecida
-    if (key && typeof window !== "undefined") {
-      try {
-        const porcupinePkg = "@picovoice/porcupine-web"
-        const processorPkg = "@picovoice/web-voice-processor"
-        
-        const { PorcupineWorker } = await import(/* webpackChunkName: "porcupine-engine" */ `${porcupinePkg}`)
-        const { WebVoiceProcessor } = await import(/* webpackChunkName: "porcupine-processor" */ `${processorPkg}`)
-
-        const keyword = customKeywordPath
-          ? { customWritePath: customKeywordPath, label: "Hey Luci" }
-          : { builtin: "Porcupine", sensitivity: 0.65 }
-
-        this.porcupineWorker = await PorcupineWorker.create(
-          key,
-          keyword,
-          (keywordLabel: string) => {
-            console.log(`[VoiceInputManager] Wake word detectada: ${keywordLabel}`)
-            this.triggerWakeWord()
-          },
-          (error: Error) => {
-            console.warn("[VoiceInputManager] Erro no Porcupine Worker:", error)
-          }
-        )
-
-        await WebVoiceProcessor.subscribe(this.porcupineWorker)
-        this.isListening = true
-        console.log("[VoiceInputManager] Porcupine Wake Word Engine ativo localmente.")
-      } catch (e) {
-        console.warn("[VoiceInputManager] Fallback para modo sem Porcupine WASM (usando SpeechRecognition nativo):", e)
-      }
-    } else {
-      console.log("[VoiceInputManager] Operando com SpeechRecognition nativo contínuo de alta velocidade (Zero Overhead).")
-    }
-
-    this.isInitialized = true
-  }
-
-  /**
-   * Retorna se a Wake Word por hardware/WASM local está disponível.
-   */
-  public hasLocalWakeWord(): boolean {
-    return Boolean(this.porcupineWorker && this.isListening)
-  }
-
-  /**
-   * Desbloqueia o AudioContext no primeiro gesto do usuário (requisito Android/iOS PWA).
-   */
   public unlockAudio(): void {
     if (typeof window === "undefined") return
     try {
@@ -185,7 +104,143 @@ class VoiceInputManager {
   }
 
   /**
-   * Inicia o reconhecimento de fala unificado (STT) com buffer cumulativo resiliente para Mobile PWA.
+   * Inicia a captura universal de áudio do microfone via MediaRecorder com analisador de volume.
+   */
+  public async startRecording(onVolumeChange?: VolumeChangeCallback): Promise<boolean> {
+    if (typeof window === "undefined") return false
+    this.unlockAudio()
+    this.duckAudio(0.15)
+
+    this.onVolumeChangeCallback = onVolumeChange || null
+    this.audioChunks = []
+
+    try {
+      // 1. Obtém permissão do microfone via getUserMedia
+      if (!this.mediaStream || !this.mediaStream.active) {
+        this.mediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        })
+      }
+
+      // 2. Conecta AudioContext ao AnalyserNode para medir volume em tempo real
+      const ctx = this.getAudioContext()
+      if (ctx && this.mediaStream) {
+        try {
+          const source = ctx.createMediaStreamSource(this.mediaStream)
+          this.analyserNode = ctx.createAnalyser()
+          this.analyserNode.fftSize = 256
+          source.connect(this.analyserNode)
+          this.startVolumeMonitoring()
+        } catch (e) {
+          console.warn("[VoiceInputManager] Não foi possível conectar analyser:", e)
+        }
+      }
+
+      // 3. Inicializa MediaRecorder com o formato mais compatível
+      const mimeTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/aac", "audio/ogg"]
+      let selectedMime = ""
+      for (const m of mimeTypes) {
+        if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(m)) {
+          selectedMime = m
+          break
+        }
+      }
+
+      const options = selectedMime ? { mimeType: selectedMime } : undefined
+      this.mediaRecorder = new MediaRecorder(this.mediaStream, options)
+
+      this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
+        if (event.data && event.data.size > 0) {
+          this.audioChunks.push(event.data)
+        }
+      }
+
+      this.mediaRecorder.start(100) // Coleta chunks a cada 100ms
+      this.isRecording = true
+      this.isListening = true
+
+      return true
+    } catch (err) {
+      console.error("[VoiceInputManager] Erro ao acessar microfone:", err)
+      this.restoreAudio()
+      return false
+    }
+  }
+
+  /**
+   * Monitora o volume do áudio do microfone em tempo real e dispara callbacks.
+   */
+  private startVolumeMonitoring() {
+    if (!this.analyserNode) return
+
+    const bufferLength = this.analyserNode.frequencyBinCount
+    const dataArray = new Uint8Array(bufferLength)
+
+    const update = () => {
+      if (!this.isRecording || !this.analyserNode) return
+
+      this.analyserNode.getByteFrequencyData(dataArray)
+      let sum = 0
+      for (let i = 0; i < bufferLength; i++) {
+        sum += dataArray[i]
+      }
+      const average = sum / bufferLength
+      const normalizedVolume = Math.min(1.0, average / 128.0)
+
+      if (this.onVolumeChangeCallback) {
+        this.onVolumeChangeCallback(normalizedVolume)
+      }
+
+      this.animationFrameId = requestAnimationFrame(update)
+    }
+
+    this.animationFrameId = requestAnimationFrame(update)
+  }
+
+  /**
+   * Finaliza a gravação e retorna o Blob de áudio gravado pronto para envio ao Whisper STT.
+   */
+  public async stopRecording(): Promise<Blob | null> {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId)
+      this.animationFrameId = null
+    }
+
+    this.restoreAudio()
+    this.isRecording = false
+    this.isListening = false
+
+    return new Promise((resolve) => {
+      if (!this.mediaRecorder || this.mediaRecorder.state === "inactive") {
+        resolve(this.audioChunks.length > 0 ? new Blob(this.audioChunks, { type: "audio/webm" }) : null)
+        return
+      }
+
+      this.mediaRecorder.onstop = () => {
+        const mimeType = this.mediaRecorder?.mimeType || "audio/webm"
+        const blob = new Blob(this.audioChunks, { type: mimeType })
+        this.audioChunks = []
+        resolve(blob.size > 200 ? blob : null)
+      }
+
+      try {
+        this.mediaRecorder.stop()
+      } catch {
+        resolve(null)
+      }
+    })
+  }
+
+  public isCurrentlyRecording(): boolean {
+    return this.isRecording
+  }
+
+  /**
+   * Inicia o reconhecimento de fala Web Speech API nativo (modo híbrido para prévias).
    */
   public startSpeechRecognition(
     onResult: SpeechResultCallback,
@@ -196,7 +251,6 @@ class VoiceInputManager {
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognition) {
-      console.warn("[VoiceInputManager] SpeechRecognition não suportado pelo navegador.")
       return false
     }
 
@@ -216,7 +270,6 @@ class VoiceInputManager {
 
       this.recognition.onresult = (event: any) => {
         let currentInterim = ""
-
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           const item = event.results[i]
           if (item.isFinal) {
@@ -225,7 +278,6 @@ class VoiceInputManager {
             currentInterim += item[0].transcript
           }
         }
-
         const fullText = (accumulatedFinalText + " " + currentInterim).replace(/\s+/g, " ").trim()
         const isFinal = Boolean(accumulatedFinalText.trim() && !currentInterim.trim())
 
@@ -234,12 +286,7 @@ class VoiceInputManager {
         }
       }
 
-      this.recognition.onerror = (e: any) => {
-        // Ignora erros comuns inofensivos de interrupção (ex: 'no-speech' ou 'aborted')
-        if (e.error !== "no-speech" && e.error !== "aborted") {
-          console.warn("[VoiceInputManager] SpeechRecognition:", e.error)
-        }
-      }
+      this.recognition.onerror = () => {}
 
       this.recognition.onend = () => {
         this.isRecognitionActive = false
@@ -251,16 +298,12 @@ class VoiceInputManager {
       this.recognition.start()
       this.isRecognitionActive = true
       return true
-    } catch (err) {
-      console.warn("[VoiceInputManager] Falha ao iniciar SpeechRecognition:", err)
+    } catch {
       this.isRecognitionActive = false
       return false
     }
   }
 
-  /**
-   * Encerra o reconhecimento de fala ativo.
-   */
   public stopSpeechRecognition(): void {
     if (this.recognition && this.isRecognitionActive) {
       try {
@@ -271,9 +314,6 @@ class VoiceInputManager {
     this.isRecognitionActive = false
   }
 
-  /**
-   * Realiza ducking de volume suave no áudio via GainNode (sem pausar a mídia).
-   */
   public duckAudio(targetLevel = 0.15, rampMs = 150): void {
     try {
       const ctx = this.getAudioContext()
@@ -282,14 +322,9 @@ class VoiceInputManager {
       gainNode.gain.cancelScheduledValues(now)
       gainNode.gain.setValueAtTime(gainNode.gain.value, now)
       gainNode.gain.linearRampToValueAtTime(targetLevel, now + rampMs / 1000)
-    } catch (e) {
-      console.warn("[VoiceInputManager] Falha ao executar duckAudio:", e)
-    }
+    } catch {}
   }
 
-  /**
-   * Restaura o volume original do áudio suavemente.
-   */
   public restoreAudio(rampMs = 150): void {
     try {
       const ctx = this.getAudioContext()
@@ -298,26 +333,15 @@ class VoiceInputManager {
       gainNode.gain.cancelScheduledValues(now)
       gainNode.gain.setValueAtTime(gainNode.gain.value, now)
       gainNode.gain.linearRampToValueAtTime(1.0, now + rampMs / 1000)
-    } catch (e) {
-      console.warn("[VoiceInputManager] Falha ao executar restoreAudio:", e)
-    }
+    } catch {}
   }
 
-  /**
-   * Pausa ou encerra a captura de microfone.
-   */
   public async stop(): Promise<void> {
     this.stopSpeechRecognition()
-    if (this.porcupineWorker) {
-      try {
-        if (typeof window !== "undefined") {
-          const processorPkg = "@picovoice/web-voice-processor"
-          const { WebVoiceProcessor } = await import(/* webpackChunkName: "porcupine-processor" */ `${processorPkg}`)
-          await WebVoiceProcessor.unsubscribe(this.porcupineWorker)
-        }
-        await this.porcupineWorker.release()
-      } catch {}
-      this.porcupineWorker = null
+    await this.stopRecording()
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach((t) => t.stop())
+      this.mediaStream = null
     }
     this.isListening = false
     this.isInitialized = false
@@ -328,7 +352,6 @@ export function getVoiceInputManager(): VoiceInputManager {
   return VoiceInputManager.getInstance()
 }
 
-// Proxy seguro para acesso transparente e lazy à instância única
 export const voiceInputManager: VoiceInputManager = new Proxy({} as VoiceInputManager, {
   get(_target, prop: keyof VoiceInputManager) {
     const instance = VoiceInputManager.getInstance()

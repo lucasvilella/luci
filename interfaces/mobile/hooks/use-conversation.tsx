@@ -31,6 +31,7 @@ type ConversationContextValue = {
   isProcessing: boolean
   sendTextMessage: (text: string) => Promise<string>
   sendVoiceMessage: (text: string, voice?: string) => Promise<{ reply: string; audioBase64?: string }>
+  sendAudioBlob: (blob: Blob, voice?: string) => Promise<{ transcription: string; reply: string; audioBase64?: string }>
   uploadFile: (file: File, message?: string) => Promise<string>
   clearConversation: () => Promise<void>
   refreshHistory: () => Promise<void>
@@ -212,6 +213,69 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     [isProcessing, userId]
   )
 
+  // ─── Enviar Gravação Binária de Áudio (Whisper STT -> LLM -> TTS) ───
+  const sendAudioBlob = useCallback(
+    async (blob: Blob, voice = "pt-BR-ThalitaNeural"): Promise<{ transcription: string; reply: string; audioBase64?: string }> => {
+      if (!blob || blob.size < 200 || isProcessing) return { transcription: "", reply: "" }
+
+      setIsProcessing(true)
+
+      try {
+        const formData = new FormData()
+        const ext = blob.type.includes("mp4") ? "mp4" : blob.type.includes("ogg") ? "ogg" : "webm"
+        formData.append("file", blob, `recording_${Date.now()}.${ext}`)
+        formData.append("userId", userId)
+        formData.append("voice", voice)
+
+        const res = await luciApiFetch("/api/v1/chat/audio", {
+          method: "POST",
+          body: formData,
+        })
+
+        if (!res.ok) throw new Error("Erro no processamento de áudio")
+        const data = await res.json()
+
+        if (data.transcription) {
+          const userMsg: UnifiedMessage = {
+            id: `temp_voice_${Date.now()}`,
+            role: "user",
+            inputType: "voice",
+            content: data.transcription,
+            createdAt: Date.now(),
+          }
+          const botMsg: UnifiedMessage = {
+            id: data.assistant_message?.id || `bot_voice_${Date.now()}`,
+            role: "assistant",
+            inputType: "voice",
+            content: data.reply,
+            audioBase64: data.audio_base64,
+            createdAt: Date.now(),
+          }
+          setMessages((prev) => [...prev, userMsg, botMsg])
+
+          // ─── Despacho Automático de Ação no App (Navegação / Música / Automação) ───
+          if (data.intent) {
+            const { appActionDispatcher } = await import("@/lib/app-action-dispatcher")
+            appActionDispatcher.dispatchIntent(data.intent, data.transcription)
+          }
+        }
+
+        return {
+          transcription: data.transcription || "",
+          reply: data.reply || "",
+          audioBase64: data.audio_base64
+        }
+      } catch (err) {
+        console.error("[ConversationBrain] Erro ao enviar áudio:", err)
+        return { transcription: "", reply: "Desculpe, ocorreu uma falha ao enviar o áudio." }
+      } finally {
+        setIsProcessing(false)
+      }
+    },
+    [isProcessing, userId]
+  )
+
+
   // ─── Enviar Arquivo / Multimodal ───
   const uploadFile = useCallback(
     async (file: File, message = "Analise o arquivo anexo."): Promise<string> => {
@@ -276,11 +340,12 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
       isProcessing,
       sendTextMessage,
       sendVoiceMessage,
+      sendAudioBlob,
       uploadFile,
       clearConversation,
       refreshHistory,
     }),
-    [messages, isProcessing, sendTextMessage, sendVoiceMessage, uploadFile, clearConversation, refreshHistory]
+    [messages, isProcessing, sendTextMessage, sendVoiceMessage, sendAudioBlob, uploadFile, clearConversation, refreshHistory]
   )
 
   return <ConversationContext.Provider value={value}>{children}</ConversationContext.Provider>

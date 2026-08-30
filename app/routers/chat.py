@@ -51,7 +51,7 @@ async def chat_text(req: ChatTextRequest, request: Request):
         "intent": result.get("intent"),
     }
 
-# ─── 2. Endpoint Chat Voz ───
+# ─── 2. Endpoint Chat Voz (Texto -> LLM -> TTS) ───
 @router.post("/voice")
 async def chat_voice(req: ChatVoiceRequest, request: Request):
     """Envia uma fala/áudio pelo Voice Orb e recebe a resposta em texto + áudio sintetizado TTS."""
@@ -70,6 +70,66 @@ async def chat_voice(req: ChatVoiceRequest, request: Request):
         "assistant_message": result["assistant_message"],
         "intent": result.get("intent"),
     }
+
+# ─── 2.1 Endpoint Chat Áudio Direto (Gravação Binária -> Whisper STT -> LLM -> TTS) ───
+@router.post("/audio")
+async def chat_audio(
+    request: Request,
+    file: UploadFile = File(...),
+    userId: Optional[str] = Form(None),
+    voice: Optional[str] = Form("pt-BR-ThalitaNeural")
+):
+    """Recebe o arquivo de áudio gravado diretamente do microfone (Push-To-Talk / Orb), transcreve via Whisper e processa na Luci."""
+    from app.services.stt_service import stt_service
+    user_id = userId or _get_current_user(request)
+
+    audio_bytes = await file.read()
+    transcribed_text = await stt_service.transcribe(
+        audio_bytes=audio_bytes,
+        filename=file.filename or "recording.webm",
+        content_type=file.content_type or "audio/webm"
+    )
+
+    if not transcribed_text:
+        return {
+            "transcription": "",
+            "reply": "Não consegui ouvir com clareza. Pode repetir, por favor?",
+            "audio_base64": None,
+            "user_message": None,
+            "assistant_message": None,
+            "intent": None
+        }
+
+    result = await brain_service.process_chat(
+        user_id=user_id,
+        message=transcribed_text,
+        input_type="voice",
+        generate_audio=True,
+        voice=voice or "pt-BR-ThalitaNeural"
+    )
+
+    return {
+        "transcription": transcribed_text,
+        "reply": result["reply"],
+        "audio_base64": result["audio_base64"],
+        "user_message": result["user_message"],
+        "assistant_message": result["assistant_message"],
+        "intent": result.get("intent"),
+    }
+
+# ─── 2.2 Endpoint Transcrição Pura ───
+@router.post("/transcribe")
+async def transcribe_only(file: UploadFile = File(...)):
+    """Apenas transcreve o arquivo de áudio sem enviar para o LLM."""
+    from app.services.stt_service import stt_service
+    audio_bytes = await file.read()
+    transcribed_text = await stt_service.transcribe(
+        audio_bytes=audio_bytes,
+        filename=file.filename or "recording.webm",
+        content_type=file.content_type or "audio/webm"
+    )
+    return {"transcription": transcribed_text}
+
 
 # ─── 3. Endpoint Upload de Arquivo / Multimodal ───
 @router.post("/upload")

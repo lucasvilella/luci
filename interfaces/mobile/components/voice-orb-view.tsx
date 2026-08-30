@@ -173,7 +173,8 @@ export function VoiceOrbView({
     }
   }
 
-  const { sendVoiceMessage, uploadFile } = useConversation()
+  const { sendVoiceMessage, sendAudioBlob, uploadFile } = useConversation()
+  const [volumeLevel, setVolumeLevel] = useState(0)
 
   // ─── Síntese e Enfileiramento de Voz TTS ───
   const synthesizeAndEnqueueSentence = useCallback(async (sentence: string, index: number) => {
@@ -199,7 +200,49 @@ export function VoiceOrbView({
     }
   }, [])
 
-  // ─── Enviar Mensagem para o Cérebro da Luci ───
+  // ─── Enviar Gravação Binária para o Whisper STT + Cérebro da Luci ───
+  const sendAudioBlobQuery = useCallback(async (blob: Blob) => {
+    if (!blob || isProcessingRef.current) return
+    isProcessingRef.current = true
+    isUserActiveSessionRef.current = false
+    clearSilenceTimer()
+
+    voiceInputManager.stopSpeechRecognition()
+    setListening(false)
+    setVolumeLevel(0)
+    setHasStartedConversation(true)
+
+    setLoading(true)
+    setResponse("")
+    audioQueueRef.current?.stopAndClear()
+
+    try {
+      const result = await sendAudioBlob(blob)
+      if (result.transcription) {
+        setTranscript(result.transcription)
+      }
+      setResponse(result.reply)
+      setLoading(false)
+
+      if (result.audioBase64) {
+        const binaryString = atob(result.audioBase64)
+        const bytes = new Uint8Array(binaryString.length)
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i)
+        }
+        audioQueueRef.current?.enqueueIndexed(0, bytes.buffer)
+      } else if (result.reply) {
+        synthesizeAndEnqueueSentence(result.reply, 0)
+      }
+    } catch (err) {
+      console.error("[VoiceOrb] Erro no processamento de áudio:", err)
+    } finally {
+      isProcessingRef.current = false
+      setLoading(false)
+    }
+  }, [sendAudioBlob, synthesizeAndEnqueueSentence])
+
+  // ─── Enviar Mensagem Textual para o Cérebro da Luci ───
   const sendVoiceQuery = useCallback(async (text: string) => {
     if (!text.trim() || isProcessingRef.current) return
     isProcessingRef.current = true
@@ -207,7 +250,9 @@ export function VoiceOrbView({
     clearSilenceTimer()
 
     voiceInputManager.stopSpeechRecognition()
+    voiceInputManager.stopRecording()
     setListening(false)
+    setVolumeLevel(0)
     setHasStartedConversation(true)
 
     setLoading(true)
@@ -237,7 +282,7 @@ export function VoiceOrbView({
     }
   }, [sendVoiceMessage, synthesizeAndEnqueueSentence])
 
-  // Inicia o STT compartilhado via voiceInputManager
+  // Inicia a sessão universal de escuta com gravação e monitor de volume
   const startListeningSession = useCallback(() => {
     if (isProcessingRef.current) return
 
@@ -247,71 +292,51 @@ export function VoiceOrbView({
     setResponse("")
     setTranscript("")
 
+    // 1. Gravação de áudio real do microfone
+    voiceInputManager.startRecording((vol) => {
+      setVolumeLevel(vol)
+      if (vol > 0.08) {
+        clearSilenceTimer()
+      } else {
+        if (!silenceTimerRef.current && isUserActiveSessionRef.current) {
+          silenceTimerRef.current = setTimeout(() => {
+            handleOrbStopAndSend()
+          }, 2200)
+        }
+      }
+    })
+
+    // 2. Prévia rápida STT onde suportado
     voiceInputManager.startSpeechRecognition(
-      (currentSpeech: string, isFinal: boolean) => {
+      (currentSpeech: string) => {
         if (!currentSpeech) return
         setTranscript(currentSpeech)
-
-        // Limpeza de silêncio e disparo natural após término da fala
         clearSilenceTimer()
         silenceTimerRef.current = setTimeout(() => {
           if (currentSpeech.trim()) {
             sendVoiceQuery(currentSpeech.trim())
           }
-        }, 1400)
+        }, 1500)
       },
-      () => {
-        // Se a sessão ainda estiver ativa e não estiver processando nem falando, reativa suavemente
-        if (isUserActiveSessionRef.current && !isProcessingRef.current) {
-          setListening(true)
-        } else {
-          setListening(false)
-        }
-      },
+      () => {},
       true
     )
   }, [sendVoiceQuery])
 
-  // Escuta contínua em segundo plano com detecção de Wake Word ("Ei Luci", "Luci", etc.)
-  const startWakeWordListener = useCallback(() => {
-    if (isProcessingRef.current || isUserActiveSessionRef.current) return
+  // Finaliza a gravação e envia para o melhor canal disponível
+  const handleOrbStopAndSend = useCallback(async () => {
+    voiceInputManager.stopSpeechRecognition()
+    const audioBlob = await voiceInputManager.stopRecording()
+    setListening(false)
+    setVolumeLevel(0)
+    isUserActiveSessionRef.current = false
 
-    voiceInputManager.startSpeechRecognition(
-      (speechText: string) => {
-        if (!speechText) return
-
-        const wakeRegex = /\b(ei\s+luci|oi\s+luci|ol[aá]\s+luci|hey\s+luci|ok\s+luci|luci|lucy)\b/i
-        if (wakeRegex.test(speechText)) {
-          console.log("[VoiceOrb] Wake word detectada via reconhecimento fonético contínuo:", speechText)
-          isUserActiveSessionRef.current = true
-          setHasStartedConversation(true)
-          setListening(true)
-          setResponse("")
-          
-          // Remove a wake word do início para extrair o comando imediato (ex: "Luci toca raul seixas")
-          const cleanCommand = speechText.replace(wakeRegex, "").trim()
-          if (cleanCommand) {
-            setTranscript(cleanCommand)
-            clearSilenceTimer()
-            silenceTimerRef.current = setTimeout(() => {
-              sendVoiceQuery(cleanCommand)
-            }, 1200)
-          } else {
-            setTranscript("Ouvindo você...")
-          }
-        }
-      },
-      () => {
-        // Reativa o listener de wake word automaticamente enquanto a tela do Orb estiver ativa
-        if (!isUserActiveSessionRef.current && !isProcessingRef.current) {
-          setTimeout(() => {
-            startWakeWordListener()
-          }, 300)
-        }
-      },
-      true
-    )
-  }, [sendVoiceQuery])
+    if (transcript.trim()) {
+      sendVoiceQuery(transcript.trim())
+    } else if (audioBlob && audioBlob.size > 300) {
+      sendAudioBlobQuery(audioBlob)
+    }
+  }, [transcript, sendVoiceQuery, sendAudioBlobQuery])
 
   // Ativar ou pausar escuta ao clicar no próprio Orbe central
   const handleOrbClick = useCallback(() => {
@@ -322,17 +347,13 @@ export function VoiceOrbView({
     }
 
     if (listening) {
-      voiceInputManager.stopSpeechRecognition()
-      setListening(false)
-      isUserActiveSessionRef.current = false
-      if (transcript.trim()) {
-        sendVoiceQuery(transcript.trim())
-      }
+      handleOrbStopAndSend()
     } else {
       isUserActiveSessionRef.current = true
       startListeningSession()
     }
-  }, [speaking, listening, transcript, sendVoiceQuery, startListeningSession])
+  }, [speaking, listening, handleOrbStopAndSend, startListeningSession])
+
 
   // Inicializa o AudioQueue, escuta contínua de wake word e contexto
   useEffect(() => {
@@ -404,12 +425,13 @@ export function VoiceOrbView({
             type="button"
             onClick={handleOrbClick}
             aria-label={listening ? "Parar de ouvir" : "Falar com a Luci"}
-            className={`relative size-44 sm:size-48 rounded-full cursor-pointer transition-transform active:scale-95 outline-none ${
+            className={`relative size-44 sm:size-48 rounded-full cursor-pointer transition-transform duration-75 active:scale-95 outline-none ${
               orbState === "processing" ? "animate-spin" : "animate-orb-ethereal"
             }`}
             style={{
               background: "linear-gradient(135deg, #2B1776 0%, #5c62ec 45%, #7527C3 75%, #ffccf2 100%)",
-              boxShadow: "0 0 60px 10px rgba(117, 39, 195, 0.45), 0 0 100px 30px rgba(43, 23, 118, 0.25)",
+              boxShadow: `0 0 ${40 + volumeLevel * 40}px ${10 + volumeLevel * 15}px rgba(117, 39, 195, ${0.45 + volumeLevel * 0.4}), 0 0 100px 30px rgba(43, 23, 118, 0.25)`,
+              transform: listening ? `scale(${1 + volumeLevel * 0.25})` : undefined,
             }}
           >
             {/* Camada interna de profundidade e brilho perolado */}
