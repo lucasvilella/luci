@@ -252,15 +252,62 @@ export function VoiceOrbView({
         if (!currentSpeech) return
         setTranscript(currentSpeech)
 
+        // Limpeza de silêncio e disparo natural após término da fala
         clearSilenceTimer()
         silenceTimerRef.current = setTimeout(() => {
           if (currentSpeech.trim()) {
             sendVoiceQuery(currentSpeech.trim())
           }
-        }, 1600)
+        }, 1400)
       },
       () => {
-        setListening(false)
+        // Se a sessão ainda estiver ativa e não estiver processando nem falando, reativa suavemente
+        if (isUserActiveSessionRef.current && !isProcessingRef.current) {
+          setListening(true)
+        } else {
+          setListening(false)
+        }
+      },
+      true
+    )
+  }, [sendVoiceQuery])
+
+  // Escuta contínua em segundo plano com detecção de Wake Word ("Ei Luci", "Luci", etc.)
+  const startWakeWordListener = useCallback(() => {
+    if (isProcessingRef.current || isUserActiveSessionRef.current) return
+
+    voiceInputManager.startSpeechRecognition(
+      (speechText: string) => {
+        if (!speechText) return
+
+        const wakeRegex = /\b(ei\s+luci|oi\s+luci|ol[aá]\s+luci|hey\s+luci|ok\s+luci|luci|lucy)\b/i
+        if (wakeRegex.test(speechText)) {
+          console.log("[VoiceOrb] Wake word detectada via reconhecimento fonético contínuo:", speechText)
+          isUserActiveSessionRef.current = true
+          setHasStartedConversation(true)
+          setListening(true)
+          setResponse("")
+          
+          // Remove a wake word do início para extrair o comando imediato (ex: "Luci toca raul seixas")
+          const cleanCommand = speechText.replace(wakeRegex, "").trim()
+          if (cleanCommand) {
+            setTranscript(cleanCommand)
+            clearSilenceTimer()
+            silenceTimerRef.current = setTimeout(() => {
+              sendVoiceQuery(cleanCommand)
+            }, 1200)
+          } else {
+            setTranscript("Ouvindo você...")
+          }
+        }
+      },
+      () => {
+        // Reativa o listener de wake word automaticamente enquanto a tela do Orb estiver ativa
+        if (!isUserActiveSessionRef.current && !isProcessingRef.current) {
+          setTimeout(() => {
+            startWakeWordListener()
+          }, 300)
+        }
       },
       true
     )
@@ -277,28 +324,32 @@ export function VoiceOrbView({
     if (listening) {
       voiceInputManager.stopSpeechRecognition()
       setListening(false)
+      isUserActiveSessionRef.current = false
       if (transcript.trim()) {
         sendVoiceQuery(transcript.trim())
       }
     } else {
+      isUserActiveSessionRef.current = true
       startListeningSession()
     }
   }, [speaking, listening, transcript, sendVoiceQuery, startListeningSession])
 
-  // Inicializa o AudioQueue e escuta de áudio
+  // Inicializa o AudioQueue, escuta contínua de wake word e contexto
   useEffect(() => {
     audioQueueRef.current = new AudioPlayerQueue((isSpeaking) => {
       setSpeaking(isSpeaking)
     })
 
     voiceInputManager.setActiveContext("orb")
+    startWakeWordListener()
 
     return () => {
       audioQueueRef.current?.stopAndClear()
       voiceInputManager.stopSpeechRecognition()
       clearSilenceTimer()
+      isUserActiveSessionRef.current = false
     }
-  }, [])
+  }, [startWakeWordListener])
 
   // Determinar estado visual do Orb
   const orbState: OrbState = getOrbState(loading, speaking, listening)
