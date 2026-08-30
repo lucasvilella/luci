@@ -138,6 +138,17 @@ async def execute_tool(req: ToolExecuteRequest):
     result = await tool_registry.execute(req.tool_name, req.arguments)
     return {"result": result}
 
+# ─── Home Automation Endpoints ───
+@app.get("/api/v1/home/devices")
+async def get_home_devices():
+    """Retorna dispositivos simulados da casa inteligente."""
+    return [
+        {"id": "dev_1", "name": "Luz da Sala", "type": "light", "state": "on", "brightness": 80, "room": "Sala de Estar"},
+        {"id": "dev_2", "name": "Ar Condicionado", "type": "climate", "state": "on", "temperature": 22, "room": "Quarto"},
+        {"id": "dev_3", "name": "Fechadura Principal", "type": "lock", "state": "locked", "room": "Entrada"},
+        {"id": "dev_4", "name": "Caixa de Som Luci", "type": "speaker", "state": "playing", "volume": 65, "room": "Geral"}
+    ]
+
 # ─── 3. Chat Endpoint (Proxy para Gemini) ───
 class ChatRequest(BaseModel):
     message: str

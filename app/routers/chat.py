@@ -107,7 +107,34 @@ async def chat_upload(
         "filename": file.filename
     }
 
-# ─── 4. Timeline / Histórico Unificado ───
+class TTSDirectRequest(BaseModel):
+    text: str
+    voice: Optional[str] = "pt-BR-ThalitaNeural"
+    rate: Optional[str] = "+0%"
+    pitch: Optional[str] = "-5Hz"
+
+# ─── 4. Endpoint Síntese Direta de Voz (TTS) ───
+@router.post("/tts")
+async def direct_tts(req: TTSDirectRequest):
+    """Sintetiza uma frase direta em áudio MP3 (retorna stream binário de áudio)."""
+    from fastapi.responses import Response
+    from app.services.tts_service import tts_service
+    import base64
+
+    b64_audio = await tts_service.synthesize(
+        text=req.text,
+        voice=req.voice or "pt-BR-ThalitaNeural",
+        rate=req.rate or "+0%",
+        pitch=req.pitch or "-5Hz"
+    )
+
+    if not b64_audio:
+        raise HTTPException(status_code=500, detail="Erro na síntese de voz TTS.")
+
+    raw_bytes = base64.b64decode(b64_audio)
+    return Response(content=raw_bytes, media_type="audio/mpeg")
+
+# ─── 5. Timeline / Histórico Unificado ───
 @router.get("/history")
 async def get_history(request: Request, limit: int = 50):
     """Retorna a timeline unificada de mensagens de Texto, Voz e Intérprete."""
@@ -121,3 +148,4 @@ async def clear_history(request: Request):
     user_id = _get_current_user(request)
     ConversationDatabase.clear_history(user_id)
     return {"status": "ok", "message": "Histórico limpo com sucesso."}
+
