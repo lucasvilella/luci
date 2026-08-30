@@ -1,5 +1,12 @@
+"""
+restart_termux.py — Reinicia o servidor Luci no celular via SSH.
+Faz git pull e depois executa luci-start (que mata processos antigos e reinicia via PM2).
+"""
 import paramiko
 import time
+import sys
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 hostname = "192.168.15.90"
 port = 8022
@@ -11,41 +18,39 @@ def update_and_restart():
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(hostname, port=port, username=username, password=password, timeout=10)
 
-    print("[1/5] Atualizando o código no repositório /root/luci-server...")
-    stdin, stdout, stderr = client.exec_command("proot-distro login debian -- bash -c 'cd /root/luci-server && git reset --hard origin/main && git pull origin main'")
-    print(stdout.read().decode())
-    print(stderr.read().decode())
-
-    print("[2/5] Encerrando processos antigos (uvicorn, ngrok, python)...")
-    stdin, stdout, stderr = client.exec_command("killall -9 python python3 ngrok uvicorn 2>/dev/null || true")
-    client.exec_command("proot-distro login debian -- bash -c 'killall -9 python python3 ngrok uvicorn 2>/dev/null || true'")
-    time.sleep(2)
-
-    print("[3/5] Verificando arquivo start_luci.sh e iniciando a Luci...")
-    stdin, stdout, stderr = client.exec_command("proot-distro login debian -- bash -c 'cat /root/start_luci.sh'")
-    print("Script start_luci.sh:", stdout.read().decode())
-
-    # Iniciar uvicorn e ngrok em background dentro do PRoot Debian
-    start_cmd = (
+    print("[1/3] Atualizando o código no repositório /root/luci-server...")
+    _, stdout, stderr = client.exec_command(
         "proot-distro login debian -- bash -c '"
-        "nohup bash -c \"cd /root/luci-server && source venv/bin/activate && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000\" > /root/uvicorn.log 2>&1 & "
-        "nohup ngrok http 8000 --url=https://subdivide-clip-easiest.ngrok-free.dev --log=stdout > /root/ngrok.log 2>&1 &"
-        "'"
+        "cd /root/luci-server && "
+        "rm -f .git/index.lock && "
+        "git stash 2>/dev/null; "
+        "git pull origin main 2>&1 || echo \"(git pull falhou, usando versao local)\"'"
     )
-    stdin, stdout, stderr = client.exec_command(start_cmd)
-    time.sleep(4)
+    print(stdout.read().decode('utf-8', errors='replace'))
 
-    print("[4/5] Verificando se os processos estão rodando...")
-    stdin, stdout, stderr = client.exec_command("proot-distro login debian -- bash -c 'ps aux | grep -E \"uvicorn|ngrok\" | grep -v grep'")
-    print(stdout.read().decode())
+    print("[2/3] Executando luci-start (mata processos antigos + PM2 reinicia)...")
+    _, stdout, stderr = client.exec_command(
+        "bash /data/data/com.termux/files/usr/bin/luci-start",
+        timeout=90
+    )
+    print(stdout.read().decode('utf-8', errors='replace'))
+    err_output = stderr.read().decode('utf-8', errors='replace')
+    if err_output.strip():
+        print("STDERR:", err_output[:500])
 
-    print("[5/5] Logs do Ngrok:")
-    stdin, stdout, stderr = client.exec_command("proot-distro login debian -- bash -c 'tail -n 20 /root/ngrok.log'")
-    print(stdout.read().decode())
-
-    print("[6/5] Logs do Uvicorn:")
-    stdin, stdout, stderr = client.exec_command("proot-distro login debian -- bash -c 'tail -n 20 /root/uvicorn.log'")
-    print(stdout.read().decode())
+    print("[3/3] Verificação final via Ngrok...")
+    _, stdout, _ = client.exec_command(
+        'proot-distro login debian -- bash -c "'
+        "curl -s -o /dev/null -w '%{http_code}' -H 'ngrok-skip-browser-warning: 1' "
+        "https://subdivide-clip-easiest.ngrok-free.dev/ 2>&1"
+        '"'
+    )
+    code = stdout.read().decode('utf-8', errors='replace').strip()
+    if code == "200":
+        print(f"\n✅ Servidor online! HTTP {code}")
+        print("   URL: https://subdivide-clip-easiest.ngrok-free.dev")
+    else:
+        print(f"\n⚠️  HTTP {code} — servidor pode estar iniciando, tente novamente em 10s")
 
     client.close()
 
