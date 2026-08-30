@@ -20,6 +20,7 @@ import {
   Moon,
   Heart,
   Maximize2,
+  Shuffle,
 } from "lucide-react"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
@@ -43,6 +44,10 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     isLiked,
     lyrics,
     loadingLyrics,
+    shuffle,
+    repeat,
+    toggleShuffle,
+    toggleRepeat,
   } = useMusicPlayer()
 
   const { goBack, goToArtist, goToAlbumDetail, goToLyrics } = useMusicNavigation()
@@ -171,66 +176,64 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
           </div>
         </div>
 
-        {/* ─── CONTROLES DE REPRODUÇÃO PRINCIPAIS ─── */}
-        <div className="flex items-center justify-between px-2 pt-1">
-          {/* Faixa Anterior */}
+        {/* ─── CONTROLES DE REPRODUÇÃO PRINCIPAIS (Conforme Referência) ─── */}
+        <div className="flex items-center justify-between px-6 pt-2 pb-1">
+          {/* Botão Repetir (Repeat) */}
+          <button
+            type="button"
+            onClick={toggleRepeat}
+            aria-label="Repetir"
+            className={`p-2 transition-transform active:scale-90 ${
+              repeat !== "off" ? "text-[#22c55e]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            <RotateCcw className="size-5 stroke-[2.2]" />
+          </button>
+
+          {/* Faixa Anterior (SkipBack preenchido) */}
           <button
             type="button"
             onClick={skipPrevious}
             aria-label="Faixa anterior"
-            className="p-2 text-[var(--text-primary)] hover:text-[var(--accent-primary)] active:scale-90 transition-transform"
+            className="p-2 text-[var(--text-primary)] hover:text-[#22c55e] active:scale-90 transition-transform"
           >
-            <SkipBack className="size-6 stroke-[2]" />
+            <SkipBack className="size-6 stroke-[2.2] fill-current" />
           </button>
 
-          {/* Voltar 10 Segundos */}
-          <button
-            type="button"
-            onClick={() => handleSeekDelta(-10)}
-            aria-label="Voltar 10 segundos"
-            className="relative p-2 text-[var(--text-primary)] hover:text-[var(--accent-primary)] active:scale-90 transition-transform"
-          >
-            <RotateCcw className="size-6 stroke-[1.8]" />
-            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black pt-1">
-              10
-            </span>
-          </button>
-
-          {/* Botão Play / Pause Gigante Circular 64x64 na Cor da Marca Luci */}
+          {/* Botão Play / Pause Gigante Circular Verde (#22c55e) */}
           <button
             type="button"
             onClick={togglePlay}
             aria-label={isPlaying ? "Pausar" : "Tocar"}
-            className="size-16 rounded-full bg-gradient-to-tr from-[#5c62ec] to-[#7c82ff] text-white flex items-center justify-center shadow-xl shadow-[#5c62ec]/40 hover:scale-105 active:scale-95 transition-all"
+            className="size-16 rounded-full bg-[#22c55e] text-white flex items-center justify-center shadow-xl shadow-[#22c55e]/30 hover:scale-105 active:scale-95 transition-all"
           >
             {isPlaying ? (
-              <Pause className="size-7 fill-white" />
+              <Pause className="size-7 fill-white stroke-none" />
             ) : (
-              <Play className="size-7 fill-white translate-x-0.5" />
+              <Play className="size-7 fill-white stroke-none translate-x-0.5" />
             )}
           </button>
 
-          {/* Avançar 10 Segundos */}
-          <button
-            type="button"
-            onClick={() => handleSeekDelta(10)}
-            aria-label="Avançar 10 segundos"
-            className="relative p-2 text-[var(--text-primary)] hover:text-[var(--accent-primary)] active:scale-90 transition-transform"
-          >
-            <RotateCw className="size-6 stroke-[1.8]" />
-            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black pt-1">
-              10
-            </span>
-          </button>
-
-          {/* Próxima Faixa */}
+          {/* Próxima Faixa (SkipForward preenchido) */}
           <button
             type="button"
             onClick={skipNext}
             aria-label="Próxima faixa"
-            className="p-2 text-[var(--text-primary)] hover:text-[var(--accent-primary)] active:scale-90 transition-transform"
+            className="p-2 text-[var(--text-primary)] hover:text-[#22c55e] active:scale-90 transition-transform"
           >
-            <SkipForward className="size-6 stroke-[2]" />
+            <SkipForward className="size-6 stroke-[2.2] fill-current" />
+          </button>
+
+          {/* Botão Aleatório (Shuffle) */}
+          <button
+            type="button"
+            onClick={toggleShuffle}
+            aria-label="Ordem aleatória"
+            className={`p-2 transition-transform active:scale-90 ${
+              shuffle ? "text-[#22c55e]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            <Shuffle className="size-5 stroke-[2.2]" />
           </button>
         </div>
 
