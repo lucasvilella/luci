@@ -21,7 +21,7 @@ export interface ModuleConfig {
 export const MODULES_REGISTRY: Record<AppModuleId, ModuleConfig> = {
   orb: {
     id: "orb",
-    name: "Luci Assistant",
+    name: "Luci",
     description: "IA conversacional e multimodal com Orb de voz",
     iconName: "Sparkles",
     deckLeftItems: [
@@ -34,7 +34,7 @@ export const MODULES_REGISTRY: Record<AppModuleId, ModuleConfig> = {
   },
   music: {
     id: "music",
-    name: "LuciMusic",
+    name: "Música",
     description: "Player inteligente de música com rádio contínua",
     iconName: "Music",
     deckLeftItems: [
@@ -49,7 +49,7 @@ export const MODULES_REGISTRY: Record<AppModuleId, ModuleConfig> = {
   },
   cinema: {
     id: "cinema",
-    name: "Cinema & Séries",
+    name: "Filmes e Séries",
     description: "Streaming e catálogo inteligente de filmes e séries",
     iconName: "Film",
     deckLeftItems: [
@@ -79,7 +79,7 @@ export const MODULES_REGISTRY: Record<AppModuleId, ModuleConfig> = {
   },
   fitness: {
     id: "fitness",
-    name: "Treino & Saúde",
+    name: "Treinos e Saúde",
     description: "Planos de exercícios, evolução física e biofeedback",
     iconName: "Dumbbell",
     deckLeftItems: [
@@ -92,24 +92,9 @@ export const MODULES_REGISTRY: Record<AppModuleId, ModuleConfig> = {
     ],
     defaultTab: "routines",
   },
-  finance: {
-    id: "finance",
-    name: "Finanças",
-    description: "Gestão financeira pessoal e orçamentos preditivos",
-    iconName: "Wallet",
-    deckLeftItems: [
-      { id: "overview", label: "Visão Geral", iconName: "PieChart" },
-      { id: "transactions", label: "Extrato", iconName: "Receipt" },
-    ],
-    deckRightItems: [
-      { id: "budgets", label: "Metas", iconName: "Target" },
-      { id: "cards", label: "Cartões", iconName: "CreditCard" },
-    ],
-    defaultTab: "overview",
-  },
   tasks: {
     id: "tasks",
-    name: "Agenda & Tarefas",
+    name: "Agendas e Tarefas",
     description: "Cronograma inteligente, lembretes e objetivos diários",
     iconName: "Calendar",
     deckLeftItems: [
@@ -121,6 +106,21 @@ export const MODULES_REGISTRY: Record<AppModuleId, ModuleConfig> = {
       { id: "notes", label: "Notas", iconName: "FileText" },
     ],
     defaultTab: "calendar",
+  },
+  finance: {
+    id: "finance",
+    name: "Financeiro",
+    description: "Gestão financeira pessoal e orçamentos preditivos",
+    iconName: "Wallet",
+    deckLeftItems: [
+      { id: "overview", label: "Visão Geral", iconName: "PieChart" },
+      { id: "transactions", label: "Extrato", iconName: "Receipt" },
+    ],
+    deckRightItems: [
+      { id: "budgets", label: "Metas", iconName: "Target" },
+      { id: "cards", label: "Cartões", iconName: "CreditCard" },
+    ],
+    defaultTab: "overview",
   },
 }
 

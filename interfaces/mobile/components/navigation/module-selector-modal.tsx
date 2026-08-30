@@ -30,14 +30,13 @@ const ICONS_MAP: Record<string, React.ElementType> = {
 export function ModuleSelectorModal() {
   const {
     isModuleSelectorOpen,
-    setModuleSelectorOpen,
     activeModuleId,
     setActiveModule,
     moduleUsageCounts,
   } = useAppNavigationStore()
 
   // Ordenação Inteligente Omnipresente da Luci:
-  // 1. Luci Assistant ('orb') é SEMPRE o primeiro.
+  // 1. Luci ('orb') é SEMPRE o primeiro.
   // 2. Os demais módulos são ordenados dinamicamente por volume de uso/relevância.
   const sortedModules = useMemo(() => {
     const all = Object.values(MODULES_REGISTRY)
@@ -56,40 +55,19 @@ export function ModuleSelectorModal() {
   if (!isModuleSelectorOpen) return null
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-20 select-none animate-slide-up pointer-events-none">
-      {/* Backdrop transparente/suave que fecha ao clicar fora */}
-      <div
-        onClick={() => setModuleSelectorOpen(false)}
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto transition-opacity"
-      />
-
+    <div className="fixed inset-x-0 bottom-4 z-30 flex justify-center px-4 pointer-events-none select-none animate-in fade-in slide-in-from-bottom-4 duration-150">
       {/* 
-        Menu Flutuante que sobe a partir do Deck Inferior (ancorado com pb-20 no z-30, logo acima do deck z-40)
-        Design System minimalista: 1 módulo por linha, apenas ícone e nome, sem pills pesadas, com linha separadora sutil.
+        Container em Pílula Orgânica que "sobe por trás" do deck de navegação (bottom-4 com z-30, dock no z-40).
+        Fundo da superfície suave, cantos arredondados generosos de 32px e alinhado perfeitamente com o deck (max-w-[404px] pb-[74px]).
       */}
       <div
-        className="pointer-events-auto relative z-10 w-full max-w-[404px] overflow-hidden rounded-[28px] border p-4 shadow-2xl backdrop-blur-2xl transition-all"
+        className="pointer-events-auto relative w-full max-w-[404px] overflow-hidden rounded-[32px] pt-3 pb-[74px] px-3 shadow-[0_12px_40px_rgba(0,0,0,0.18)] backdrop-blur-2xl border border-[var(--border-subtle)] transition-all bg-[var(--bg-surface-1)]"
         style={{
-          backgroundColor: "var(--bg-deck)",
-          borderColor: "var(--border-subtle)",
-          boxShadow: "0 -10px 36px rgba(0, 0, 0, 0.35), var(--shadow-deck)",
+          boxShadow: "0 -8px 32px rgba(0, 0, 0, 0.15), var(--shadow-deck)",
         }}
       >
-        {/* Cabeçalho Minimalista da Luci */}
-        <div className="flex items-center justify-between px-2 pb-2.5 mb-1 border-b border-[var(--border-subtle)]">
-          <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-              Módulos Inteligentes
-            </h4>
-          </div>
-          <span className="text-[10px] text-[var(--text-muted)] font-medium">
-            Ordenado por afinidade
-          </span>
-        </div>
-
-        {/* Lista Vertical de Módulos (1 por linha, sem pill, com divisores) */}
-        <div className="divide-y divide-[var(--border-subtle)] max-h-[48vh] overflow-y-auto no-scrollbar">
+        {/* Lista Vertical de Módulos (1 por linha, sem pill pesada, tipografia ampliada e divisores sutis) */}
+        <div className="divide-y divide-[var(--border-subtle)] max-h-[52vh] overflow-y-auto no-scrollbar">
           {sortedModules.map((mod) => {
             const Icon = ICONS_MAP[mod.iconName] || Sparkles
             const isActive = activeModuleId === mod.id
@@ -101,24 +79,24 @@ export function ModuleSelectorModal() {
                 onClick={() => {
                   setActiveModule(mod.id as AppModuleId)
                 }}
-                className={`w-full flex items-center justify-between py-3 px-2 transition-all active:scale-[0.98] text-left hover:bg-[var(--bg-surface-1)] rounded-xl ${
+                className={`w-full flex items-center justify-between py-3 px-3 transition-all active:scale-[0.98] text-left hover:bg-[var(--bg-surface-2)] rounded-2xl ${
                   isActive ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-primary)]"
                 }`}
               >
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div
-                    className={`flex size-9 items-center justify-center rounded-full transition-all shrink-0 ${
+                    className={`flex size-10 items-center justify-center rounded-2xl transition-all shrink-0 ${
                       isActive
-                        ? "bg-gradient-to-tr from-[#2B1776] to-[#7527C3] text-white shadow-md shadow-[#7527c3]/30"
+                        ? "bg-gradient-to-tr from-[#2B1776] to-[#7527C3] text-white shadow-md shadow-[#7527c3]/35"
                         : "bg-[var(--bg-surface-2)] text-[var(--text-secondary)]"
                     }`}
                   >
-                    <Icon className="size-4 stroke-[2]" />
+                    <Icon className="size-5 stroke-[2.2]" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <span
-                      className={`text-sm font-semibold truncate block ${
-                        isActive ? "text-[var(--accent-primary)] font-bold" : "text-[var(--text-primary)]"
+                      className={`text-[15px] font-bold tracking-tight truncate block ${
+                        isActive ? "text-[var(--accent-primary)]" : "text-[var(--text-primary)]"
                       }`}
                     >
                       {mod.name}
@@ -128,8 +106,8 @@ export function ModuleSelectorModal() {
 
                 {/* Indicador de Módulo Ativo */}
                 {isActive && (
-                  <div className="flex size-6 items-center justify-center rounded-full bg-[var(--accent-surface)] text-[var(--accent-primary)]">
-                    <Check className="size-3.5 stroke-[2.5]" />
+                  <div className="flex size-6 items-center justify-center rounded-full bg-[var(--accent-surface)] text-[var(--accent-primary)] shrink-0">
+                    <Check className="size-3.5 stroke-[3]" />
                   </div>
                 )}
               </button>
