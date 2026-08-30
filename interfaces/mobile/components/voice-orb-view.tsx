@@ -355,14 +355,13 @@ export function VoiceOrbView({
   }, [speaking, listening, handleOrbStopAndSend, startListeningSession])
 
 
-  // Inicializa o AudioQueue, escuta contínua de wake word e contexto
+  // Inicializa o AudioQueue e contexto
   useEffect(() => {
     audioQueueRef.current = new AudioPlayerQueue((isSpeaking) => {
       setSpeaking(isSpeaking)
     })
 
     voiceInputManager.setActiveContext("orb")
-    startWakeWordListener()
 
     return () => {
       audioQueueRef.current?.stopAndClear()
@@ -370,7 +369,7 @@ export function VoiceOrbView({
       clearSilenceTimer()
       isUserActiveSessionRef.current = false
     }
-  }, [startWakeWordListener])
+  }, [])
 
   // Determinar estado visual do Orb
   const orbState: OrbState = getOrbState(loading, speaking, listening)
