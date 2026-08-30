@@ -268,7 +268,7 @@ export function LyricsView() {
           {/* Duração & Barra */}
           <div className="text-right pl-3 pr-1">
             <span className="text-[10px] font-bold text-[var(--accent-pink)]">
-              {formatTime(progress)} / {formatTime(totalSec)}
+              {formatSeconds(progress)} / {formatSeconds(totalSec)}
             </span>
           </div>
         </footer>

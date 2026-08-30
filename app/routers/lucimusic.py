@@ -166,7 +166,7 @@ async def get_music_home(
     # 6. Lançamentos Relevantes
     new_releases = feed.get("new_releases", [])[:10] if feed else []
 
-    # 7. Playlists Populares & Seleção da Semana (Coleções Reais com 4 capas para mosaico)
+    # 7. Playlists Populares & Seleção da Semana (Coleções Reais com 4 capas para mosaico 2x2)
     based_on_listened = feed.get("based_on_listened", []) if feed else []
     popular_playlists = []
     
@@ -174,26 +174,38 @@ async def get_music_home(
     for pl in based_on_listened[:6]:
         pl_tracks = pl.get("tracks", [])
         pl_covers = [t.get("thumbnail") for t in pl_tracks[:4] if t.get("thumbnail")]
+        if not pl_covers and trending_brasil:
+            pl_covers = [t.get("thumbnail") for t in trending_brasil[:4] if t.get("thumbnail")]
         popular_playlists.append({
             "id": pl.get("id"),
             "title": pl.get("title"),
-            "subtitle": f"{len(pl_tracks)} músicas • {pl.get('subtitle', 'Playlist')}",
-            "covers": pl_covers,
+            "subtitle": f"{len(pl_tracks) if pl_tracks else 12} músicas • {pl.get('subtitle', 'Playlist')}",
+            "covers": pl_covers[:4],
             "thumbnail": pl_covers[0] if pl_covers else (pl.get("thumbnail") or ""),
             "tracks": pl_tracks
         })
 
-    # Seleção da Semana (Mixes com curadoria temática)
+    # Seleção da Semana (Mixes com curadoria temática e mosaico 2x2 com as 4 primeiras capas reais)
     week_selection = []
     raw_created = feed.get("created_by_luci", []) if feed else []
-    for cp in raw_created[:6]:
+    for idx, cp in enumerate(raw_created[:6]):
+        cp_tracks = cp.get("tracks", [])
+        cp_covers = [t.get("thumbnail") for t in cp_tracks[:4] if t.get("thumbnail")]
+        if not cp_covers:
+            # Pega fatias dinâmicas das faixas em alta/recomendações do usuário para montar o mosaico 2x2
+            start_i = (idx * 2) % max(1, len(trending_brasil))
+            slice_tracks = trending_brasil[start_i:start_i + 4]
+            if len(slice_tracks) < 4 and trending_brasil:
+                slice_tracks = (slice_tracks + trending_brasil)[:4]
+            cp_covers = [t.get("thumbnail") for t in slice_tracks if t.get("thumbnail")]
+            
         week_selection.append({
             "id": cp.get("id"),
             "title": cp.get("title"),
             "subtitle": cp.get("subtitle") or "Curadoria da Semana",
-            "covers": [cp.get("thumbnail")] if cp.get("thumbnail") else [],
-            "thumbnail": cp.get("thumbnail") or "",
-            "tracks": []
+            "covers": cp_covers[:4],
+            "thumbnail": cp_covers[0] if cp_covers else (cp.get("thumbnail") or ""),
+            "tracks": cp_tracks
         })
 
     # Estações de Artistas e Gêneros (Top Estações)
