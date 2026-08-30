@@ -107,36 +107,28 @@ export function LuciCentralButton({
   }
 
   // Cálculos do anel circular SVG de progresso
-  const radius = 27
+  const radius = 30
   const circumference = 2 * Math.PI * radius
   const strokeDashoffset = circumference - (progress / 100) * circumference
 
   return (
-    <div className="relative flex items-center justify-center -top-3 z-30">
+    <div className="relative flex items-center justify-center -top-2.5 z-30">
+      {/* Moldura Circular Conectora / Bezel do Deck do Figma */}
+      <div className="absolute size-[64px] rounded-full bg-[var(--bg-deck)] border-2 border-[var(--border-subtle)] shadow-sm pointer-events-none" />
+
       {/* Anel Radial de Progresso SVG no Hold */}
       <svg
-        className="absolute pointer-events-none -rotate-90 size-16"
-        viewBox="0 0 64 64"
+        className="absolute pointer-events-none -rotate-90 size-[68px]"
+        viewBox="0 0 68 68"
       >
-        {/* Trilho com pontinhos/glow sutil */}
-        <circle
-          cx="32"
-          cy="32"
-          r={radius}
-          fill="none"
-          stroke="rgba(124, 130, 255, 0.15)"
-          strokeWidth="2"
-          strokeDasharray="2 3"
-        />
-        {/* Anel de Preenchimento Dinâmico */}
         {progress > 0 && (
           <circle
-            cx="32"
-            cy="32"
+            cx="34"
+            cy="34"
             r={radius}
             fill="none"
             stroke="url(#radialGradient)"
-            strokeWidth="3"
+            strokeWidth="3.5"
             strokeLinecap="round"
             style={{
               strokeDasharray: circumference,
@@ -149,12 +141,12 @@ export function LuciCentralButton({
           <linearGradient id="radialGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#5c62ec" />
             <stop offset="50%" stopColor="#7c82ff" />
-            <stop offset="100%" stopColor="#ffccf2" />
+            <stop offset="100%" stopColor="#c084fc" />
           </linearGradient>
         </defs>
       </svg>
 
-      {/* Botão Físico Virtual da Luci com Calota Elevada */}
+      {/* Botão Circular da Luci (Azul Índigo #5c62ec Sólido e Vibrante do Figma) */}
       <button
         type="button"
         onPointerDown={handlePointerDown}
@@ -162,21 +154,16 @@ export function LuciCentralButton({
         onPointerLeave={handlePointerLeave}
         onPointerCancel={cancelHold}
         aria-label="Botão Central Luci"
-        className={`relative flex size-[50px] items-center justify-center rounded-full transition-all duration-200 select-none touch-none ${
+        className={`relative flex size-[52px] items-center justify-center rounded-full transition-all duration-200 select-none touch-none bg-[#5c62ec] shadow-md shadow-[#5c62ec]/30 ${
           isHolding
-            ? "scale-110 shadow-lg shadow-[#5c62ec]/60 ring-2 ring-[#7c82ff]"
-            : "active:scale-95 shadow-md shadow-[#5c62ec]/35"
+            ? "scale-105 shadow-xl shadow-[#5c62ec]/60 ring-2 ring-white"
+            : "active:scale-95 hover:bg-[#5258e3]"
         }`}
-        style={{
-          background: isHolding
-            ? "linear-gradient(135deg, #494ec9 0%, #686eff 100%)"
-            : "linear-gradient(135deg, #5c62ec 0%, #7c82ff 100%)",
-        }}
       >
         {isHolding ? (
           <Mic className="size-6 text-white animate-pulse" />
         ) : (
-          <div className="size-6 flex items-center justify-center transition-transform duration-200">
+          <div className="size-7 flex items-center justify-center transition-transform duration-200">
             <svg
               viewBox="0 0 176.05 254.34"
               className="w-full h-full text-white fill-current drop-shadow-sm"

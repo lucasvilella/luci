@@ -108,9 +108,9 @@ export function ModularDeck() {
       aria-label="Deck Modular da Luci"
       className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 select-none"
     >
-      {/* Contêiner Estilizado com Curvatura Orgânica e Calota Central */}
+      {/* Contêiner em formato de Pílula Perfeita conforme o Figma */}
       <div
-        className="pointer-events-auto relative flex h-[62px] w-full max-w-[420px] items-center justify-between px-3 shadow-2xl transition-all duration-300 backdrop-blur-2xl rounded-[32px]"
+        className="pointer-events-auto relative flex h-[60px] w-full max-w-[420px] items-center justify-between px-4 shadow-2xl transition-all duration-300 backdrop-blur-2xl rounded-full"
         style={{
           backgroundColor: "var(--bg-deck)",
           border: "1px solid var(--border-subtle)",
