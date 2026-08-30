@@ -19,6 +19,7 @@ import {
   Sun,
   Moon,
   Heart,
+  Maximize2,
 } from "lucide-react"
 import { useMusicPlayer } from "@/hooks/use-music-player"
 import { useMusicNavigation } from "@/hooks/use-music-navigation"
@@ -27,26 +28,6 @@ import { MediaCard } from "@/components/ui/media-card"
 import { SectionHeader } from "@/components/ui/section-header"
 import { TrackActionMenu } from "@/components/ui/track-action-menu"
 import { formatSeconds, type LuciTrack } from "@/lib/lucimusic"
-
-// Letras sincronizadas mock fiéis
-const SAMPLE_LYRICS = [
-  { time: 5, text: "I'm tryna put you in the worst mood, ah" },
-  { time: 10, text: "P1 cleaner than your church shoes, ah" },
-  { time: 15, text: "Milli point two just to hurt you, ah" },
-  { time: 20, text: "All red Lamb' just to tease you, ah" },
-  { time: 25, text: "None of these toys on lease too, ah" },
-  { time: 30, text: "Made your whole year in a week too, yah" },
-  { time: 35, text: "Main bitch out of your league too, ah" },
-  { time: 40, text: "Side bitch out of your league too, ah" },
-  { time: 45, text: "House so empty, need a centerpiece" },
-  { time: 50, text: "20 racks a table cut from ebony" },
-  { time: 55, text: "Cut that ivory into skinny pieces" },
-  { time: 60, text: "Then she clean it with her face, man, I love my baby" },
-  { time: 65, text: "You talking money, need a hearing aid" },
-  { time: 70, text: "You talking 'bout me, I don't see a shade" },
-  { time: 75, text: "Switch up my style, I take any lane" },
-  { time: 80, text: "I switch up my cup, I kill any pain" },
-]
 
 export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) {
   const {
@@ -64,7 +45,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
     loadingLyrics,
   } = useMusicPlayer()
 
-  const { goBack, goToArtist, goToAlbumDetail } = useMusicNavigation()
+  const { goBack, goToArtist, goToAlbumDetail, goToLyrics } = useMusicNavigation()
   const { theme, toggleTheme, mounted } = useTheme()
 
   const [showLyricsExpanded, setShowLyricsExpanded] = useState(false)
@@ -299,32 +280,29 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
           </button>
         </div>
 
-        {/* ─── SEÇÃO DE LETRAS (Lyrics Dinâmicas) ─── */}
+        {/* ─── SEÇÃO DE LETRAS (Lyrics Dinâmicas com Botão Tela Cheia) ─── */}
         <div className="pt-1">
-          <div
-            onClick={() => setShowLyricsExpanded(!showLyricsExpanded)}
-            className="flex items-center justify-between cursor-pointer py-1 group"
-          >
+          <div className="flex items-center justify-between py-1">
             <h3 className="text-lg font-black text-[var(--text-primary)]">
               Letras
             </h3>
+            {/* Botão de Tela Cheia para o Modo Karaoke Completo */}
             <button
               type="button"
-              className="p-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors"
+              onClick={goToLyrics}
+              title="Abrir letras em tela cheia"
+              aria-label="Abrir letras em tela cheia"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--bg-surface-2)] text-[var(--text-primary)] hover:bg-[var(--accent-primary)] hover:text-white transition-all active:scale-90 text-xs font-bold shadow-sm"
             >
-              {showLyricsExpanded ? (
-                <ChevronDown className="size-5" />
-              ) : (
-                <ChevronUp className="size-5" />
-              )}
+              <Maximize2 className="size-3.5 stroke-[2.5]" />
+              <span>Tela cheia</span>
             </button>
           </div>
 
-          {/* Bloco de Letras com Raio de 16px */}
+          {/* Bloco de Letras com Rolagem Suave e Destaque da Frase Cantada */}
           <div
-            className={`mt-2 rounded-[16px] p-5 transition-all duration-300 ${
-              showLyricsExpanded ? "max-h-[360px]" : "max-h-[220px]"
-            } overflow-y-auto space-y-3 bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-inner`}
+            onClick={goToLyrics}
+            className="mt-2 cursor-pointer rounded-[16px] p-5 max-h-[220px] overflow-y-auto space-y-3 bg-[var(--bg-surface-1)] border border-[var(--border-subtle)] shadow-inner transition-all hover:border-[var(--accent-primary)]/50 group"
           >
             {loadingLyrics ? (
               <p className="text-xs text-[var(--text-secondary)] italic animate-pulse">
@@ -335,16 +313,21 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
                 const nextLineTime = lyrics.lines[idx + 1]?.time || 9999
                 const isCurrent = currentTime >= line.time && currentTime < nextLineTime
                 return (
-                  <p
+                  <div
                     key={idx}
-                    className={`text-base font-extrabold leading-relaxed transition-all duration-200 ${
+                    className={`flex items-center gap-2 transition-all duration-300 ${
                       isCurrent
-                        ? "text-[var(--accent-primary)] scale-[1.02] origin-left"
-                        : "text-[var(--text-secondary)] opacity-75"
+                        ? "text-[var(--accent-primary)] scale-[1.03] origin-left font-black"
+                        : "text-[var(--text-secondary)] opacity-60 font-semibold"
                     }`}
                   >
-                    {line.text}
-                  </p>
+                    {isCurrent && (
+                      <span className="size-2 rounded-full bg-[#10b981] shadow-sm animate-pulse shrink-0" />
+                    )}
+                    <p className={`text-base leading-relaxed ${isCurrent ? "text-[var(--accent-primary)] font-black drop-shadow-sm" : ""}`}>
+                      {line.text}
+                    </p>
+                  </div>
                 )
               })
             ) : lyrics?.plain ? (
@@ -353,7 +336,7 @@ export function NowPlaying({ onSwitchToLuci }: { onSwitchToLuci?: () => void }) 
               </p>
             ) : (
               <p className="text-xs text-[var(--text-secondary)] opacity-70">
-                Letra instrumental ou indisponível para esta faixa.
+                Toque para abrir a tela de letras completa.
               </p>
             )}
           </div>

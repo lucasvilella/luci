@@ -188,15 +188,20 @@ export function LyricsView() {
                 <div
                   key={`karaoke-line-${idx}`}
                   onClick={() => handleLineClick(line)}
-                  className={`cursor-pointer transition-all duration-400 ease-[cubic-bezier(0.25,1,0.5,1)] origin-left py-1 select-none ${
+                  className={`flex items-center gap-3 cursor-pointer transition-all duration-400 ease-[cubic-bezier(0.25,1,0.5,1)] origin-left py-1 select-none ${
                     isActive
-                      ? "text-[28px] sm:text-[32px] font-bold text-white scale-100 drop-shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
+                      ? "text-[28px] sm:text-[32px] font-black text-white scale-100 drop-shadow-[0_4px_14px_rgba(0,0,0,0.8)]"
                       : isPast || isFarFuture
-                      ? "text-[22px] sm:text-[24px] font-medium text-[rgba(242,230,238,0.30)] hover:text-white/60"
+                      ? "text-[22px] sm:text-[24px] font-medium text-[rgba(242,230,238,0.25)] hover:text-white/60"
                       : "text-[22px] sm:text-[24px] font-medium text-[rgba(242,230,238,0.40)] hover:text-white/60"
                   }`}
                 >
-                  {line.text}
+                  {isActive && (
+                    <div className="size-4 shrink-0 flex items-center justify-center text-[#22c55e]">
+                      <Play className="size-4 fill-[#22c55e] text-[#22c55e]" />
+                    </div>
+                  )}
+                  <span>{line.text}</span>
                 </div>
               )
             })
