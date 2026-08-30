@@ -217,8 +217,6 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
           <section>
             <SectionHeader
               title="Com base nas suas reproduções recentes"
-              seeAllText="Ver tudo"
-              onSeeAll={goToHistory}
             />
             <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
               {trendingBrasil.map((item: any) => (
@@ -240,8 +238,6 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
           <section className="animate-fade-in">
             <SectionHeader
               title="Seleção da semana"
-              seeAllText="Ver tudo"
-              onSeeAll={() => goToSearch()}
             />
             <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
               {weekSelection.map((pl: any) => (
@@ -263,8 +259,6 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
           <section className="animate-fade-in">
             <SectionHeader
               title="Playlists Populares"
-              seeAllText="Ver tudo"
-              onSeeAll={() => goToSearch()}
             />
             <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
               {popularPlaylists.map((pl: any) => (
@@ -286,8 +280,6 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
           <section>
             <SectionHeader
               title="Últimos lançamentos para você"
-              seeAllText="Ver tudo"
-              onSeeAll={() => goToSearch()}
             />
             <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
               {newReleases.map((item: any) => (
@@ -309,8 +301,6 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
           <section>
             <SectionHeader
               title="Álbuns para você"
-              seeAllText="Ver tudo"
-              onSeeAll={() => goToSearch()}
             />
             <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
               {customFocus.map((item: any) => (
@@ -332,8 +322,6 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
           <section>
             <SectionHeader
               title="Trending Artistas"
-              seeAllText="Ver tudo"
-              onSeeAll={() => goToSearch()}
             />
             <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
               {favoriteArtists.map((artist: any) => (
