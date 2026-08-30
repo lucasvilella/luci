@@ -74,9 +74,23 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
   const customWorkout = homeData?.custom_workout?.tracks || []
   const customFocus = homeData?.custom_focus?.tracks || []
 
-  // 6 itens reais para o grid de 2 colunas do "Continuar Ouvindo" no topo
-  const continuePills = (continueListening.length > 0 ? continueListening : trendingBrasil).slice(0, 6).map((item: any, idx: number) => ({
+  // 6 itens reais e únicos para o grid de 2 colunas do "Continuar Ouvindo" no topo
+  const rawList = continueListening.length > 0 ? continueListening : trendingBrasil
+  const seenIds = new Set<string>()
+  const uniqueItems = []
+
+  for (const item of rawList) {
+    const rawId = item.id || ""
+    if (rawId && !seenIds.has(rawId)) {
+      seenIds.add(rawId)
+      uniqueItems.push(item)
+    }
+    if (uniqueItems.length >= 6) break
+  }
+
+  const continuePills = uniqueItems.map((item: any, idx: number) => ({
     id: item.id || `cont_${idx}`,
+    uniqueKey: `${item.id || "cont"}_${idx}`,
     title: item.title || "Música",
     coverUrl: item.thumbnail || item.cover_url || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300",
     artist: item.artist || item.subtitle || "",
@@ -141,7 +155,7 @@ export function MusicHome({ onOpenMenu }: { onOpenMenu?: () => void }) {
             <div className="grid grid-cols-2 gap-2.5">
               {continuePills.map((pill) => (
                 <ContinuePillCard
-                  key={pill.id}
+                  key={pill.uniqueKey}
                   id={pill.id}
                   title={pill.title}
                   coverUrl={pill.coverUrl}
